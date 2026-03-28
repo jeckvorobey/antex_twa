@@ -1,30 +1,43 @@
 import { boot } from 'quasar/wrappers';
 
-declare global {
-  interface Window {
-    Telegram: { WebApp: TelegramWebApp };
-  }
+export interface TelegramMainButton {
+  show(): void;
+  hide(): void;
+  setText(text: string): void;
+  onClick(fn: () => void): void;
 }
 
-interface TelegramWebApp {
+export interface TelegramWebApp {
   initData: string;
-  initDataUnsafe: Record<string, unknown>;
+  initDataUnsafe: {
+    user?: {
+      id?: number;
+      username?: string;
+      first_name?: string;
+      last_name?: string;
+      language_code?: string;
+      is_premium?: boolean;
+    };
+  };
   ready(): void;
   expand(): void;
   close(): void;
-  MainButton: {
-    show(): void;
-    hide(): void;
-    setText(text: string): void;
-    onClick(fn: () => void): void;
-  };
+  MainButton: TelegramMainButton;
 }
 
-export const tg: TelegramWebApp = window.Telegram?.WebApp;
+declare global {
+  interface Window {
+    Telegram?: { WebApp?: TelegramWebApp };
+  }
+}
+
+export const tg = window.Telegram?.WebApp;
 
 export default boot(() => {
-  if (tg) {
-    tg.ready();
-    tg.expand();
+  if (!tg) {
+    return;
   }
+
+  tg.ready();
+  tg.expand();
 });

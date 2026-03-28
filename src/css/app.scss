@@ -1,6 +1,268 @@
-// Global styles AntEx miniapp
+:root {
+  --antex-bg-primary: #0f2a26;
+  --antex-bg-card: #123530;
+  --antex-bg-deep: #0a1f1c;
+  --antex-gold-base: #d4af37;
+  --antex-gold-light: #f2d27a;
+  --antex-gold-dark: #b8962e;
+  --antex-gold-border: rgba(212, 175, 55, 0.3);
+  --antex-gold-glow: rgba(212, 175, 55, 0.22);
+  --antex-text-primary: #ffffff;
+  --antex-text-secondary: #cfcfcf;
+  --antex-text-muted: #8a8a8a;
+  --antex-space-xs: 4px;
+  --antex-space-sm: 8px;
+  --antex-space-md: 16px;
+  --antex-space-lg: 24px;
+  --antex-space-xl: 32px;
+  --antex-radius-btn: 14px;
+  --antex-radius-card: 18px;
+  --antex-radius-chip: 20px;
+  --antex-shadow-card: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --antex-shadow-glow: 0 0 20px rgba(212, 175, 55, 0.25);
+  --antex-gold-gradient: linear-gradient(135deg, #f2d27a, #d4af37, #b8962e);
+  --antex-page-padding: 16px;
+}
+
+html,
+body,
+#q-app {
+  min-height: 100%;
+}
+
 body {
-  background: var(--tg-theme-bg-color, #fff);
-  color: var(--tg-theme-text-color, #000);
-  font-family: 'Roboto', sans-serif;
+  margin: 0;
+  color: var(--antex-text-primary);
+  background:
+    radial-gradient(circle at top left, rgba(212, 175, 55, 0.08), transparent 32%),
+    radial-gradient(circle at bottom right, rgba(39, 98, 87, 0.45), transparent 42%),
+    linear-gradient(180deg, #123530 0%, #0f2a26 32%, #0a1f1c 100%);
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    repeating-linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.015) 0,
+      rgba(255, 255, 255, 0.015) 1px,
+      transparent 1px,
+      transparent 8px
+    );
+  mix-blend-mode: soft-light;
+  opacity: 0.4;
+  pointer-events: none;
+  z-index: -1;
+}
+
+body.body--dark,
+body.body--dark #q-app,
+body.body--dark .q-layout,
+body.body--dark .q-page-container,
+body.body--dark .q-page {
+  background: transparent;
+  color: var(--antex-text-primary);
+}
+
+.app-page {
+  padding: 0 var(--antex-page-padding) calc(var(--antex-space-xl) + 86px);
+}
+
+.app-page__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--antex-space-lg);
+}
+
+.app-surface,
+.q-card.app-surface {
+  background: rgba(18, 53, 48, 0.96);
+  border: 1px solid var(--antex-gold-border);
+  border-radius: var(--antex-radius-card);
+  box-shadow: var(--antex-shadow-card);
+  color: var(--antex-text-primary);
+  backdrop-filter: blur(18px);
+}
+
+.app-surface--deep {
+  background: rgba(10, 31, 28, 0.96);
+}
+
+.app-section-title {
+  font-family: 'Montserrat', 'Inter', sans-serif;
+  font-size: 1.125rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--antex-text-primary);
+}
+
+.app-muted {
+  color: var(--antex-text-muted);
+}
+
+.app-secondary-text {
+  color: var(--antex-text-secondary);
+}
+
+.app-gold-text {
+  color: var(--antex-gold-light);
+}
+
+.app-gold-glow {
+  text-shadow: 0 0 18px rgba(242, 210, 122, 0.22);
+}
+
+.app-gradient-text {
+  background: var(--antex-gold-gradient);
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.app-btn {
+  min-height: 52px;
+  border-radius: var(--antex-radius-btn);
+  font-weight: 600;
+  letter-spacing: 0;
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease,
+    opacity 0.25s ease;
+}
+
+.app-btn:active {
+  transform: translateY(1px) scale(0.995);
+}
+
+.app-btn--primary {
+  background: var(--antex-gold-gradient);
+  color: var(--antex-bg-primary);
+  box-shadow:
+    0 10px 24px rgba(0, 0, 0, 0.24),
+    0 0 18px rgba(212, 175, 55, 0.18);
+}
+
+.app-btn--secondary {
+  border: 1px solid rgba(212, 175, 55, 0.9);
+  background: transparent;
+  color: var(--antex-gold-base);
+}
+
+.app-btn--ghost {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0;
+  border-radius: 12px;
+  background: rgba(212, 175, 55, 0.08);
+  color: var(--antex-gold-base);
+}
+
+.app-chip {
+  border-radius: var(--antex-radius-chip);
+  border: 1px solid transparent;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--antex-text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.app-chip--active {
+  border-color: rgba(212, 175, 55, 0.9);
+  background: rgba(212, 175, 55, 0.14);
+  color: var(--antex-gold-light);
+}
+
+.app-field .q-field__control {
+  min-height: 48px;
+  border-radius: 14px;
+  background: rgba(10, 31, 28, 0.92);
+  color: var(--antex-text-primary);
+}
+
+.app-field .q-field__native,
+.app-field .q-field__input,
+.app-field .q-field__label,
+.app-field .q-field__marginal {
+  color: var(--antex-text-primary);
+}
+
+.app-field .q-field__label {
+  color: var(--antex-text-muted);
+}
+
+.app-dialog--bottom .q-dialog__inner {
+  padding: 0;
+  align-items: flex-end;
+}
+
+.app-dialog--bottom .q-card {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.app-bottom-nav {
+  position: fixed;
+  right: 16px;
+  bottom: max(16px, env(safe-area-inset-bottom, 0px) + 8px);
+  left: 16px;
+  z-index: 40;
+}
+
+.app-bottom-nav__inner {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
+  padding: 4px;
+  border-radius: 28px;
+}
+
+.app-bottom-nav__item {
+  gap: 2px;
+  padding: 8px 0;
+  border-radius: 24px;
+  color: var(--antex-text-muted);
+}
+
+.app-bottom-nav__item--active {
+  background: rgba(212, 175, 55, 0.08);
+  color: var(--antex-gold-base);
+}
+
+.app-bottom-nav__label {
+  font-size: 10px;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.app-rate-value {
+  font-family: 'Montserrat', 'Inter', sans-serif;
+  font-size: 1.375rem;
+  font-weight: 700;
+}
+
+.app-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.app-sheet-handle {
+  width: 40px;
+  height: 4px;
+  margin: 0 auto 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.app-fade-enter-active,
+.app-fade-leave-active {
+  transition: opacity 0.24s ease;
+}
+
+.app-fade-enter-from,
+.app-fade-leave-to {
+  opacity: 0;
 }

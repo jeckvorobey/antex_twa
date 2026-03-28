@@ -8,22 +8,23 @@ const api = axios.create({
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('access_token');
-  if (token) config.headers.Authorization = `Bearer ${token}`;
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
   return config;
 });
 
 api.interceptors.response.use(
-  (r) => r,
-  (err) => {
-    if (err.response?.status === 401) {
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
       localStorage.removeItem('access_token');
     }
-    return Promise.reject(err);
+    return Promise.reject(error);
   },
 );
 
 export default boot(({ app }) => {
-  app.config.globalProperties.$axios = axios;
   app.config.globalProperties.$api = api;
 });
 
