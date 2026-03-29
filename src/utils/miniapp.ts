@@ -3,6 +3,7 @@ import type {
   MiniappOrderItem,
   MiniappQuoteResponse,
 } from '@types/miniapp';
+import { formatMiniappLongDate } from '@utils/formatters';
 
 type QuoteParams = {
   currencySell: string;
@@ -35,16 +36,10 @@ export function getStatusTone(status: number) {
 }
 
 export function groupOrdersByDate(items: MiniappOrderItem[]) {
-  const formatter = new Intl.DateTimeFormat('ru-RU', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
-
   const groups = new Map<string, MiniappOrderItem[]>();
 
   items.forEach((item) => {
-    const label = formatter.format(new Date(item.createdAt));
+    const label = formatMiniappLongDate(item.createdAt, 'ru');
     groups.set(label, [...(groups.get(label) ?? []), item]);
   });
 

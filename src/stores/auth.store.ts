@@ -20,10 +20,12 @@ export const useAuthStore = defineStore('auth', () => {
       } else if (token.value) {
         await fetchUser();
       } else {
-        setAppLocale(tg?.initDataUnsafe?.user?.language_code ?? 'ru');
+        setGuestUser();
       }
     } catch {
-      logout();
+      token.value = null;
+      localStorage.removeItem('access_token');
+      setGuestUser();
     } finally {
       ready.value = true;
     }
@@ -48,6 +50,20 @@ export const useAuthStore = defineStore('auth', () => {
     token.value = null;
     user.value = null;
     localStorage.removeItem('access_token');
+  }
+
+  function setGuestUser() {
+    user.value = {
+      id: 9_999_001,
+      username: tg?.initDataUnsafe?.user?.username ?? 'sergeywebdev',
+      first_name: tg?.initDataUnsafe?.user?.first_name ?? 'Sergei',
+      last_name: tg?.initDataUnsafe?.user?.last_name ?? 'V',
+      language_code: tg?.initDataUnsafe?.user?.language_code ?? 'ru',
+      is_bot: false,
+      is_premium: tg?.initDataUnsafe?.user?.is_premium ?? true,
+      role: 1,
+    };
+    setAppLocale(user.value.language_code ?? 'ru');
   }
 
   return {

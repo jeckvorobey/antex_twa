@@ -1,14 +1,13 @@
 <template>
-  <div class="column q-gutter-xs">
-    <div class="app-muted text-caption">{{ label }}</div>
+  <div class="app-input-field">
+    <div class="app-input-field__label">{{ label }}</div>
 
     <q-input
       v-if="type !== 'select'"
       :model-value="modelValue"
       :type="type"
       class="app-field"
-      outlined
-      standout="bg-transparent"
+      borderless
       dense
       hide-bottom-space
       v-bind="$attrs"
@@ -20,8 +19,7 @@
       :model-value="modelValue"
       :options="options"
       class="app-field"
-      outlined
-      standout="bg-transparent"
+      borderless
       dense
       emit-value
       map-options

@@ -1,41 +1,40 @@
 <template>
-  <q-dialog
-    :model-value="modelValue"
-    position="bottom"
-    class="app-dialog--bottom"
-    @update:model-value="$emit('update:modelValue', $event)"
-  >
-    <AppSurface class="q-pa-md">
+  <q-dialog :model-value="modelValue" position="bottom" class="app-dialog--bottom"
+    @update:model-value="$emit('update:modelValue', $event)">
+    <AppSurface class="app-sheet app-order-sheet">
       <div class="app-sheet-handle" />
-      <div class="text-h6 q-mb-xs">{{ t('order.title') }}</div>
-      <div class="app-secondary-text q-mb-md">{{ t('order.description') }}</div>
+      <div class="app-sheet__description">{{ t('order.description') }}</div>
 
-      <div class="column q-gutter-md">
-        <AppInputField
-          v-model="amountSell"
-          :label="t('order.amount')"
-          type="number"
-          min="1"
-        />
+      <div class="app-order-sheet__fields">
+        <div class="app-order-sheet__field">
+          <div class="app-order-sheet__label">{{ t('order.amount') }}</div>
+          <div class="app-order-sheet__control">
+            <q-input v-model.number="amountSell" class="app-order-sheet__input" type="number" borderless dense
+              min="1" />
+            <span class="app-order-sheet__suffix">{{ currencySell }}</span>
+          </div>
+        </div>
 
-        <AppInputField
-          v-model="currencyBuy"
-          :label="t('order.currency')"
-          :options="currencyOptions"
-          type="select"
-        />
+        <div class="app-order-sheet__field">
+          <div class="app-order-sheet__label">{{ t('order.currency') }}</div>
+          <div class="app-order-sheet__control app-order-sheet__control--select">
+            <q-select v-model="currencyBuy" :options="currencyOptions" class="app-order-sheet__select" borderless dense
+              emit-value map-options behavior="menu" />
+          </div>
+        </div>
 
-        <AppInputField
-          v-model="contactTelegram"
-          :label="t('order.contact')"
-          type="text"
-          :placeholder="t('order.contactPlaceholder')"
-        />
-
-        <AppButton block :loading="exchangeStore.submitting" @click="submit">
-          {{ t('common.submit') }}
-        </AppButton>
+        <div class="app-order-sheet__field">
+          <div class="app-order-sheet__label">{{ t('order.contact') }}</div>
+          <div class="app-order-sheet__control">
+            <q-input v-model="contactTelegram" class="app-order-sheet__input" type="text" borderless dense
+              :placeholder="t('order.contactPlaceholder')" />
+          </div>
+        </div>
       </div>
+
+      <AppButton block :loading="exchangeStore.submitting" @click="submit">
+        {{ t('common.submit') }}
+      </AppButton>
     </AppSurface>
   </q-dialog>
 </template>
@@ -47,7 +46,6 @@ import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 
 import AppButton from '@components/ui/AppButton.vue';
-import AppInputField from '@components/ui/AppInputField.vue';
 import AppSurface from '@components/ui/AppSurface.vue';
 import { useAuthStore } from '@stores/auth.store';
 import { useExchangeStore } from '@stores/exchange.store';
@@ -73,8 +71,9 @@ const amountSell = ref<number | null>(null);
 const currencyBuy = ref<string>('THB');
 const contactTelegram = ref<string>('');
 
+const currencySell = computed(() => uiStore.orderContext?.currencySell ?? exchangeStore.quote?.currencySell ?? 'RUB');
 const currencyOptions = computed(() => {
-  const sell = uiStore.orderContext?.currencySell ?? 'RUB';
+  const sell = currencySell.value;
   if (sell === 'USDT') {
     return [{ label: 'THB', value: 'THB' }];
   }
@@ -110,7 +109,7 @@ async function submit() {
 
   try {
     const order = await exchangeStore.submitOrder({
-      currencySell: uiStore.orderContext?.currencySell ?? exchangeStore.quote?.currencySell ?? 'RUB',
+      currencySell: currencySell.value,
       currencyBuy: currencyBuy.value,
       amountSell: amountSell.value,
       contactTelegram: contactTelegram.value || undefined,

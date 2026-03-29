@@ -39,6 +39,7 @@ describe('miniapp utils', () => {
     ]);
 
     expect(result).toHaveLength(1);
+    expect(result[0].label).toBe('28 марта 2026');
     expect(result[0].items).toHaveLength(2);
   });
 
