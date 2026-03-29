@@ -1,8 +1,8 @@
-import { boot } from 'quasar/wrappers';
+import { defineBoot } from '#q-app/wrappers';
 
 import { useAuthStore } from '@stores/auth.store';
 
-export default boot(async () => {
+export default defineBoot(async () => {
   const authStore = useAuthStore();
   await authStore.init();
 });

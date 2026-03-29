@@ -14,6 +14,7 @@ export default defineConfig({
       '@types': fileURLToPath(new URL('./src/types', import.meta.url)),
       '@utils': fileURLToPath(new URL('./src/utils', import.meta.url)),
       '@i18n': fileURLToPath(new URL('./src/i18n', import.meta.url)),
+      '#q-app/wrappers': fileURLToPath(new URL('./tests/mocks/q-app-wrappers.ts', import.meta.url)),
     },
   },
   test: {
