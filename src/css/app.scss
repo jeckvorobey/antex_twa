@@ -1312,15 +1312,15 @@ body.body--light .q-page,
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 14px;
+  gap: 8px;
+  padding: 12px;
   overflow: hidden;
 }
 
 .app-exchange-calculator__field {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .app-exchange-calculator__label {
@@ -1332,16 +1332,16 @@ body.body--light .q-page,
 .app-exchange-calculator__control {
   display: flex;
   align-items: center;
-  gap: 10px;
-  min-height: 64px;
-  padding: 0 14px;
+  gap: 8px;
+  min-height: 54px;
+  padding: 0 12px;
   border: 1px solid rgba(212, 175, 55, 0.14);
-  border-radius: 18px;
+  border-radius: 16px;
   background: rgba(10, 31, 28, 0.92);
 }
 
 .app-exchange-calculator__currency {
-  width: 92px;
+  width: 82px;
 }
 
 .app-exchange-calculator__currency .q-field__control,
@@ -1366,14 +1366,15 @@ body.body--light .q-page,
   flex: 1 1 auto;
   min-width: 0;
   font-family: 'Montserrat', 'Inter', sans-serif;
-  font-size: 30px;
+  font-size: 22px;
   font-weight: 700;
   color: var(--antex-text-primary);
+  line-height: 1.1;
 }
 
 .app-exchange-calculator__amount .q-field__native {
   font-family: 'Montserrat', 'Inter', sans-serif;
-  font-size: 30px;
+  font-size: 22px;
   font-weight: 700;
 }
 
@@ -1382,23 +1383,28 @@ body.body--light .q-page,
   color: var(--antex-gold-light);
 }
 
-.app-exchange-calculator__swap {
-  display: flex;
-  justify-content: center;
-  margin: -2px 0;
-}
-
 .app-exchange-calculator__swap-button {
-  width: 38px;
-  height: 38px;
-  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  min-height: 34px;
+  padding: 0;
+  border-radius: 50%;
   background: var(--antex-gold-gradient);
   color: var(--antex-bg-primary);
+  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.2);
+}
+
+.app-exchange-calculator__swap-button .q-btn__content {
+  justify-content: center;
 }
 
 .app-exchange-calculator__rate {
   color: var(--antex-text-secondary);
-  font-size: 13px;
+  font-size: 11px;
   text-align: center;
 }
 
