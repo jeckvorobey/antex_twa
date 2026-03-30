@@ -293,10 +293,27 @@ body.body--dark .q-page {
 
 .app-bottom-nav {
   position: fixed;
-  right: 16px;
-  bottom: max(16px, env(safe-area-inset-bottom) + 8px);
-  left: 16px;
+  left: 50%;
+  bottom: calc(env(safe-area-inset-bottom) + var(--antex-space-md));
+  width: min(calc(100vw - (var(--antex-space-md) * 2)), 390px);
+  transform: translateX(-50%);
   z-index: 40;
+}
+
+.app-header-shell {
+  position: relative;
+  width: min(calc(100vw - (var(--antex-space-md) * 2)), 390px);
+  margin:
+    calc(env(safe-area-inset-top) + var(--antex-space-md))
+    auto
+    0;
+  padding: 0;
+  transform: none;
+  z-index: 1;
+}
+
+.app-header-shell .app-header-bar {
+  width: min(calc(100vw - (var(--antex-space-md) * 2)), 390px);
 }
 
 .app-bottom-nav__shell {
@@ -314,7 +331,8 @@ body.body--dark .q-page {
 }
 
 .app-bottom-nav__item {
-  gap: 2px;
+  min-height: 52px;
+  min-width: 0;
   padding: 8px 0;
   border-radius: 26px;
   color: var(--antex-text-muted);
@@ -326,11 +344,23 @@ body.body--dark .q-page {
   color: var(--antex-gold-base);
 }
 
-.app-bottom-nav__label {
+.app-bottom-nav__item .q-btn__content {
+  gap: 4px;
+}
+
+.app-bottom-nav__item .q-icon {
+  font-size: 16px;
+}
+
+.app-bottom-nav__item .block {
+  overflow: hidden;
+  max-width: 100%;
   font-size: 9px;
   line-height: 1.2;
   font-weight: 600;
   text-transform: uppercase;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .app-chip-row {
@@ -880,10 +910,13 @@ body.body--light .q-page,
 }
 
 .app-layout > .q-page-container,
-.app-layout > .app-bottom-nav,
 .app-layout > .q-dialog {
   position: relative;
   z-index: 1;
+}
+
+.app-layout > .app-bottom-nav {
+  z-index: 40;
 }
 
 .app-layout-background {
@@ -1247,9 +1280,8 @@ body.body--light .q-page,
 }
 
 .app-bottom-nav {
-  right: 12px;
-  bottom: max(12px, env(safe-area-inset-bottom) + 6px);
-  left: 12px;
+  bottom: calc(env(safe-area-inset-bottom) + var(--antex-space-md));
+  width: min(calc(100vw - (var(--antex-space-md) * 2)), 390px);
 }
 
 .app-bottom-nav__shell {
@@ -1259,12 +1291,19 @@ body.body--light .q-page,
 }
 
 .app-bottom-nav__item {
-  gap: 1px;
-  min-height: 34px;
+  min-height: 40px;
   padding: 6px 0;
 }
 
-.app-bottom-nav__label {
+.app-bottom-nav__item .q-btn__content {
+  gap: 2px;
+}
+
+.app-bottom-nav__item .q-icon {
+  font-size: 16px;
+}
+
+.app-bottom-nav__item .block {
   font-size: 8px;
   letter-spacing: 0;
 }

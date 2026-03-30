@@ -7,6 +7,10 @@
       <div class="app-layout-background__grain" />
     </div>
 
+    <div class="app-header-shell">
+      <AppHeaderBar />
+    </div>
+
     <q-page-container>
       <router-view />
     </q-page-container>
@@ -22,6 +26,7 @@
 import MoreMenuSheet from '@components/orders/MoreMenuSheet.vue';
 import OrderFormSheet from '@components/orders/OrderFormSheet.vue';
 import AppBottomNav from '@components/ui/AppBottomNav.vue';
+import AppHeaderBar from '@components/ui/AppHeaderBar.vue';
 import { useUiStore } from '@stores/ui.store';
 
 const uiStore = useUiStore();

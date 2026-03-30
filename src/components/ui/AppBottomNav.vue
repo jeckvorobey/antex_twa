@@ -5,13 +5,13 @@
         v-for="item in items"
         :key="item.name"
         flat
+        stack
         no-caps
+        :icon="item.icon"
+        :label="item.label"
         :class="['app-bottom-nav__item', isActive(item.name) ? 'app-bottom-nav__item--active' : null]"
         @click="handleClick(item)"
-      >
-        <q-icon :name="item.icon" size="16px" />
-        <span class="app-bottom-nav__label">{{ item.label }}</span>
-      </q-btn>
+      />
     </div>
   </div>
 </template>

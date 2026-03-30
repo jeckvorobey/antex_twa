@@ -1,8 +1,6 @@
 <template>
   <q-page class="app-page">
     <div class="app-screen app-screen--home">
-      <AppHeaderBar />
-
       <section class="app-home-overview">
         <div class="app-home-quick-grid">
           <button
@@ -143,7 +141,6 @@ import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 
 import AppButton from '@components/ui/AppButton.vue';
-import AppHeaderBar from '@components/ui/AppHeaderBar.vue';
 import AppRateValue from '@components/ui/AppRateValue.vue';
 import AppSectionTitle from '@components/ui/AppSectionTitle.vue';
 import AppSurface from '@components/ui/AppSurface.vue';
