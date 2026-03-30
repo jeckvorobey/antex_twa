@@ -2,8 +2,8 @@
   <q-page class="app-page">
     <div class="app-screen app-screen--exchange">
       <AppSurface class="app-exchange-calculator">
-        <div class="app-exchange-calculator__field">
-          <div class="app-exchange-calculator__label">{{ t('exchange.payAmount') }}</div>
+        <div class="column">
+          <div class="app-exchange-calculator__label q-mb-xs">{{ t('exchange.payAmount') }}</div>
           <div class="app-exchange-calculator__control">
             <q-select
               v-model="selectedSellCurrency"
@@ -26,20 +26,18 @@
               min="1"
             />
           </div>
-        </div>
 
-        <div class="app-exchange-calculator__swap">
-          <q-btn
-            round
-            unelevated
-            class="app-exchange-calculator__swap-button"
-            icon="swap_vert"
-            @click="swapCurrencies"
-          />
-        </div>
+          <div class="row items-center justify-center q-py-sm">
+            <q-btn
+              round
+              unelevated
+              class="app-exchange-calculator__swap-button"
+              icon="swap_vert"
+              @click="swapCurrencies"
+            />
+          </div>
 
-        <div class="app-exchange-calculator__field">
-          <div class="app-exchange-calculator__label">{{ t('exchange.receiveCurrency') }}</div>
+          <div class="app-exchange-calculator__label q-mb-xs">{{ t('exchange.receiveCurrency') }}</div>
           <div class="app-exchange-calculator__control">
             <q-select
               v-model="selectedBuyCurrency"
@@ -67,7 +65,7 @@
 
       <div class="app-chip-row app-chip-row--exchange">
         <q-chip
-          v-for="chip in exchangeStore.screen?.chips ?? []"
+          v-for="chip in visibleChips"
           :key="chip"
           clickable
           :class="['app-chip', selectedSellCurrency === chip ? 'app-chip--active' : null]"
@@ -130,6 +128,7 @@ import AppSurface from '@components/ui/AppSurface.vue';
 import { useExchangeStore } from '@stores/exchange.store';
 import { useUiStore } from '@stores/ui.store';
 import type { MiniappRateCard } from '@types/miniapp';
+import { swapExchangeDirection } from '@utils/exchange';
 import { formatAmount, formatMiniappDateTime } from '@utils/formatters';
 import { isQuoteCurrent } from '@utils/miniapp';
 
@@ -141,12 +140,30 @@ const selectedSellCurrency = ref('RUB');
 const selectedBuyCurrency = ref('THB');
 const amountSell = ref<number | null>(5000);
 
+const supportedPairs = computed(() => {
+  const directPairs = exchangeStore.screen?.pairs ?? [];
+
+  return directPairs.flatMap((pair) => [
+    [pair.fromCurrency, pair.toCurrency],
+    [pair.toCurrency, pair.fromCurrency],
+  ]);
+});
+
 const sellOptions = computed(() =>
-  (exchangeStore.screen?.chips ?? ['RUB', 'USDT']).map((chip) => ({
-    label: chip,
-    value: chip,
+  [...new Set(supportedPairs.value.flatMap(([sell, buy]) => [sell, buy]))].map((currency) => ({
+    label: currency,
+    value: currency,
   })),
 );
+
+const visibleChips = computed(() => {
+  const chips = exchangeStore.screen?.chips ?? [];
+  if (chips.includes(selectedSellCurrency.value)) {
+    return chips;
+  }
+
+  return [...chips, selectedSellCurrency.value];
+});
 
 onMounted(async () => {
   if (!exchangeStore.screen) {
@@ -158,16 +175,16 @@ onMounted(async () => {
   amountSell.value = exchangeStore.screen?.calculator.amountSell ?? 5000;
 });
 
-const buyOptions = computed(() => {
-  if (selectedSellCurrency.value === 'USDT') {
-    return [{ label: 'THB', value: 'THB' }];
-  }
-
-  return [
-    { label: 'THB', value: 'THB' },
-    { label: 'USDT', value: 'USDT' },
-  ];
-});
+const buyOptions = computed(() =>
+  supportedPairs.value
+    .filter(([sell]) => sell === selectedSellCurrency.value)
+    .map(([, buy]) => buy)
+    .filter((buy, index, items) => items.indexOf(buy) === index)
+    .map((currency) => ({
+      label: currency,
+      value: currency,
+    })),
+);
 
 const canSubmitQuote = computed(() =>
   !exchangeStore.quoteLoading
@@ -186,8 +203,9 @@ const currentRateLabel = computed(() => {
 });
 
 watch(selectedSellCurrency, (value) => {
-  if (value === 'USDT' && selectedBuyCurrency.value !== 'THB') {
-    selectedBuyCurrency.value = 'THB';
+  const nextBuyOptions = buyOptions.value.map((option) => option.value);
+  if (!nextBuyOptions.includes(selectedBuyCurrency.value)) {
+    selectedBuyCurrency.value = nextBuyOptions[0] ?? value;
   }
 });
 
@@ -212,14 +230,17 @@ onBeforeUnmount(() => {
  * Меняет местами валюты в калькуляторе, если пара поддерживается.
  */
 function swapCurrencies() {
-  if (selectedSellCurrency.value === 'RUB' && selectedBuyCurrency.value === 'THB') {
-    selectedSellCurrency.value = 'USDT';
-    selectedBuyCurrency.value = 'THB';
-    return;
-  }
+  const swapped = swapExchangeDirection({
+    currencySell: selectedSellCurrency.value,
+    currencyBuy: selectedBuyCurrency.value,
+    amountSell: amountSell.value,
+    amountBuy: exchangeStore.quote?.amountBuy,
+    useQuotedAmountBuy: canSubmitQuote.value,
+  });
 
-  selectedSellCurrency.value = 'RUB';
-  selectedBuyCurrency.value = 'THB';
+  selectedSellCurrency.value = swapped.currencySell;
+  selectedBuyCurrency.value = swapped.currencyBuy;
+  amountSell.value = swapped.amountSell;
 }
 
 function selectPair(pair: MiniappRateCard) {
