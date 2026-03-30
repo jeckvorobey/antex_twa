@@ -1,8 +1,6 @@
 <template>
   <q-page class="app-page">
     <div class="app-screen app-screen--history">
-      <AppStatusBar />
-
       <div class="app-chip-row app-chip-row--history">
         <q-chip
           v-for="filter in filters"
@@ -52,7 +50,6 @@ import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 import AppInfoRow from '@components/ui/AppInfoRow.vue';
-import AppStatusBar from '@components/ui/AppStatusBar.vue';
 import AppSurface from '@components/ui/AppSurface.vue';
 import { useOrdersStore } from '@stores/orders.store';
 import type { MiniappOrderItem } from '@types/miniapp';

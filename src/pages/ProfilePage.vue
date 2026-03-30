@@ -1,8 +1,6 @@
 <template>
   <q-page class="app-page">
     <div class="app-screen app-screen--profile">
-      <AppStatusBar />
-
       <div class="app-profile-hero">
         <div class="app-profile-hero__avatar">
           <q-icon name="person_outline" size="34px" />
@@ -39,7 +37,6 @@ import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 
 import AppInfoRow from '@components/ui/AppInfoRow.vue';
-import AppStatusBar from '@components/ui/AppStatusBar.vue';
 import AppSurface from '@components/ui/AppSurface.vue';
 import { useProfileStore } from '@stores/profile.store';
 import { useUiStore } from '@stores/ui.store';

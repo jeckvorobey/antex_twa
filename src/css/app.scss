@@ -98,23 +98,6 @@ body.body--dark .q-page {
   border-radius: 18px;
 }
 
-.app-status-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 62px;
-  padding: 0 8px;
-  color: var(--antex-text-primary);
-  font-size: 15px;
-  font-weight: 600;
-}
-
-.app-status-bar__icons {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
 .app-header-bar {
   display: flex;
   align-items: center;
@@ -989,17 +972,6 @@ body.body--light .q-page,
 .app-screen--history,
 .app-screen--profile {
   padding-bottom: 12px;
-}
-
-.app-status-bar {
-  min-height: 44px;
-  padding: 8px 2px 0;
-  font-size: 14px;
-}
-
-.app-status-bar__icons {
-  gap: 4px;
-  color: rgba(255, 255, 255, 0.88);
 }
 
 .app-header-bar {

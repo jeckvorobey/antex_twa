@@ -1,7 +1,6 @@
 <template>
   <q-page class="app-page">
     <div class="app-screen app-screen--home">
-      <AppStatusBar />
       <AppHeaderBar />
 
       <section class="app-home-overview">
@@ -147,7 +146,6 @@ import AppButton from '@components/ui/AppButton.vue';
 import AppHeaderBar from '@components/ui/AppHeaderBar.vue';
 import AppRateValue from '@components/ui/AppRateValue.vue';
 import AppSectionTitle from '@components/ui/AppSectionTitle.vue';
-import AppStatusBar from '@components/ui/AppStatusBar.vue';
 import AppSurface from '@components/ui/AppSurface.vue';
 import { useHomeStore } from '@stores/home.store';
 import { useUiStore } from '@stores/ui.store';

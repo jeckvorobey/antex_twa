@@ -1,8 +1,6 @@
 <template>
   <q-page class="app-page">
     <div class="app-screen app-screen--exchange">
-      <AppStatusBar />
-
       <AppSurface class="app-exchange-calculator">
         <div class="app-exchange-calculator__field">
           <div class="app-exchange-calculator__label">{{ t('exchange.payAmount') }}</div>
@@ -128,7 +126,6 @@ import { useI18n } from 'vue-i18n';
 import AppButton from '@components/ui/AppButton.vue';
 import AppRateValue from '@components/ui/AppRateValue.vue';
 import AppSectionTitle from '@components/ui/AppSectionTitle.vue';
-import AppStatusBar from '@components/ui/AppStatusBar.vue';
 import AppSurface from '@components/ui/AppSurface.vue';
 import { useExchangeStore } from '@stores/exchange.store';
 import { useUiStore } from '@stores/ui.store';
