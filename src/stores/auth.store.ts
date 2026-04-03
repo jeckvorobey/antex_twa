@@ -15,7 +15,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function init() {
     try {
-      if (tg?.initData && !token.value) {
+      if (tg?.initData) {
         await login(tg.initData);
       } else if (token.value) {
         await fetchUser();
@@ -61,7 +61,7 @@ export const useAuthStore = defineStore('auth', () => {
       language_code: tg?.initDataUnsafe?.user?.language_code ?? 'ru',
       is_bot: false,
       is_premium: tg?.initDataUnsafe?.user?.is_premium ?? true,
-      role: 1,
+      role: 9,
     };
     setAppLocale(user.value.language_code ?? 'ru');
   }
