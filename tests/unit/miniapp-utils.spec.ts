@@ -6,6 +6,18 @@ import {
   groupOrdersByDate,
   isQuoteCurrent,
 } from '@utils/miniapp';
+import type { MiniappCity } from '@types/miniapp';
+
+const city: MiniappCity = {
+  id: 1,
+  name: 'Bangkok',
+  country: 'THAILAND',
+  countryRuName: 'Таиланд',
+  countryCode: 'TH',
+  countryFlag: '🇹🇭',
+  createdAt: '2026-03-28T09:00:00+00:00',
+  updatedAt: '2026-03-28T09:00:00+00:00',
+};
 
 describe('miniapp utils', () => {
   it('groups orders by localized date label', () => {
@@ -18,10 +30,13 @@ describe('miniapp utils', () => {
         amountBuy: 13500,
         rate: 2.7,
         status: 1,
+        cityId: 1,
+        address: null,
         methodGet: 'cash',
         contactTelegram: '@serg',
         createdAt: '2026-03-28T09:30:00+00:00',
-        bank: { id: 1, code: 'SCB', name: 'Siam Commercial Bank' },
+        updatedAt: '2026-03-28T09:30:00+00:00',
+        city,
       },
       {
         id: 2,
@@ -31,10 +46,13 @@ describe('miniapp utils', () => {
         amountBuy: 4950,
         rate: 33,
         status: 4,
+        cityId: 1,
+        address: null,
         methodGet: 'cash',
         contactTelegram: '@serg',
         createdAt: '2026-03-28T10:30:00+00:00',
-        bank: { id: 1, code: 'SCB', name: 'Siam Commercial Bank' },
+        updatedAt: '2026-03-28T10:30:00+00:00',
+        city,
       },
     ]);
 

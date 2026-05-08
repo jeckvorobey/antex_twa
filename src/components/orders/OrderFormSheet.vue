@@ -51,6 +51,7 @@ import { useAuthStore } from '@stores/auth.store';
 import { useExchangeStore } from '@stores/exchange.store';
 import { useOrdersStore } from '@stores/orders.store';
 import { useUiStore } from '@stores/ui.store';
+import { getMiniappErrorMessageKey } from '@utils/api-errors';
 
 const props = defineProps<{
   modelValue: boolean;
@@ -122,17 +123,7 @@ async function submit() {
     await router.push({ name: 'history' });
   } catch (error: unknown) {
     const code = (error as { response?: { data?: { code?: string } } })?.response?.data?.code;
-    const messageKey =
-      code === 'ORDER_ALREADY_EXISTS'
-        ? 'errors.order_exists'
-        : code === 'RATE_UNAVAILABLE'
-          ? 'errors.rate_unavailable'
-          : code === 'BANK_NOT_FOUND'
-            ? 'errors.bank_missing'
-            : code === 'UNSUPPORTED_PAIR'
-              ? 'errors.unsupported_pair'
-              : 'errors.generic';
-    Notify.create({ type: 'negative', message: t(messageKey) });
+    Notify.create({ type: 'negative', message: t(getMiniappErrorMessageKey(code)) });
   }
 }
 </script>

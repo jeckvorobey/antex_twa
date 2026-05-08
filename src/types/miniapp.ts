@@ -9,6 +9,17 @@ export interface MiniappUser {
   role: number;
 }
 
+export interface MiniappCity {
+  id: number;
+  name: string;
+  country: string;
+  countryRuName: string;
+  countryCode: string;
+  countryFlag: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface MiniappProfileSummary {
   id: number;
   displayName: string;
@@ -105,16 +116,19 @@ export interface MiniappBankSummary {
 
 export interface MiniappOrderItem {
   id: number;
+  cityId: number;
   currencySell: string;
   amountSell: number;
   currencyBuy: string;
-  amountBuy: number;
-  rate: number;
+  amountBuy: number | null;
+  rate: number | null;
   status: number;
+  address: string | null;
   methodGet: string | null;
   contactTelegram: string | null;
   createdAt: string;
-  bank: MiniappBankSummary;
+  updatedAt: string;
+  city: MiniappCity;
 }
 
 export interface MiniappOrdersResponse {

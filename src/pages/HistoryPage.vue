@@ -121,6 +121,7 @@ function resolveHistoryTitle(item: MiniappOrderItem) {
 }
 
 function resolveHistorySubtitle(item: MiniappOrderItem) {
-  return `${formatAmount(item.amountSell, locale.value)} ${item.currencySell} = ${formatAmount(item.amountBuy, locale.value)} ${item.currencyBuy}`;
+  const amountBuy = item.amountBuy ?? 0;
+  return `${formatAmount(item.amountSell, locale.value)} ${item.currencySell} = ${formatAmount(amountBuy, locale.value)} ${item.currencyBuy}`;
 }
 </script>
