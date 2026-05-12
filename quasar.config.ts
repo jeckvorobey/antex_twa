@@ -8,7 +8,8 @@ const pkg = JSON.parse(readFileSync(resolve(rootDir, 'package.json'), 'utf-8')) 
   version: string;
 };
 
-export default defineConfig((ctx) => ({
+export default defineConfig((ctx) => {
+  return ({
   boot: ['telegram', 'i18n', 'axios', 'init'],
   css: ['app.scss'],
   extras: ['roboto-font', 'fontawesome-v6', 'mdi-v7', 'material-icons'],
@@ -47,6 +48,7 @@ export default defineConfig((ctx) => ({
     host: '0.0.0.0',
     open: false,
     port: 5173,
+    strictPort: true,
     allowedHosts: true,
   },
   framework: {
@@ -67,4 +69,5 @@ export default defineConfig((ctx) => ({
     plugins: ['Dark', 'Notify', 'Loading', 'Dialog', 'BottomSheet'],
   },
   animations: [],
-}));
+  });
+});
