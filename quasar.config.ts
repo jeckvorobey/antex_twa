@@ -47,6 +47,7 @@ export default defineConfig((ctx) => ({
     host: '0.0.0.0',
     open: false,
     port: 5173,
+    allowedHosts: true,
   },
   framework: {
     iconSet: 'material-icons',

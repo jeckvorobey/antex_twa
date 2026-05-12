@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 describe('quasar.config', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   it('uses modern quasar v2 defaults for miniapp build and dev server', async () => {
     const { default: createQuasarConfig } = await import('../../quasar.config.ts');
     const quasarConfig = createQuasarConfig({
@@ -34,6 +38,28 @@ describe('quasar.config', () => {
     expect(viteConf).toMatchObject({
       optimizeDeps: {
         entries: ['index.html', 'src/**/*.{js,ts,vue}'],
+      },
+    });
+  });
+
+  it('uses secure websocket HMR settings for an HTTPS tunnel host', async () => {
+    vi.stubEnv('VITE_DEV_TUNNEL_HOST', 'https://antex-twa.loca.lt/');
+    vi.resetModules();
+
+    const { default: createQuasarConfig } = await import('../../quasar.config.ts');
+    const quasarConfig = createQuasarConfig({
+      dev: true,
+      prod: false,
+      mode: { spa: true },
+      modeName: 'spa',
+    });
+
+    expect(quasarConfig.devServer).toMatchObject({
+      allowedHosts: true,
+      hmr: {
+        protocol: 'wss',
+        host: 'antex-twa.loca.lt',
+        clientPort: 443,
       },
     });
   });
