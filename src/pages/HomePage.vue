@@ -1,53 +1,39 @@
 <template>
   <q-page class="app-page">
     <div class="app-screen app-screen--home">
-      <section class="app-home-overview">
-        <div class="app-home-quick-grid">
-          <button
-            v-for="action in quickActions"
-            :key="action.id"
-            type="button"
-            class="app-home-quick-card"
-            @click="handleAction(action)"
-          >
-            <span class="app-home-quick-card__icon">
-              <q-icon :name="action.icon" size="18px" />
-            </span>
-            <span class="app-home-quick-card__title">{{ action.title }}</span>
-          </button>
-        </div>
+      <section class="app-section app-section--home">
+        <AppSectionTitle>{{ t('home.locations') }}</AppSectionTitle>
 
-        <div class="app-home-stats-grid">
-          <AppSurface
-            v-for="stat in statCards"
-            :key="stat.id"
-            class="app-home-stat-card"
+        <div class="app-home-location-chips">
+          <span
+            v-for="city in locationChips"
+            :key="city"
+            class="app-home-location-chip"
           >
-            <div class="app-home-stat-card__label">{{ stat.label }}</div>
-            <div class="app-home-stat-card__value">{{ stat.value }}</div>
-          </AppSurface>
+            {{ city }}
+          </span>
         </div>
       </section>
 
-      <AppButton block class="app-home-primary-button" @click="openOrderFromFeatured(featuredRates[0])">
+      <AppButton block class="app-home-primary-button" @click="openDefaultExchangeOrder">
         {{ t('common.exchange') }}
       </AppButton>
 
       <AppSurface class="app-home-rates-card">
         <div class="app-home-country-chips">
           <q-chip
-            v-for="chip in homeStore.data?.rates.chips ?? []"
-            :key="chip"
+            v-for="chip in filterChips"
+            :key="chip.key"
             clickable
-            :class="['app-chip', selectedRateChip === chip ? 'app-chip--active' : null]"
-            @click="selectedRateChip = chip"
+            :class="['app-chip', selectedRateChip === chip.key ? 'app-chip--active' : null]"
+            @click="selectRateChip(chip.key)"
           >
-            {{ chip }}
+            {{ chip.label }}
           </q-chip>
         </div>
 
         <button
-          v-for="card in featuredRates"
+          v-for="card in visibleRates"
           :key="card.id"
           type="button"
           class="app-home-rate-item"
@@ -59,7 +45,7 @@
           </div>
 
           <div class="app-home-rate-item__pill">
-            <AppRateValue :value="formatRateValue(card.rate)" shimmer />
+            <AppRateValue :value="formatRateValue(card.rate)" />
             <q-icon name="arrow_forward" size="14px" />
           </div>
 
@@ -69,8 +55,14 @@
           </div>
         </button>
 
-        <AppButton variant="secondary" block class="app-home-rates-card__footer" @click="goExchange">
-          Развернуть
+        <AppButton
+          v-if="canExpand"
+          variant="secondary"
+          block
+          class="app-home-rates-card__footer"
+          @click="expandRates"
+        >
+          {{ t('home.expandRates') }}
         </AppButton>
       </AppSurface>
 
@@ -104,32 +96,6 @@
         </div>
       </section>
 
-      <section class="app-section app-section--home">
-        <AppSectionTitle>{{ t('home.locations') }}</AppSectionTitle>
-
-        <div class="app-home-location-chips">
-          <span
-            v-for="city in locationChips"
-            :key="city"
-            class="app-home-location-chip"
-          >
-            {{ city }}
-          </span>
-        </div>
-
-        <div class="app-home-location-grid">
-          <AppSurface
-            v-for="location in homeStore.data?.locations ?? []"
-            :key="location.id"
-            class="app-home-location-card"
-            :style="locationStyle(location.accent)"
-          >
-            <div class="app-home-location-card__title">{{ location.city }}</div>
-            <div class="app-home-location-card__hours">{{ location.hours }}</div>
-          </AppSurface>
-        </div>
-      </section>
-
       <q-inner-loading :showing="homeStore.loading" dark />
     </div>
   </q-page>
@@ -138,7 +104,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useRouter } from 'vue-router';
 
 import AppButton from '@components/ui/AppButton.vue';
 import AppRateValue from '@components/ui/AppRateValue.vue';
@@ -146,44 +111,48 @@ import AppSectionTitle from '@components/ui/AppSectionTitle.vue';
 import AppSurface from '@components/ui/AppSurface.vue';
 import { useHomeStore } from '@stores/home.store';
 import { useUiStore } from '@stores/ui.store';
-import type { MiniappQuickAction, MiniappRateCard } from '@types/miniapp';
+import type { MiniappRateCard } from '@types/miniapp';
+import {
+  buildHomeRateFilterChips,
+  buildHomeRateView,
+  HOME_ALL_FILTER_KEY,
+  resetHomeRateExpansion,
+} from '@utils/home-rates';
 
-const router = useRouter();
 const homeStore = useHomeStore();
 const uiStore = useUiStore();
 const { t } = useI18n();
 
-const selectedRateChip = ref('');
-const statCards = [
-  { id: 'partnership', label: 'Партнёрство', value: 'Приводите клиентов' },
-  { id: 'deposit', label: 'Ваш депозит', value: '0' },
-];
-const locationChips = ['Phuket', 'Pattaya', 'Bangkok', 'Huahin', 'Samui'];
-
-const quickActions = computed(() => (homeStore.data?.quickActions ?? []).slice(0, 4));
+const selectedRateChip = ref(HOME_ALL_FILTER_KEY);
+const ratesExpanded = ref(false);
+const locationChips = ['Тайланд', 'Вьетнам', 'Грузия'];
 const featuredRates = computed(() => homeStore.data?.rates.featured ?? []);
+const previewLimit = computed(() => homeStore.data?.rates.previewLimit ?? 3);
+const filterChips = computed(() => buildHomeRateFilterChips(
+  homeStore.data?.rates.chips ?? [],
+  t('home.all'),
+));
+const rateView = computed(() => buildHomeRateView({
+  rates: featuredRates.value,
+  filterKey: selectedRateChip.value,
+  previewLimit: previewLimit.value,
+  expanded: ratesExpanded.value,
+}));
+const visibleRates = computed(() => rateView.value.visibleRates);
+const canExpand = computed(() => rateView.value.canExpand);
+const defaultExchangeCard = computed(() => (
+  featuredRates.value.find((card) => card.id === 'rub-thb')
+  ?? featuredRates.value[0]
+));
 
 onMounted(async () => {
   if (!homeStore.data) {
     await homeStore.load();
   }
 
-  if (!selectedRateChip.value) {
-    selectedRateChip.value = homeStore.data?.rates.chips[0] ?? '';
-  }
+  selectedRateChip.value = HOME_ALL_FILTER_KEY;
+  ratesExpanded.value = resetHomeRateExpansion(ratesExpanded.value);
 });
-
-/**
- * Открывает вторичный сценарий из плитки главного экрана.
- */
-function handleAction(action: MiniappQuickAction) {
-  if (action.route) {
-    void router.push(action.route);
-    return;
-  }
-
-  uiStore.openMoreSheet();
-}
 
 /**
  * Открывает sheet заявки с предзаполнением по выбранной паре.
@@ -204,12 +173,30 @@ function openOrderFromFeatured(card?: MiniappRateCard) {
 }
 
 /**
- * Переводит пользователя на полный экран обмена.
+ * Сохраняет текущий дефолтный intent главной для открытия заявки RUB/THB.
  */
-function goExchange() {
-  void router.push({ name: 'exchange' });
+function openDefaultExchangeOrder() {
+  openOrderFromFeatured(defaultExchangeCard.value);
 }
 
+/**
+ * Меняет фильтр и заново сворачивает список текущего набора пар.
+ */
+function selectRateChip(chipKey: string) {
+  selectedRateChip.value = chipKey;
+  ratesExpanded.value = resetHomeRateExpansion(ratesExpanded.value);
+}
+
+/**
+ * Раскрывает все пары текущего фильтра прямо в home-блоке.
+ */
+function expandRates() {
+  ratesExpanded.value = true;
+}
+
+/**
+ * Возвращает подпись и мета-текст для одной стороны карточки курса.
+ */
 function getRateSide(card: MiniappRateCard, side: 'from' | 'to') {
   const metaMap: Record<string, { from: string; to: string }> = {
     'rub-thb': { from: 'по СБП', to: 'наличными' },
@@ -225,24 +212,11 @@ function getRateSide(card: MiniappRateCard, side: 'from' | 'to') {
   return { title: card.toCurrency, meta: meta.to };
 }
 
+/**
+ * Форматирует числовое значение курса для compact UI-пилюли.
+ */
 function formatRateValue(rate: number) {
   return rate >= 1 ? rate.toFixed(3) : rate.toFixed(4);
 }
 
-/**
- * Возвращает декоративный градиент для карточки точки выдачи.
- */
-function locationStyle(accent: string) {
-  if (accent === 'ocean') {
-    return {
-      background:
-        'linear-gradient(145deg, rgba(31,122,140,0.95), rgba(84,178,195,0.82), rgba(15,42,38,0.98))',
-    };
-  }
-
-  return {
-    background:
-      'linear-gradient(145deg, rgba(140,106,26,0.95), rgba(212,175,55,0.82), rgba(15,42,38,0.98))',
-  };
-}
 </script>

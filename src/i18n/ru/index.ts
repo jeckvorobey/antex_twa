@@ -21,7 +21,9 @@ export default {
   home: {
     title: 'Главная',
     services: 'Сервисы',
-    locations: 'Наши точки',
+    locations: 'Выбрать страну',
+    all: 'Все',
+    expandRates: 'Развернуть',
     bonus: 'Приведи друга и получи бонус',
     bonusAction: 'Подробнее',
   },

@@ -90,7 +90,7 @@
               <span>{{ pair.toCurrency }}</span>
             </div>
 
-            <AppRateValue :value="formatPairRate(pair.rate)" shimmer />
+            <AppRateValue :value="formatPairRate(pair.rate)" />
 
             <div class="app-exchange-pair-card__meta">
               {{ formatMiniappDateTime(pair.updatedAt, locale) }}

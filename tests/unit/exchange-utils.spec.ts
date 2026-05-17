@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { swapExchangeDirection } from '@utils/exchange';
+import {
+  buildBuyCurrencyOptions,
+  getDefaultReceiveMethod,
+  swapExchangeDirection,
+} from '@utils/exchange';
 
 describe('swapExchangeDirection', () => {
   it('swaps currencies and moves received amount into sell amount', () => {
@@ -40,5 +44,42 @@ describe('swapExchangeDirection', () => {
       currencyBuy: 'RUB',
       amountSell: 5000,
     });
+  });
+});
+
+describe('buildBuyCurrencyOptions', () => {
+  const pairs = [
+    { fromCurrency: 'RUB', toCurrency: 'THB' },
+    { fromCurrency: 'RUB', toCurrency: 'GEL' },
+    { fromCurrency: 'RUB', toCurrency: 'VND' },
+    { fromCurrency: 'USDT', toCurrency: 'VND' },
+  ];
+
+  it('builds options from backend-driven pairs without currency hardcode', () => {
+    expect(buildBuyCurrencyOptions(pairs, 'RUB')).toEqual([
+      { label: 'THB', value: 'THB' },
+      { label: 'GEL', value: 'GEL' },
+      { label: 'VND', value: 'VND' },
+    ]);
+  });
+
+  it('includes reverse pair options', () => {
+    expect(buildBuyCurrencyOptions(pairs, 'GEL')).toEqual([
+      { label: 'RUB', value: 'RUB' },
+    ]);
+  });
+});
+
+describe('getDefaultReceiveMethod', () => {
+  it('uses quote methods first', () => {
+    expect(getDefaultReceiveMethod('VND', ['bank'])).toBe('bank');
+  });
+
+  it('uses currency defaults for supported receive currencies', () => {
+    expect(getDefaultReceiveMethod('THB')).toBe('cash');
+    expect(getDefaultReceiveMethod('GEL')).toBe('cash');
+    expect(getDefaultReceiveMethod('VND')).toBe('cash');
+    expect(getDefaultReceiveMethod('USDT')).toBe('wallet');
+    expect(getDefaultReceiveMethod('RUB')).toBe('card');
   });
 });

@@ -10,7 +10,7 @@ vi.mock('@services/api/miniapp.service', () => ({
   fetchQuote: vi.fn(),
 }));
 
-import { fetchQuote } from '@services/api/miniapp.service';
+import { fetchExchangeScreen, fetchQuote } from '@services/api/miniapp.service';
 
 function createDeferred<T>() {
   let resolve!: (value: T) => void;
@@ -85,5 +85,49 @@ describe('exchange store', () => {
 
     expect(store.quote?.amountSell).toBe(6000);
     expect(store.quote?.amountBuy).toBe(18000);
+  });
+
+  it('loads GEL and VND pairs from the backend-driven exchange screen', async () => {
+    const store = useExchangeStore();
+
+    vi.mocked(fetchExchangeScreen).mockResolvedValue({
+      calculator: { fromCurrency: 'RUB', toCurrency: 'THB', amountSell: 5000 },
+      chips: ['RUB', 'THB', 'GEL', 'VND'],
+      pairs: [
+        {
+          id: 'rub-gel',
+          label: 'RUB/GEL',
+          fromCurrency: 'RUB',
+          toCurrency: 'GEL',
+          rate: 0.03,
+          rateText: '1 RUB = 0.0300 GEL',
+          amountSellExample: 5000,
+          amountBuyExample: 150,
+          updatedAt: '2026-03-28T12:00:00+00:00',
+        },
+        {
+          id: 'usdt-vnd',
+          label: 'USDT/VND',
+          fromCurrency: 'USDT',
+          toCurrency: 'VND',
+          rate: 25500,
+          rateText: '1 USDT = 25500.00 VND',
+          amountSellExample: 100,
+          amountBuyExample: 2550000,
+          updatedAt: '2026-03-28T12:00:00+00:00',
+        },
+      ],
+      quote: makeQuote({
+        currencySell: 'RUB',
+        currencyBuy: 'THB',
+        amountSell: 5000,
+        amountBuy: 2050,
+      }),
+    });
+
+    await store.load();
+
+    expect(store.screen?.chips).toEqual(['RUB', 'THB', 'GEL', 'VND']);
+    expect(store.screen?.pairs.map((pair) => pair.id)).toEqual(['rub-gel', 'usdt-vnd']);
   });
 });

@@ -12,6 +12,11 @@ export interface SwappedExchangeDirection {
   amountSell: number | null;
 }
 
+export interface ExchangePairLike {
+  fromCurrency: string;
+  toCurrency: string;
+}
+
 export function swapExchangeDirection(
   params: SwapExchangeDirectionParams,
 ): SwappedExchangeDirection {
@@ -22,4 +27,47 @@ export function swapExchangeDirection(
     currencyBuy: params.currencySell,
     amountSell: shouldUseQuotedAmountBuy ? params.amountBuy ?? params.amountSell : params.amountSell,
   };
+}
+
+/**
+ * Строит варианты валюты получения из backend-driven списка пар.
+ */
+export function buildBuyCurrencyOptions(
+  pairs: ExchangePairLike[],
+  currencySell: string,
+) {
+  return pairs
+    .flatMap((pair) => [
+      [pair.fromCurrency, pair.toCurrency],
+      [pair.toCurrency, pair.fromCurrency],
+    ])
+    .filter(([sell]) => sell === currencySell)
+    .map(([, buy]) => buy)
+    .filter((buy, index, items) => items.indexOf(buy) === index)
+    .map((currency) => ({
+      label: currency,
+      value: currency,
+    }));
+}
+
+/**
+ * Выбирает способ получения по quote или дефолту для валюты покупки.
+ */
+export function getDefaultReceiveMethod(
+  currencyBuy: string,
+  availableMethods?: string[] | null,
+) {
+  if (availableMethods?.[0]) {
+    return availableMethods[0];
+  }
+
+  if (currencyBuy === 'USDT') {
+    return 'wallet';
+  }
+
+  if (currencyBuy === 'RUB') {
+    return 'card';
+  }
+
+  return 'cash';
 }

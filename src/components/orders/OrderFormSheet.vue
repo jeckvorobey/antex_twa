@@ -52,6 +52,7 @@ import { useExchangeStore } from '@stores/exchange.store';
 import { useOrdersStore } from '@stores/orders.store';
 import { useUiStore } from '@stores/ui.store';
 import { getMiniappErrorMessageKey } from '@utils/api-errors';
+import { buildBuyCurrencyOptions, getDefaultReceiveMethod } from '@utils/exchange';
 
 const props = defineProps<{
   modelValue: boolean;
@@ -74,15 +75,21 @@ const contactTelegram = ref<string>('');
 
 const currencySell = computed(() => uiStore.orderContext?.currencySell ?? exchangeStore.quote?.currencySell ?? 'RUB');
 const currencyOptions = computed(() => {
-  const sell = currencySell.value;
-  if (sell === 'USDT') {
-    return [{ label: 'THB', value: 'THB' }];
+  const options = buildBuyCurrencyOptions(exchangeStore.screen?.pairs ?? [], currencySell.value);
+  const contextBuyCurrency = uiStore.orderContext?.currencyBuy;
+  if (options.length || !contextBuyCurrency) {
+    return options;
   }
 
-  return [
-    { label: 'THB', value: 'THB' },
-    { label: 'USDT', value: 'USDT' },
-  ];
+  return [{ label: contextBuyCurrency, value: contextBuyCurrency }];
+});
+const currentQuoteMethods = computed(() => {
+  const quote = exchangeStore.quote;
+  if (!quote || quote.currencySell !== currencySell.value || quote.currencyBuy !== currencyBuy.value) {
+    return null;
+  }
+
+  return quote.availableMethods;
 });
 
 watch(
@@ -99,6 +106,14 @@ watch(
   { immediate: true },
 );
 
+watch(currencyOptions, (options) => {
+  if (!options.length || options.some((option) => option.value === currencyBuy.value)) {
+    return;
+  }
+
+  currencyBuy.value = options[0]?.value ?? currencyBuy.value;
+});
+
 /**
  * Отправляет miniapp-заявку и показывает локализованное сообщение по коду ошибки.
  */
@@ -114,7 +129,7 @@ async function submit() {
       currencyBuy: currencyBuy.value,
       amountSell: amountSell.value,
       contactTelegram: contactTelegram.value || undefined,
-      methodGet: 'cash',
+      methodGet: getDefaultReceiveMethod(currencyBuy.value, currentQuoteMethods.value),
     });
 
     ordersStore.prepend(order);
