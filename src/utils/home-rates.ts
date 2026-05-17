@@ -1,4 +1,4 @@
-import type { MiniappRateCard } from '@types/miniapp';
+import type { MiniappLocationItem, MiniappRateCard } from '@types/miniapp';
 
 export const HOME_ALL_FILTER_KEY = 'ALL';
 
@@ -7,11 +7,19 @@ export interface HomeRateFilterChip {
   label: string;
 }
 
+export interface BuildHomeRateFilterChipsParams {
+  backendChips: string[];
+  allLabel: string;
+  rates: MiniappRateCard[];
+  selectedCountry: string | null;
+}
+
 export interface BuildHomeRateViewParams {
   rates: MiniappRateCard[];
   filterKey: string;
   previewLimit: number;
   expanded: boolean;
+  selectedCountry: string | null;
 }
 
 export interface HomeRateView {
@@ -20,31 +28,40 @@ export interface HomeRateView {
   canExpand: boolean;
 }
 
-/**
- * Добавляет локальный фильтр "Все" перед backend-driven валютами.
- */
-export function buildHomeRateFilterChips(
-  backendChips: string[],
-  allLabel: string,
-): HomeRateFilterChip[] {
+export function buildHomeRateFilterChips({
+  backendChips,
+  allLabel,
+  rates,
+  selectedCountry,
+}: BuildHomeRateFilterChipsParams): HomeRateFilterChip[] {
+  const countryRates = selectedCountry
+    ? rates.filter((rate) => rate.country === selectedCountry)
+    : rates;
+  const availableCurrencies = new Set(
+    countryRates.flatMap((rate) => [rate.fromCurrency, rate.toCurrency]),
+  );
+
   return [
     { key: HOME_ALL_FILTER_KEY, label: allLabel },
-    ...backendChips.map((chip) => ({ key: chip, label: chip })),
+    ...backendChips
+      .filter((chip) => availableCurrencies.has(chip))
+      .map((chip) => ({ key: chip, label: chip })),
   ];
 }
 
-/**
- * Строит видимый список карточек и состояние inline-expand для главной.
- */
 export function buildHomeRateView({
   rates,
   filterKey,
   previewLimit,
   expanded,
+  selectedCountry,
 }: BuildHomeRateViewParams): HomeRateView {
+  const countryRates = selectedCountry
+    ? rates.filter((rate) => rate.country === selectedCountry)
+    : rates;
   const filteredRates = filterKey === HOME_ALL_FILTER_KEY
-    ? rates
-    : rates.filter((rate) => rate.fromCurrency === filterKey || rate.toCurrency === filterKey);
+    ? countryRates
+    : countryRates.filter((rate) => rate.fromCurrency === filterKey || rate.toCurrency === filterKey);
   const canExpand = filteredRates.length > previewLimit;
 
   return {
@@ -54,9 +71,28 @@ export function buildHomeRateView({
   };
 }
 
-/**
- * Сбрасывает раскрытое состояние при смене фильтра или новой загрузке экрана.
- */
+export function buildHomeVisibleLocations(
+  locations: MiniappLocationItem[],
+  selectedCountry: string | null,
+) {
+  if (!selectedCountry) {
+    return locations;
+  }
+
+  return locations.filter((location) => location.country === selectedCountry);
+}
+
+export function resolveHomeCountryByCity(
+  locations: MiniappLocationItem[],
+  cityId: string,
+) {
+  return locations.find((location) => location.id === cityId)?.country ?? null;
+}
+
+export function buildHomeAvailableMethods(selectedCityId: string | null) {
+  return selectedCityId ? ['qrcode', 'cash'] : ['qrcode'];
+}
+
 export function resetHomeRateExpansion(_expanded: boolean) {
   return false;
 }

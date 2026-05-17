@@ -84,6 +84,11 @@ const currencyOptions = computed(() => {
   return [{ label: contextBuyCurrency, value: contextBuyCurrency }];
 });
 const currentQuoteMethods = computed(() => {
+  const contextMethods = uiStore.orderContext?.availableMethods;
+  if (contextMethods?.length) {
+    return contextMethods;
+  }
+
   const quote = exchangeStore.quote;
   if (!quote || quote.currencySell !== currencySell.value || quote.currencyBuy !== currencyBuy.value) {
     return null;

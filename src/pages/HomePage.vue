@@ -4,20 +4,30 @@
       <section class="app-section app-section--home">
         <AppSectionTitle>{{ t('home.locations') }}</AppSectionTitle>
 
-        <div class="app-home-location-chips">
-          <span
-            v-for="city in locationChips"
-            :key="city"
-            class="app-home-location-chip"
+        <div class="app-home-country-chips">
+          <q-chip
+            v-for="country in homeStore.data?.countries ?? []"
+            :key="country.id"
+            clickable
+            :class="['app-chip', selectedCountry === country.id ? 'app-chip--active' : null]"
+            @click="selectCountry(country.id)"
           >
-            {{ city }}
-          </span>
+            {{ country.label }}
+          </q-chip>
+        </div>
+
+        <div class="app-home-location-chips">
+          <q-chip
+            v-for="location in visibleLocations"
+            :key="location.id"
+            clickable
+            :class="['app-chip', selectedCityId === location.id ? 'app-chip--active' : null]"
+            @click="selectCity(location.id)"
+          >
+            {{ location.city }}
+          </q-chip>
         </div>
       </section>
-
-      <AppButton block class="app-home-primary-button" @click="openDefaultExchangeOrder">
-        {{ t('common.exchange') }}
-      </AppButton>
 
       <AppSurface class="app-home-rates-card">
         <div class="app-home-country-chips">
@@ -66,6 +76,10 @@
         </AppButton>
       </AppSurface>
 
+      <AppButton block class="app-home-primary-button" @click="openDefaultExchangeOrder">
+        {{ t('common.exchange') }}
+      </AppButton>
+
       <AppSurface class="app-home-bonus-card">
         <div class="app-home-bonus-card__coin">
           <q-icon name="workspace_premium" size="22px" />
@@ -113,10 +127,13 @@ import { useHomeStore } from '@stores/home.store';
 import { useUiStore } from '@stores/ui.store';
 import type { MiniappRateCard } from '@types/miniapp';
 import {
+  buildHomeAvailableMethods,
   buildHomeRateFilterChips,
   buildHomeRateView,
+  buildHomeVisibleLocations,
   HOME_ALL_FILTER_KEY,
   resetHomeRateExpansion,
+  resolveHomeCountryByCity,
 } from '@utils/home-rates';
 
 const homeStore = useHomeStore();
@@ -124,19 +141,28 @@ const uiStore = useUiStore();
 const { t } = useI18n();
 
 const selectedRateChip = ref(HOME_ALL_FILTER_KEY);
+const selectedCountry = ref<string | null>(null);
+const selectedCityId = ref<string | null>(null);
 const ratesExpanded = ref(false);
-const locationChips = ['Тайланд', 'Вьетнам', 'Грузия'];
 const featuredRates = computed(() => homeStore.data?.rates.featured ?? []);
 const previewLimit = computed(() => homeStore.data?.rates.previewLimit ?? 3);
-const filterChips = computed(() => buildHomeRateFilterChips(
-  homeStore.data?.rates.chips ?? [],
-  t('home.all'),
+const locations = computed(() => homeStore.data?.locations ?? []);
+const visibleLocations = computed(() => buildHomeVisibleLocations(
+  locations.value,
+  selectedCountry.value,
 ));
+const filterChips = computed(() => buildHomeRateFilterChips({
+  backendChips: homeStore.data?.rates.chips ?? [],
+  allLabel: t('home.all'),
+  rates: featuredRates.value,
+  selectedCountry: selectedCountry.value,
+}));
 const rateView = computed(() => buildHomeRateView({
   rates: featuredRates.value,
   filterKey: selectedRateChip.value,
   previewLimit: previewLimit.value,
   expanded: ratesExpanded.value,
+  selectedCountry: selectedCountry.value,
 }));
 const visibleRates = computed(() => rateView.value.visibleRates);
 const canExpand = computed(() => rateView.value.canExpand);
@@ -151,6 +177,8 @@ onMounted(async () => {
   }
 
   selectedRateChip.value = HOME_ALL_FILTER_KEY;
+  selectedCountry.value = null;
+  selectedCityId.value = null;
   ratesExpanded.value = resetHomeRateExpansion(ratesExpanded.value);
 });
 
@@ -169,6 +197,7 @@ function openOrderFromFeatured(card?: MiniappRateCard) {
     amountSell: card.amountSellExample,
     amountBuy: card.amountBuyExample,
     rate: card.rate,
+    availableMethods: buildHomeAvailableMethods(selectedCityId.value),
   });
 }
 
@@ -183,7 +212,31 @@ function openDefaultExchangeOrder() {
  * Меняет фильтр и заново сворачивает список текущего набора пар.
  */
 function selectRateChip(chipKey: string) {
+  if (chipKey === HOME_ALL_FILTER_KEY) {
+    selectedCountry.value = null;
+    selectedCityId.value = null;
+  }
+
   selectedRateChip.value = chipKey;
+  ratesExpanded.value = resetHomeRateExpansion(ratesExpanded.value);
+}
+
+function selectCountry(countryId: string) {
+  selectedCountry.value = countryId;
+  selectedCityId.value = null;
+  selectedRateChip.value = HOME_ALL_FILTER_KEY;
+  ratesExpanded.value = resetHomeRateExpansion(ratesExpanded.value);
+}
+
+function selectCity(cityId: string) {
+  const countryId = resolveHomeCountryByCity(locations.value, cityId);
+  if (!countryId) {
+    return;
+  }
+
+  selectedCountry.value = countryId;
+  selectedCityId.value = cityId;
+  selectedRateChip.value = HOME_ALL_FILTER_KEY;
   ratesExpanded.value = resetHomeRateExpansion(ratesExpanded.value);
 }
 
@@ -198,18 +251,14 @@ function expandRates() {
  * Возвращает подпись и мета-текст для одной стороны карточки курса.
  */
 function getRateSide(card: MiniappRateCard, side: 'from' | 'to') {
-  const metaMap: Record<string, { from: string; to: string }> = {
-    'rub-thb': { from: 'по СБП', to: 'наличными' },
-    'rub-usdt': { from: 'по СБП', to: 'на кошелёк' },
-    'usdt-thb': { from: 'наличными', to: 'на карту' },
-  };
-  const meta = metaMap[card.id] ?? { from: 'по курсу', to: 'по курсу' };
-
   if (side === 'from') {
-    return { title: card.fromCurrency, meta: meta.from };
+    return { title: card.fromCurrency, meta: t('home.rateMeta.market') };
   }
 
-  return { title: card.toCurrency, meta: meta.to };
+  return {
+    title: card.toCurrency,
+    meta: selectedCityId.value ? t('home.rateMeta.cashAndQr') : t('home.rateMeta.qrcode'),
+  };
 }
 
 </script>

@@ -40,6 +40,8 @@ export interface MiniappQuickAction {
 export interface MiniappRateCard {
   id: string;
   label: string;
+  country: string;
+  countryLabel: string;
   fromCurrency: string;
   toCurrency: string;
   rate: number;
@@ -48,6 +50,15 @@ export interface MiniappRateCard {
   amountSellExample: number;
   amountBuyExample: number;
   updatedAt: string;
+  availableMethods: string[];
+}
+
+export interface MiniappCountryFilterItem {
+  id: string;
+  label: string;
+  currency: string;
+  code: string;
+  flag: string;
 }
 
 export interface MiniappRatesSection {
@@ -67,6 +78,8 @@ export interface MiniappServiceItem {
 export interface MiniappLocationItem {
   id: string;
   city: string;
+  country: string;
+  countryLabel: string;
   hours: string;
   accent: string;
 }
@@ -79,6 +92,7 @@ export interface MiniappBanner {
 export interface MiniappHomeResponse {
   profile: MiniappProfileSummary;
   quickActions: MiniappQuickAction[];
+  countries: MiniappCountryFilterItem[];
   rates: MiniappRatesSection;
   banner: MiniappBanner;
   services: MiniappServiceItem[];

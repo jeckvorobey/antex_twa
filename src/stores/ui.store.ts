@@ -3,7 +3,10 @@ import { ref } from 'vue';
 
 import type { MiniappQuoteResponse } from '@types/miniapp';
 
-type OrderContext = Pick<MiniappQuoteResponse, 'currencySell' | 'currencyBuy' | 'amountSell' | 'amountBuy' | 'rate'>;
+type OrderContext = Pick<
+  MiniappQuoteResponse,
+  'currencySell' | 'currencyBuy' | 'amountSell' | 'amountBuy' | 'rate' | 'availableMethods'
+>;
 
 export const useUiStore = defineStore('ui', () => {
   const moreSheetOpen = ref(false);

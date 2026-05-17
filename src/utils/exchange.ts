@@ -57,6 +57,14 @@ export function getDefaultReceiveMethod(
   currencyBuy: string,
   availableMethods?: string[] | null,
 ) {
+  if (availableMethods?.includes('cash')) {
+    return 'cash';
+  }
+
+  if (availableMethods?.includes('qrcode')) {
+    return 'qrcode';
+  }
+
   if (availableMethods?.[0]) {
     return availableMethods[0];
   }

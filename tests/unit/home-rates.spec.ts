@@ -1,17 +1,22 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  buildHomeAvailableMethods,
   buildHomeRateFilterChips,
   buildHomeRateView,
+  buildHomeVisibleLocations,
   resetHomeRateExpansion,
+  resolveHomeCountryByCity,
   type HomeRateFilterChip,
 } from '@utils/home-rates';
-import type { MiniappRateCard } from '@types/miniapp';
+import type { MiniappLocationItem, MiniappRateCard } from '@types/miniapp';
 
 const rates: MiniappRateCard[] = [
   {
     id: 'usdt-thb',
     label: 'USDT/THB',
+    country: 'thailand',
+    countryLabel: 'Тайланд',
     fromCurrency: 'USDT',
     toCurrency: 'THB',
     rate: 36.2,
@@ -20,10 +25,13 @@ const rates: MiniappRateCard[] = [
     amountSellExample: 100,
     amountBuyExample: 3620,
     updatedAt: '2026-05-12T10:00:00Z',
+    availableMethods: ['qrcode', 'cash'],
   },
   {
     id: 'usdt-vnd',
     label: 'USDT/VND',
+    country: 'vietnam',
+    countryLabel: 'Вьетнам',
     fromCurrency: 'USDT',
     toCurrency: 'VND',
     rate: 25500,
@@ -32,10 +40,13 @@ const rates: MiniappRateCard[] = [
     amountSellExample: 100,
     amountBuyExample: 2550000,
     updatedAt: '2026-05-12T10:00:00Z',
+    availableMethods: ['qrcode', 'cash'],
   },
   {
     id: 'usdt-gel',
     label: 'USDT/GEL',
+    country: 'georgia',
+    countryLabel: 'Грузия',
     fromCurrency: 'USDT',
     toCurrency: 'GEL',
     rate: 2.7,
@@ -44,10 +55,13 @@ const rates: MiniappRateCard[] = [
     amountSellExample: 100,
     amountBuyExample: 270,
     updatedAt: '2026-05-12T10:00:00Z',
+    availableMethods: ['qrcode', 'cash'],
   },
   {
     id: 'rub-thb',
     label: 'RUB/THB',
+    country: 'thailand',
+    countryLabel: 'Тайланд',
     fromCurrency: 'RUB',
     toCurrency: 'THB',
     rate: 0.41,
@@ -56,10 +70,13 @@ const rates: MiniappRateCard[] = [
     amountSellExample: 5000,
     amountBuyExample: 2050,
     updatedAt: '2026-05-12T10:00:00Z',
+    availableMethods: ['qrcode', 'cash'],
   },
   {
     id: 'rub-vnd',
     label: 'RUB/VND',
+    country: 'vietnam',
+    countryLabel: 'Вьетнам',
     fromCurrency: 'RUB',
     toCurrency: 'VND',
     rate: 280,
@@ -68,12 +85,51 @@ const rates: MiniappRateCard[] = [
     amountSellExample: 5000,
     amountBuyExample: 1400000,
     updatedAt: '2026-05-12T10:00:00Z',
+    availableMethods: ['qrcode', 'cash'],
+  },
+];
+
+const locations: MiniappLocationItem[] = [
+  {
+    id: '1',
+    city: 'Паттайя',
+    country: 'thailand',
+    countryLabel: 'Тайланд',
+    hours: 'Ежедневно',
+    accent: 'ocean',
+  },
+  {
+    id: '2',
+    city: 'Батуми',
+    country: 'georgia',
+    countryLabel: 'Грузия',
+    hours: 'Ежедневно',
+    accent: 'gold',
   },
 ];
 
 describe('buildHomeRateFilterChips', () => {
   it('adds the all filter as the first chip', () => {
-    expect(buildHomeRateFilterChips(['USDT', 'THB', 'RUB'], 'Все')).toEqual<HomeRateFilterChip[]>([
+    expect(buildHomeRateFilterChips({
+      backendChips: ['USDT', 'THB', 'RUB'],
+      allLabel: 'Все',
+      rates,
+      selectedCountry: null,
+    })).toEqual<HomeRateFilterChip[]>([
+      { key: 'ALL', label: 'Все' },
+      { key: 'USDT', label: 'USDT' },
+      { key: 'THB', label: 'THB' },
+      { key: 'RUB', label: 'RUB' },
+    ]);
+  });
+
+  it('narrows chips to the selected country currencies', () => {
+    expect(buildHomeRateFilterChips({
+      backendChips: ['USDT', 'THB', 'RUB', 'GEL', 'VND'],
+      allLabel: 'Все',
+      rates,
+      selectedCountry: 'thailand',
+    })).toEqual<HomeRateFilterChip[]>([
       { key: 'ALL', label: 'Все' },
       { key: 'USDT', label: 'USDT' },
       { key: 'THB', label: 'THB' },
@@ -89,6 +145,7 @@ describe('buildHomeRateView', () => {
       filterKey: 'ALL',
       previewLimit: 3,
       expanded: false,
+      selectedCountry: null,
     });
 
     expect(view.visibleRates.map((rate) => rate.id)).toEqual([
@@ -105,6 +162,7 @@ describe('buildHomeRateView', () => {
       filterKey: 'THB',
       previewLimit: 3,
       expanded: false,
+      selectedCountry: null,
     });
 
     expect(view.filteredRates.map((rate) => rate.id)).toEqual([
@@ -119,6 +177,7 @@ describe('buildHomeRateView', () => {
       filterKey: 'USDT',
       previewLimit: 3,
       expanded: false,
+      selectedCountry: null,
     });
 
     expect(view.visibleRates.map((rate) => rate.id)).toEqual([
@@ -135,6 +194,7 @@ describe('buildHomeRateView', () => {
       filterKey: 'ALL',
       previewLimit: 3,
       expanded: false,
+      selectedCountry: null,
     });
 
     expect(view.canExpand).toBe(true);
@@ -146,6 +206,7 @@ describe('buildHomeRateView', () => {
       filterKey: 'ALL',
       previewLimit: 3,
       expanded: true,
+      selectedCountry: null,
     });
 
     expect(view.visibleRates.map((rate) => rate.id)).toEqual([
@@ -155,6 +216,42 @@ describe('buildHomeRateView', () => {
       'rub-thb',
       'rub-vnd',
     ]);
+  });
+
+  it('filters rates by selected country before currency chips', () => {
+    const view = buildHomeRateView({
+      rates,
+      filterKey: 'ALL',
+      previewLimit: 3,
+      expanded: true,
+      selectedCountry: 'thailand',
+    });
+
+    expect(view.filteredRates.map((rate) => rate.id)).toEqual([
+      'usdt-thb',
+      'rub-thb',
+    ]);
+  });
+});
+
+describe('home locations and methods', () => {
+  it('shows all cities by default and only country cities after selection', () => {
+    expect(buildHomeVisibleLocations(locations, null).map((item) => item.city)).toEqual([
+      'Паттайя',
+      'Батуми',
+    ]);
+    expect(buildHomeVisibleLocations(locations, 'thailand').map((item) => item.city)).toEqual([
+      'Паттайя',
+    ]);
+  });
+
+  it('resolves country by selected city', () => {
+    expect(resolveHomeCountryByCity(locations, '2')).toBe('georgia');
+  });
+
+  it('enables cash only when a city is selected', () => {
+    expect(buildHomeAvailableMethods(null)).toEqual(['qrcode']);
+    expect(buildHomeAvailableMethods('1')).toEqual(['qrcode', 'cash']);
   });
 });
 

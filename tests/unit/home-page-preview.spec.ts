@@ -12,6 +12,14 @@ describe('HomePage preview rates', () => {
     expect(source).toContain("t('home.all')");
   });
 
+  it('keeps country and city filters in local state instead of hardcoded arrays', () => {
+    const source = readFileSync(homePagePath, 'utf8');
+
+    expect(source).toContain('const selectedCountry = ref<string | null>(null)');
+    expect(source).toContain('const selectedCityId = ref<string | null>(null)');
+    expect(source).not.toContain("const locationChips = ['Тайланд', 'Вьетнам', 'Грузия']");
+  });
+
   it('keeps expand as inline action instead of exchange navigation', () => {
     const source = readFileSync(homePagePath, 'utf8');
 
@@ -25,5 +33,11 @@ describe('HomePage preview rates', () => {
     expect(source).toContain('card.rateDisplay');
     expect(source).not.toContain('formatRateValue');
     expect(source).not.toContain('toFixed(');
+  });
+
+  it('passes backend-driven availableMethods into the order sheet context', () => {
+    const source = readFileSync(homePagePath, 'utf8');
+
+    expect(source).toContain('availableMethods: buildHomeAvailableMethods(selectedCityId.value)');
   });
 });

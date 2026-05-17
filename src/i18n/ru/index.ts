@@ -26,6 +26,11 @@ export default {
     expandRates: 'Развернуть',
     bonus: 'Приведи друга и получи бонус',
     bonusAction: 'Подробнее',
+    rateMeta: {
+      market: 'по курсу',
+      qrcode: 'по qrcode',
+      cashAndQr: 'наличными и qrcode',
+    },
   },
   exchange: {
     title: 'Курсы и обмен',
