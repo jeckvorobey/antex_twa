@@ -53,8 +53,7 @@ export interface MiniappRatesSection {
   featured: MiniappRateCard[];
   chips: string[];
   previewLimit: number;
-  updatedAt: string;
-  allowance: number;
+  updatedAt: string | null;
 }
 
 export interface MiniappServiceItem {
