@@ -32,6 +32,7 @@ function makeQuote(params: {
   return {
     ...params,
     rate: 1.5,
+    rateDisplay: '1.50',
     rateText: 'stub rate',
     updatedAt: '2026-03-28T12:00:00+00:00',
     availableMethods: ['cash'],
@@ -100,6 +101,7 @@ describe('exchange store', () => {
           fromCurrency: 'RUB',
           toCurrency: 'GEL',
           rate: 0.03,
+          rateDisplay: '0.03',
           rateText: '1 RUB = 0.0300 GEL',
           amountSellExample: 5000,
           amountBuyExample: 150,
@@ -111,6 +113,7 @@ describe('exchange store', () => {
           fromCurrency: 'USDT',
           toCurrency: 'VND',
           rate: 25500,
+          rateDisplay: '25500.00',
           rateText: '1 USDT = 25500.00 VND',
           amountSellExample: 100,
           amountBuyExample: 2550000,

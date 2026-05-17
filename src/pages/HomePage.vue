@@ -45,7 +45,7 @@
           </div>
 
           <div class="app-home-rate-item__pill">
-            <AppRateValue :value="formatRateValue(card.rate)" />
+            <AppRateValue :value="card.rateDisplay" />
             <q-icon name="arrow_forward" size="14px" />
           </div>
 
@@ -210,13 +210,6 @@ function getRateSide(card: MiniappRateCard, side: 'from' | 'to') {
   }
 
   return { title: card.toCurrency, meta: meta.to };
-}
-
-/**
- * Форматирует числовое значение курса для compact UI-пилюли.
- */
-function formatRateValue(rate: number) {
-  return rate >= 1 ? rate.toFixed(3) : rate.toFixed(4);
 }
 
 </script>

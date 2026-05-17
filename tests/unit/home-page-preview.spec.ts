@@ -18,4 +18,12 @@ describe('HomePage preview rates', () => {
     expect(source).not.toContain("router.push({ name: 'exchange' })");
     expect(source).toContain("t('home.expandRates')");
   });
+
+  it('uses backend-prepared rate display values', () => {
+    const source = readFileSync(homePagePath, 'utf8');
+
+    expect(source).toContain('card.rateDisplay');
+    expect(source).not.toContain('formatRateValue');
+    expect(source).not.toContain('toFixed(');
+  });
 });

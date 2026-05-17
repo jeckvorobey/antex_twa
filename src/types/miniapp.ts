@@ -43,6 +43,7 @@ export interface MiniappRateCard {
   fromCurrency: string;
   toCurrency: string;
   rate: number;
+  rateDisplay: string;
   rateText: string;
   amountSellExample: number;
   amountBuyExample: number;
@@ -90,6 +91,7 @@ export interface MiniappQuoteResponse {
   amountSell: number;
   amountBuy: number;
   rate: number;
+  rateDisplay: string;
   rateText: string;
   updatedAt: string;
   availableMethods: string[];

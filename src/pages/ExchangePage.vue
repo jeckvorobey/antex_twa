@@ -90,7 +90,7 @@
               <span>{{ pair.toCurrency }}</span>
             </div>
 
-            <AppRateValue :value="formatPairRate(pair.rate)" />
+            <AppRateValue :value="pair.rateDisplay" />
 
             <div class="app-exchange-pair-card__meta">
               {{ formatMiniappDateTime(pair.updatedAt, locale) }}
@@ -199,7 +199,7 @@ const currentRateLabel = computed(() => {
     return t('exchange.quoteUnavailable');
   }
 
-  return `1 ${exchangeStore.quote.currencySell} = ${formatPairRate(exchangeStore.quote.rate)} ${exchangeStore.quote.currencyBuy}`;
+  return exchangeStore.quote.rateText;
 });
 
 watch(selectedSellCurrency, (value) => {
@@ -273,7 +273,4 @@ function openSheetFromQuote() {
   });
 }
 
-function formatPairRate(rate: number) {
-  return rate >= 1 ? rate.toFixed(1) : rate.toFixed(4);
-}
 </script>
