@@ -40,4 +40,25 @@ describe('HomePage preview rates', () => {
 
     expect(source).toContain('availableMethods: buildHomeAvailableMethods(selectedCityId.value)');
   });
+
+  it('renders home rate flags and the localized rate prefix', () => {
+    const source = readFileSync(homePagePath, 'utf8');
+
+    expect(source).toContain('presentation.left.flag');
+    expect(source).toContain('presentation.right.flag');
+    expect(source).toContain("t('home.ratePrefix')");
+  });
+
+  it('keeps the home chips fully rounded through shared chip styles', () => {
+    const source = readFileSync(resolve(process.cwd(), 'src/css/app.scss'), 'utf8');
+    const pageSource = readFileSync(homePagePath, 'utf8');
+
+    expect(source).toContain('border-radius: var(--antex-radius-chip);');
+    expect(source).toContain('overflow: hidden;');
+    expect(source).toContain('box-shadow: inset 0 0 0 1px rgba(212, 175, 55, 0.9);');
+    expect(source).toContain('.app-home-rates-card__chips');
+    expect(source).toContain('padding: 2px 2px 4px 2px;');
+    expect(source).toContain('z-index: 1;');
+    expect(pageSource).toContain("class=\"app-home-country-chips app-home-rates-card__chips\"");
+  });
 });

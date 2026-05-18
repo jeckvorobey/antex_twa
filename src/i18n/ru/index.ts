@@ -24,10 +24,11 @@ export default {
     locations: 'Выбрать страну',
     all: 'Все',
     expandRates: 'Развернуть',
+    ratePrefix: 'от',
     bonus: 'Приведи друга и получи бонус',
     bonusAction: 'Подробнее',
     rateMeta: {
-      market: 'по курсу',
+      market: 'СБП, перевод',
       qrcode: 'по qrcode',
       cashAndQr: 'наличными и qrcode',
     },

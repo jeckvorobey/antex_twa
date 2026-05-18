@@ -1,6 +1,24 @@
 import type { MiniappLocationItem, MiniappRateCard } from '@types/miniapp';
 
 export const HOME_ALL_FILTER_KEY = 'ALL';
+const HOME_RATE_DISPLAY_PRIORITY = ['RUB', 'USDT', 'THB', 'GEL', 'VND'] as const;
+
+export interface HomeRateCardSide {
+  title: string;
+  flag: string;
+  meta: string;
+}
+
+export interface HomeRateCardPresentation {
+  left: HomeRateCardSide;
+  right: HomeRateCardSide;
+  ratePrefix: string;
+}
+
+export interface BuildHomeRateCardPresentationParams {
+  card: MiniappRateCard;
+  selectedCityId: string | null;
+}
 
 export interface HomeRateFilterChip {
   key: string;
@@ -95,4 +113,57 @@ export function buildHomeAvailableMethods(selectedCityId: string | null) {
 
 export function resetHomeRateExpansion(_expanded: boolean) {
   return false;
+}
+
+export function buildHomeRateCardPresentation({
+  card,
+  selectedCityId,
+}: BuildHomeRateCardPresentationParams): HomeRateCardPresentation {
+  const [leftCurrency, rightCurrency] = sortHomeRateCurrencies(card.fromCurrency, card.toCurrency);
+
+  return {
+    left: {
+      title: leftCurrency,
+      flag: getCurrencyFlag(leftCurrency),
+      meta: getHomeRateSourceLabel(leftCurrency),
+    },
+    right: {
+      title: rightCurrency,
+      flag: getCurrencyFlag(rightCurrency),
+      meta: selectedCityId ? 'по qrcode, наличными' : 'по qrcode',
+    },
+    ratePrefix: 'от',
+  };
+}
+
+function getHomeRateSourceLabel(currency: string) {
+  return currency === 'USDT' ? 'перевод' : 'СБП, перевод';
+}
+
+function sortHomeRateCurrencies(left: string, right: string): [string, string] {
+  const leftPriority = HOME_RATE_DISPLAY_PRIORITY.indexOf(left as (typeof HOME_RATE_DISPLAY_PRIORITY)[number]);
+  const rightPriority = HOME_RATE_DISPLAY_PRIORITY.indexOf(right as (typeof HOME_RATE_DISPLAY_PRIORITY)[number]);
+
+  if (leftPriority === -1 || rightPriority === -1) {
+    return [left, right];
+  }
+
+  return leftPriority <= rightPriority ? [left, right] : [right, left];
+}
+
+function getCurrencyFlag(currency: string) {
+  switch (currency) {
+    case 'RUB':
+      return '🇷🇺';
+    case 'THB':
+      return '🇹🇭';
+    case 'GEL':
+      return '🇬🇪';
+    case 'VND':
+      return '🇻🇳';
+    case 'USDT':
+      return '🇺🇸';
+    default:
+      return '🏳️';
+  }
 }

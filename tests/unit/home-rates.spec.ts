@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   buildHomeAvailableMethods,
+  buildHomeRateCardPresentation,
   buildHomeRateFilterChips,
   buildHomeRateView,
   buildHomeVisibleLocations,
@@ -252,6 +253,77 @@ describe('home locations and methods', () => {
   it('enables cash only when a city is selected', () => {
     expect(buildHomeAvailableMethods(null)).toEqual(['qrcode']);
     expect(buildHomeAvailableMethods('1')).toEqual(['qrcode', 'cash']);
+  });
+});
+
+describe('buildHomeRateCardPresentation', () => {
+  it('keeps backend order for RUB to THB and adds display metadata', () => {
+    expect(
+      buildHomeRateCardPresentation({
+        card: rates[3],
+        selectedCityId: null,
+      }),
+    ).toEqual({
+      left: {
+        title: 'RUB',
+        flag: '🇷🇺',
+        meta: 'СБП, перевод',
+      },
+      right: {
+        title: 'THB',
+        flag: '🇹🇭',
+        meta: 'по qrcode',
+      },
+      ratePrefix: 'от',
+    });
+  });
+
+  it('swaps display order when RUB is on the right side', () => {
+    expect(
+      buildHomeRateCardPresentation({
+        card: {
+          ...rates[0],
+          id: 'thb-rub',
+          label: 'THB/RUB',
+          fromCurrency: 'THB',
+          toCurrency: 'RUB',
+        },
+        selectedCityId: null,
+      }),
+    ).toEqual({
+      left: {
+        title: 'RUB',
+        flag: '🇷🇺',
+        meta: 'СБП, перевод',
+      },
+      right: {
+        title: 'THB',
+        flag: '🇹🇭',
+        meta: 'по qrcode',
+      },
+      ratePrefix: 'от',
+    });
+  });
+
+  it('adds cash meta when a city is selected', () => {
+    expect(
+      buildHomeRateCardPresentation({
+        card: rates[1],
+        selectedCityId: '1',
+      }),
+    ).toEqual({
+      left: {
+        title: 'USDT',
+        flag: '🇺🇸',
+        meta: 'перевод',
+      },
+      right: {
+        title: 'VND',
+        flag: '🇻🇳',
+        meta: 'по qrcode, наличными',
+      },
+      ratePrefix: 'от',
+    });
   });
 });
 

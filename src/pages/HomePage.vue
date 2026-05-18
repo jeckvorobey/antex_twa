@@ -30,7 +30,7 @@
       </section>
 
       <AppSurface class="app-home-rates-card">
-        <div class="app-home-country-chips">
+        <div class="app-home-country-chips app-home-rates-card__chips">
           <q-chip
             v-for="chip in filterChips"
             :key="chip.key"
@@ -43,25 +43,32 @@
         </div>
 
         <button
-          v-for="card in visibleRates"
+          v-for="{ card, presentation } in visibleRateCards"
           :key="card.id"
           type="button"
           class="app-home-rate-item"
           @click="openOrderFromFeatured(card)"
         >
           <div class="app-home-rate-item__side">
-            <div class="app-home-rate-item__currency">{{ getRateSide(card, 'from').title }}</div>
-            <div class="app-home-rate-item__meta">{{ getRateSide(card, 'from').meta }}</div>
+            <div class="app-home-rate-item__currency">
+              <span class="app-home-rate-item__flag">{{ presentation.left.flag }}</span>
+              <span>{{ presentation.left.title }}</span>
+            </div>
+            <div class="app-home-rate-item__meta">{{ presentation.left.meta }}</div>
           </div>
 
           <div class="app-home-rate-item__pill">
+            <span class="app-home-rate-item__rate-prefix">{{ t('home.ratePrefix') }}</span>
             <AppRateValue :value="card.rateDisplay" />
             <q-icon name="arrow_forward" size="14px" />
           </div>
 
           <div class="app-home-rate-item__side app-home-rate-item__side--right">
-            <div class="app-home-rate-item__currency">{{ getRateSide(card, 'to').title }}</div>
-            <div class="app-home-rate-item__meta">{{ getRateSide(card, 'to').meta }}</div>
+            <div class="app-home-rate-item__currency app-home-rate-item__currency--right">
+              <span>{{ presentation.right.title }}</span>
+              <span class="app-home-rate-item__flag">{{ presentation.right.flag }}</span>
+            </div>
+            <div class="app-home-rate-item__meta">{{ presentation.right.meta }}</div>
           </div>
         </button>
 
@@ -128,6 +135,7 @@ import { useUiStore } from '@stores/ui.store';
 import type { MiniappRateCard } from '@types/miniapp';
 import {
   buildHomeAvailableMethods,
+  buildHomeRateCardPresentation,
   buildHomeRateFilterChips,
   buildHomeRateView,
   buildHomeVisibleLocations,
@@ -165,6 +173,13 @@ const rateView = computed(() => buildHomeRateView({
   selectedCountry: selectedCountry.value,
 }));
 const visibleRates = computed(() => rateView.value.visibleRates);
+const visibleRateCards = computed(() => visibleRates.value.map((card) => ({
+  card,
+  presentation: buildHomeRateCardPresentation({
+    card,
+    selectedCityId: selectedCityId.value,
+  }),
+})));
 const canExpand = computed(() => rateView.value.canExpand);
 const defaultExchangeCard = computed(() => (
   featuredRates.value.find((card) => card.id === 'rub-thb')
@@ -246,19 +261,4 @@ function selectCity(cityId: string) {
 function expandRates() {
   ratesExpanded.value = true;
 }
-
-/**
- * Возвращает подпись и мета-текст для одной стороны карточки курса.
- */
-function getRateSide(card: MiniappRateCard, side: 'from' | 'to') {
-  if (side === 'from') {
-    return { title: card.fromCurrency, meta: t('home.rateMeta.market') };
-  }
-
-  return {
-    title: card.toCurrency,
-    meta: selectedCityId.value ? t('home.rateMeta.cashAndQr') : t('home.rateMeta.qrcode'),
-  };
-}
-
 </script>
