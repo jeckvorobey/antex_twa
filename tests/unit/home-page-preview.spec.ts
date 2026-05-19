@@ -41,11 +41,12 @@ describe('HomePage preview rates', () => {
     expect(source).toContain('availableMethods: buildHomeAvailableMethods(selectedCityId.value)');
   });
 
-  it('renders home rate flags and the localized rate prefix', () => {
+  it('renders home rate currency marks through a dedicated component and the localized rate prefix', () => {
     const source = readFileSync(homePagePath, 'utf8');
 
-    expect(source).toContain('presentation.left.flag');
-    expect(source).toContain('presentation.right.flag');
+    expect(source).toContain('AppCurrencyMark');
+    expect(source).toContain(':mark="presentation.left.flag"');
+    expect(source).toContain(':mark="presentation.right.flag"');
     expect(source).toContain("t('home.ratePrefix')");
   });
 

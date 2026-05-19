@@ -1,17 +1,12 @@
-<template>
-  <transition name="app-rate-swap" mode="out-in">
-    <span :key="displayKey" :class="['app-rate-value', shimmer ? 'app-rate-value--shimmer' : null]">
-      {{ value }}
-    </span>
-  </transition>
-</template>
-
 <script setup lang="ts">
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
+
+import { formatReadableNumber } from '@utils/formatters';
 
 const props = withDefaults(
   defineProps<{
-    value: string;
+    value: string | number;
     shimmer?: boolean;
   }>(),
   {
@@ -19,5 +14,15 @@ const props = withDefaults(
   },
 );
 
-const displayKey = computed(() => props.value);
+const { locale } = useI18n();
+const displayValue = computed(() => formatReadableNumber(props.value, locale.value) || String(props.value));
+const displayKey = computed(() => displayValue.value);
 </script>
+
+<template>
+  <transition name="app-rate-swap" mode="out-in">
+    <span :key="displayKey" :class="['app-rate-value', shimmer ? 'app-rate-value--shimmer' : null]">
+      {{ displayValue }}
+    </span>
+  </transition>
+</template>

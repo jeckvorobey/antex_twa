@@ -17,7 +17,7 @@ const rates: MiniappRateCard[] = [
     id: 'usdt-thb',
     label: 'USDT/THB',
     country: 'thailand',
-    countryLabel: 'Тайланд',
+    countryLabel: 'Таиланд',
     fromCurrency: 'USDT',
     toCurrency: 'THB',
     rate: 36.2,
@@ -62,7 +62,7 @@ const rates: MiniappRateCard[] = [
     id: 'rub-thb',
     label: 'RUB/THB',
     country: 'thailand',
-    countryLabel: 'Тайланд',
+    countryLabel: 'Таиланд',
     fromCurrency: 'RUB',
     toCurrency: 'THB',
     rate: 0.41,
@@ -95,7 +95,7 @@ const locations: MiniappLocationItem[] = [
     id: '1',
     city: 'Паттайя',
     country: 'thailand',
-    countryLabel: 'Тайланд',
+    countryLabel: 'Таиланд',
     hours: 'Ежедневно',
     accent: 'ocean',
   },
@@ -314,7 +314,7 @@ describe('buildHomeRateCardPresentation', () => {
     ).toEqual({
       left: {
         title: 'USDT',
-        flag: '🇺🇸',
+        flag: 'USDT',
         meta: 'перевод',
       },
       right: {

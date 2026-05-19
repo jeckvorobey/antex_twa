@@ -12,7 +12,7 @@ const city: MiniappCity = {
   id: 1,
   name: 'Bangkok',
   country: 'thailand',
-  countryRuName: 'Тайланд',
+  countryRuName: 'Таиланд',
   countryCode: 'th',
   countryFlag: '🇹🇭',
   createdAt: '2026-03-28T09:00:00+00:00',

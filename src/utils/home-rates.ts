@@ -1,4 +1,5 @@
 import type { MiniappLocationItem, MiniappRateCard } from '@types/miniapp';
+import { getCurrencyBadge, normalizeCityLabel, normalizeCountryLabel } from '@utils/display';
 
 export const HOME_ALL_FILTER_KEY = 'ALL';
 const HOME_RATE_DISPLAY_PRIORITY = ['RUB', 'USDT', 'THB', 'GEL', 'VND'] as const;
@@ -93,11 +94,15 @@ export function buildHomeVisibleLocations(
   locations: MiniappLocationItem[],
   selectedCountry: string | null,
 ) {
-  if (!selectedCountry) {
-    return locations;
-  }
+  const visibleLocations = !selectedCountry
+    ? locations
+    : locations.filter((location) => location.country === selectedCountry);
 
-  return locations.filter((location) => location.country === selectedCountry);
+  return visibleLocations.map((location) => ({
+    ...location,
+    city: normalizeCityLabel(location.city),
+    countryLabel: normalizeCountryLabel(location.countryLabel),
+  }));
 }
 
 export function resolveHomeCountryByCity(
@@ -124,12 +129,12 @@ export function buildHomeRateCardPresentation({
   return {
     left: {
       title: leftCurrency,
-      flag: getCurrencyFlag(leftCurrency),
+      flag: getCurrencyBadge(leftCurrency),
       meta: getHomeRateSourceLabel(leftCurrency),
     },
     right: {
       title: rightCurrency,
-      flag: getCurrencyFlag(rightCurrency),
+      flag: getCurrencyBadge(rightCurrency),
       meta: selectedCityId ? 'по qrcode, наличными' : 'по qrcode',
     },
     ratePrefix: 'от',
@@ -149,21 +154,4 @@ function sortHomeRateCurrencies(left: string, right: string): [string, string] {
   }
 
   return leftPriority <= rightPriority ? [left, right] : [right, left];
-}
-
-function getCurrencyFlag(currency: string) {
-  switch (currency) {
-    case 'RUB':
-      return '🇷🇺';
-    case 'THB':
-      return '🇹🇭';
-    case 'GEL':
-      return '🇬🇪';
-    case 'VND':
-      return '🇻🇳';
-    case 'USDT':
-      return '🇺🇸';
-    default:
-      return '🏳️';
-  }
 }

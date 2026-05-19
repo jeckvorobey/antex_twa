@@ -19,13 +19,13 @@
                     behavior="menu"
                   />
                   <q-input
-                    v-model.number="amountSell"
+                    :model-value="formattedAmountSell"
                     class="app-exchange-calculator__amount"
-                    type="number"
+                    type="text"
                     borderless
                     dense
+                    inputmode="decimal"
                     input-class="text-right"
-                    min="1"
                     @update:model-value="handleSellAmountInput"
                   />
                 </div>
@@ -45,13 +45,13 @@
                     behavior="menu"
                   />
                   <q-input
-                    v-model.number="amountBuy"
+                    :model-value="formattedAmountBuy"
                     class="app-exchange-calculator__amount"
-                    type="number"
+                    type="text"
                     borderless
                     dense
+                    inputmode="decimal"
                     input-class="text-right text-antex-gold"
-                    min="1"
                     @update:model-value="handleBuyAmountInput"
                   />
                 </div>
@@ -193,7 +193,8 @@ import { useExchangeStore } from '@stores/exchange.store';
 import { useOrdersStore } from '@stores/orders.store';
 import type { MiniappRateCard } from '@types/miniapp';
 import { getMiniappErrorMessageKey } from '@utils/api-errors';
-import { formatMiniappDateTime } from '@utils/formatters';
+import { normalizeCityLabel, normalizeCountryLabel } from '@utils/display';
+import { formatMiniappDateTime, formatReadableNumber, parseReadableNumber } from '@utils/formatters';
 import {
   buildReceiveLocationLabel,
   buildBuyCurrencyOptions,
@@ -235,7 +236,9 @@ const countryOptions = computed(() =>
   buyOptions.value
     .map((option) => ({
       value: getCountryByCurrency(exchangeStore.screen?.pairs ?? [], option.value),
-      label: getCountryLabelByCurrency(exchangeStore.screen?.pairs ?? [], option.value) ?? option.value,
+      label: normalizeCountryLabel(
+        getCountryLabelByCurrency(exchangeStore.screen?.pairs ?? [], option.value) ?? option.value,
+      ),
     }))
     .filter((option): option is { value: string; label: string } => Boolean(option.value)),
 );
@@ -255,6 +258,8 @@ const receiveLocationLabel = computed(() => buildReceiveLocationLabel({
   countryLabel: selectedCountryLabel.value,
   cityLabel: selectedCityLabel.value,
 }));
+const formattedAmountSell = computed(() => formatReadableNumber(amountSell.value, locale.value));
+const formattedAmountBuy = computed(() => formatReadableNumber(amountBuy.value, locale.value));
 
 function normalizeCountryKey(value: unknown): string {
   if (!value) {
@@ -293,7 +298,7 @@ const cityOptions = computed(() =>
       return candidates.includes(selected);
     })
     .map((city) => ({
-      label: city.name,
+      label: normalizeCityLabel(city.name),
       value: city.id,
     })),
 );
@@ -323,7 +328,7 @@ const currentRateLabel = computed(() => {
     return t('exchange.quoteUnavailable');
   }
 
-  return exchangeStore.quote.rateText;
+  return `1 ${exchangeStore.quote.currencySell} = ${formatReadableNumber(exchangeStore.quote.rate, locale.value)} ${exchangeStore.quote.currencyBuy}`;
 });
 
 const canSubmit = computed(() => {
@@ -398,12 +403,14 @@ function recalculateFromBuy() {
   amountBuy.value = exchangeStore.quote?.amountBuy ?? amountBuy.value;
 }
 
-function handleSellAmountInput() {
+function handleSellAmountInput(value: string | number | null) {
+  amountSell.value = parseReadableNumber(value);
   lastEditedField.value = 'sell';
   recalculateFromSell();
 }
 
-function handleBuyAmountInput() {
+function handleBuyAmountInput(value: string | number | null) {
+  amountBuy.value = parseReadableNumber(value);
   lastEditedField.value = 'buy';
   recalculateFromBuy();
 }

@@ -9,8 +9,15 @@
         <div class="app-order-sheet__field">
           <div class="app-order-sheet__label">{{ t('order.amount') }}</div>
           <div class="app-order-sheet__control">
-            <q-input v-model.number="amountSell" class="app-order-sheet__input" type="number" borderless dense
-              min="1" />
+            <q-input
+              :model-value="formattedAmountSell"
+              class="app-order-sheet__input"
+              type="text"
+              inputmode="decimal"
+              borderless
+              dense
+              @update:model-value="handleAmountSellInput"
+            />
             <span class="app-order-sheet__suffix">{{ currencySell }}</span>
           </div>
         </div>
@@ -53,6 +60,7 @@ import { useOrdersStore } from '@stores/orders.store';
 import { useUiStore } from '@stores/ui.store';
 import { getMiniappErrorMessageKey } from '@utils/api-errors';
 import { buildBuyCurrencyOptions, getDefaultReceiveMethod } from '@utils/exchange';
+import { formatReadableNumber, parseReadableNumber } from '@utils/formatters';
 
 const props = defineProps<{
   modelValue: boolean;
@@ -62,7 +70,7 @@ const emit = defineEmits<{
   'update:modelValue': [value: boolean];
 }>();
 
-const { t } = useI18n();
+const { locale, t } = useI18n();
 const router = useRouter();
 const authStore = useAuthStore();
 const exchangeStore = useExchangeStore();
@@ -72,6 +80,7 @@ const uiStore = useUiStore();
 const amountSell = ref<number | null>(null);
 const currencyBuy = ref<string>('THB');
 const contactTelegram = ref<string>('');
+const formattedAmountSell = computed(() => formatReadableNumber(amountSell.value, locale.value));
 
 const currencySell = computed(() => uiStore.orderContext?.currencySell ?? exchangeStore.quote?.currencySell ?? 'RUB');
 const currencyOptions = computed(() => {
@@ -118,6 +127,10 @@ watch(currencyOptions, (options) => {
 
   currencyBuy.value = options[0]?.value ?? currencyBuy.value;
 });
+
+function handleAmountSellInput(value: string | number | null) {
+  amountSell.value = parseReadableNumber(value);
+}
 
 /**
  * Отправляет miniapp-заявку и показывает локализованное сообщение по коду ошибки.

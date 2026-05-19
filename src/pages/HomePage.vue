@@ -51,7 +51,7 @@
         >
           <div class="app-home-rate-item__side">
             <div class="app-home-rate-item__currency">
-              <span class="app-home-rate-item__flag">{{ presentation.left.flag }}</span>
+              <AppCurrencyMark class="app-home-rate-item__flag" :mark="presentation.left.flag" />
               <span>{{ presentation.left.title }}</span>
             </div>
             <div class="app-home-rate-item__meta">{{ presentation.left.meta }}</div>
@@ -66,7 +66,7 @@
           <div class="app-home-rate-item__side app-home-rate-item__side--right">
             <div class="app-home-rate-item__currency app-home-rate-item__currency--right">
               <span>{{ presentation.right.title }}</span>
-              <span class="app-home-rate-item__flag">{{ presentation.right.flag }}</span>
+              <AppCurrencyMark class="app-home-rate-item__flag" :mark="presentation.right.flag" />
             </div>
             <div class="app-home-rate-item__meta">{{ presentation.right.meta }}</div>
           </div>
@@ -127,6 +127,7 @@ import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 import AppButton from '@components/ui/AppButton.vue';
+import AppCurrencyMark from '@components/ui/AppCurrencyMark.vue';
 import AppRateValue from '@components/ui/AppRateValue.vue';
 import AppSectionTitle from '@components/ui/AppSectionTitle.vue';
 import AppSurface from '@components/ui/AppSurface.vue';

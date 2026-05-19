@@ -80,10 +80,51 @@ export function formatMiniappLongDate(value: string, locale?: string | null): st
  * Форматирует сумму валюты: целые — без дробной части, дробные — до 2 знаков.
  */
 export function formatAmount(value: number, locale?: string | null): string {
+  return formatReadableNumber(value, locale);
+}
+
+/**
+ * Приводит строку с пробелами и локальным разделителем к числу для полей ввода.
+ */
+export function parseReadableNumber(value: string | number | null | undefined): number | null {
+  if (value == null || value === '') {
+    return null;
+  }
+
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : null;
+  }
+
+  const normalized = value
+    .trim()
+    .replace(/\s+/g, '')
+    .replace(/,/g, '.')
+    .replace(/[^\d.-]/g, '');
+
+  if (!normalized || normalized === '-' || normalized === '.' || normalized === '-.') {
+    return null;
+  }
+
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+/**
+ * Форматирует число или числовую строку в читаемый вид для всего miniapp.
+ */
+export function formatReadableNumber(
+  value: string | number | null | undefined,
+  locale?: string | null,
+): string {
+  const parsed = parseReadableNumber(value);
+  if (parsed == null) {
+    return '';
+  }
+
   return new Intl.NumberFormat(resolveDateLocale(locale), {
-    minimumFractionDigits: Number.isInteger(value) ? 0 : 2,
+    minimumFractionDigits: Number.isInteger(parsed) ? 0 : 2,
     maximumFractionDigits: 2,
   })
-    .format(value)
+    .format(parsed)
     .replace(/\u00A0/g, ' ');
 }
