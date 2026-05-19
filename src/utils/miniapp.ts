@@ -13,18 +13,16 @@ type QuoteParams = {
 
 const STATUS_LABELS: Record<number, string> = {
   1: 'status.new',
-  2: 'status.confirmed',
-  3: 'status.processing',
-  4: 'status.completed',
-  5: 'status.cancelled',
+  2: 'status.processing',
+  3: 'status.completed',
+  4: 'status.cancelled',
 };
 
 const STATUS_TONES: Record<number, string> = {
   1: 'warning',
   2: 'info',
-  3: 'warning',
-  4: 'positive',
-  5: 'negative',
+  3: 'positive',
+  4: 'negative',
 };
 
 export function getStatusLabelKey(status: number) {

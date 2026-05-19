@@ -5,6 +5,7 @@ vi.mock('@boot/axios', () => ({
   api: {
     get: vi.fn(),
     post: vi.fn(),
+    put: vi.fn(),
   },
 }));
 
@@ -57,12 +58,16 @@ describe('auth store', () => {
       data: {
         id: 1,
         username: 'fresh_user',
+        phone: null,
         first_name: 'Fresh',
         last_name: 'User',
         language_code: 'ru',
         is_bot: false,
         is_premium: true,
         role: 9,
+        trusted_contact: 'fresh_user',
+        trusted_contact_source: 'username',
+        trusted_contact_ready: true,
       },
     });
 
@@ -75,6 +80,42 @@ describe('auth store', () => {
     expect(api.get).toHaveBeenCalledWith('/api/users/me');
     expect(localStorage.getItem('access_token')).toBe('fresh-token');
     expect(store.user?.username).toBe('fresh_user');
+    expect(store.trustedContactReady).toBe(true);
     expect(setAppLocale).toHaveBeenCalledWith('ru');
+  });
+
+  it('сохраняет trusted phone через auth seam и обновляет readiness локально', async () => {
+    vi.mocked(api.put).mockResolvedValue({
+      data: {
+        ready: true,
+        contact: '+79991234567',
+        source: 'phone',
+        phone: '+79991234567',
+        username: null,
+      },
+    });
+
+    const store = useAuthStore();
+    store.user = {
+      id: 1,
+      username: null,
+      phone: null,
+      first_name: 'Fresh',
+      last_name: 'User',
+      language_code: 'ru',
+      is_bot: false,
+      is_premium: true,
+      role: 9,
+      trusted_contact: null,
+      trusted_contact_source: null,
+      trusted_contact_ready: false,
+    };
+
+    await store.saveTrustedPhone('+79991234567');
+
+    expect(api.put).toHaveBeenCalledWith('/api/auth/contact', { phone: '+79991234567' });
+    expect(store.user?.phone).toBe('+79991234567');
+    expect(store.user?.trusted_contact).toBe('+79991234567');
+    expect(store.trustedContactReady).toBe(true);
   });
 });

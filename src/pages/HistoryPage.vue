@@ -76,10 +76,10 @@ const filteredGroups = computed(() =>
         }
 
         if (activeFilter.value === 'active') {
-          return [1, 2, 3].includes(item.status);
+          return [1, 2].includes(item.status);
         }
 
-        return [4, 5].includes(item.status);
+        return [3, 4].includes(item.status);
       }),
     }))
     .filter((group) => group.items.length > 0),

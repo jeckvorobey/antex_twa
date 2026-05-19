@@ -3,6 +3,8 @@ const MINIAPP_ERROR_KEYS: Record<string, string> = {
   RATE_UNAVAILABLE: 'errors.rate_unavailable',
   UNSUPPORTED_PAIR: 'errors.unsupported_pair',
   CITY_MANAGER_NOT_CONFIGURED: 'errors.city_manager_missing',
+  TRUSTED_CONTACT_NOT_READY: 'errors.trusted_contact_not_ready',
+  CITY_REQUIRED_FOR_CASH: 'errors.city_required',
 };
 
 /**

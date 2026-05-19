@@ -1,12 +1,16 @@
 export interface MiniappUser {
   id: number;
   username: string | null;
+  phone: string | null;
   first_name: string | null;
   last_name: string | null;
   language_code: string | null;
   is_bot: boolean;
   is_premium: boolean;
   role: number;
+  trusted_contact: string | null;
+  trusted_contact_source: string | null;
+  trusted_contact_ready: boolean;
 }
 
 export interface MiniappCity {
@@ -132,19 +136,19 @@ export interface MiniappBankSummary {
 
 export interface MiniappOrderItem {
   id: number;
-  cityId: number;
+  cityId: number | null;
+  country: string;
   currencySell: string;
   amountSell: number;
   currencyBuy: string;
   amountBuy: number | null;
   rate: number | null;
   status: number;
-  address: string | null;
-  methodGet: string | null;
+  methodGet: string;
   contactTelegram: string | null;
   createdAt: string;
   updatedAt: string;
-  city: MiniappCity;
+  city: MiniappCity | null;
 }
 
 export interface MiniappOrdersResponse {
@@ -152,11 +156,20 @@ export interface MiniappOrdersResponse {
 }
 
 export interface MiniappOrderCreate {
+  country: string;
+  cityId?: number | null;
   currencySell: string;
   currencyBuy: string;
   amountSell: number;
-  contactTelegram?: string | null;
-  methodGet?: string | null;
+  methodGet: 'qrcode' | 'cash';
+}
+
+export interface TrustedContactState {
+  ready: boolean;
+  contact: string | null;
+  source: 'username' | 'phone' | null;
+  phone: string | null;
+  username: string | null;
 }
 
 export interface MiniappMenuItem {

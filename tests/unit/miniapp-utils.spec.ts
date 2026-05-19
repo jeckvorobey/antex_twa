@@ -11,9 +11,9 @@ import type { MiniappCity } from '@types/miniapp';
 const city: MiniappCity = {
   id: 1,
   name: 'Bangkok',
-  country: 'THAILAND',
-  countryRuName: 'Таиланд',
-  countryCode: 'TH',
+  country: 'thailand',
+  countryRuName: 'Тайланд',
+  countryCode: 'th',
   countryFlag: '🇹🇭',
   createdAt: '2026-03-28T09:00:00+00:00',
   updatedAt: '2026-03-28T09:00:00+00:00',
@@ -31,9 +31,9 @@ describe('miniapp utils', () => {
         rate: 2.7,
         status: 1,
         cityId: 1,
-        address: null,
+        country: 'thailand',
         methodGet: 'cash',
-        contactTelegram: '@serg',
+        contactTelegram: 'serg',
         createdAt: '2026-03-28T09:30:00+00:00',
         updatedAt: '2026-03-28T09:30:00+00:00',
         city,
@@ -45,11 +45,11 @@ describe('miniapp utils', () => {
         currencyBuy: 'THB',
         amountBuy: 4950,
         rate: 33,
-        status: 4,
+        status: 3,
         cityId: 1,
-        address: null,
+        country: 'thailand',
         methodGet: 'cash',
-        contactTelegram: '@serg',
+        contactTelegram: 'serg',
         createdAt: '2026-03-28T10:30:00+00:00',
         updatedAt: '2026-03-28T10:30:00+00:00',
         city,
@@ -62,8 +62,8 @@ describe('miniapp utils', () => {
   });
 
   it('maps status keys and tones', () => {
-    expect(getStatusLabelKey(4)).toBe('status.completed');
-    expect(getStatusTone(4)).toBe('positive');
+    expect(getStatusLabelKey(3)).toBe('status.completed');
+    expect(getStatusTone(3)).toBe('positive');
     expect(getStatusTone(99)).toBe('warning');
   });
 

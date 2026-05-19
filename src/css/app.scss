@@ -978,6 +978,10 @@ body.body--light .q-page,
   position: relative;
 }
 
+.app-page--exchange {
+  overflow: hidden;
+}
+
 .app-page::before {
   content: '';
   position: absolute;
@@ -991,7 +995,9 @@ body.body--light .q-page,
 
 .app-screen {
   gap: 16px;
+  width: min(100%, 390px);
   max-width: 390px;
+  min-width: 0;
   margin: 0 auto;
   position: relative;
   z-index: 1;
@@ -1002,6 +1008,10 @@ body.body--light .q-page,
 .app-screen--history,
 .app-screen--profile {
   padding-bottom: 12px;
+}
+
+.app-screen--exchange {
+  min-height: 0;
 }
 
 .app-header-bar {
@@ -1135,6 +1145,20 @@ body.body--light .q-page,
 .app-home-location-chips::-webkit-scrollbar,
 .app-exchange-pairs::-webkit-scrollbar {
   display: none;
+}
+
+.app-exchange-pairs--carousel {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding-bottom: 2px;
+}
+
+.app-exchange-pairs--carousel .app-exchange-pair-card {
+  flex: 0 0 calc((100% - 8px) / 2.25);
+  min-width: 0;
+  scroll-snap-align: start;
 }
 
 .app-home-country-chips .q-chip,
@@ -1353,8 +1377,21 @@ body.body--light .q-page,
   background: rgba(10, 31, 28, 0.92);
 }
 
+.app-exchange-calculator__control,
+.app-order-sheet__control {
+  width: 100%;
+  min-width: 0;
+}
+
 .app-exchange-calculator__currency {
   width: 82px;
+}
+
+.app-exchange-calculator__currency,
+.app-exchange-calculator__amount,
+.app-order-sheet__input,
+.app-order-sheet__select {
+  min-width: 0;
 }
 
 .app-exchange-calculator__currency .q-field__control,
@@ -1436,7 +1473,7 @@ body.body--light .q-page,
 
 .app-exchange-pair-card {
   display: flex;
-  flex: 0 0 220px;
+  width: 100%;
   flex-direction: column;
   gap: 12px;
   padding: 14px;
@@ -1458,6 +1495,10 @@ body.body--light .q-page,
 
 .app-exchange-pair-card__button {
   min-height: 40px;
+}
+
+.app-exchange-submit {
+  flex: 0 0 auto;
 }
 
 .app-group-label--history {
@@ -1570,6 +1611,21 @@ body.body--light .q-page,
 .app-order-sheet__input,
 .app-order-sheet__select {
   flex: 1 1 auto;
+}
+
+.app-order-sheet__methods {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+}
+
+.app-order-sheet__methods .q-radio {
+  margin-right: 0;
+  min-width: 0;
+}
+
+.app-order-sheet__methods .q-radio__label {
+  white-space: normal;
 }
 
 .app-order-sheet__suffix {

@@ -6,12 +6,14 @@ import { describe, expect, it } from 'vitest';
 const exchangePagePath = resolve(process.cwd(), 'src/pages/ExchangePage.vue');
 
 describe('ExchangePage rate formatting', () => {
-  it('uses backend-prepared rate display values', () => {
+  it('uses direct submit flow without modal trigger or swap CTA', () => {
     const source = readFileSync(exchangePagePath, 'utf8');
 
-    expect(source).toContain('pair.rateDisplay');
-    expect(source).toContain('exchangeStore.quote.rateText');
-    expect(source).not.toContain('formatPairRate');
-    expect(source).not.toContain('toFixed(');
+    expect(source).toContain('selectedMethod');
+    expect(source).toContain('selectedCountry');
+    expect(source).toContain('submitOrder');
+    expect(source).not.toContain('swapCurrencies');
+    expect(source).not.toContain('openOrderSheet');
+    expect(source).not.toContain('fetchQuote');
   });
 });
