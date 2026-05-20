@@ -14,17 +14,47 @@ import type { MiniappLocationItem, MiniappRateCard } from '@types/miniapp';
 
 const rates: MiniappRateCard[] = [
   {
+    id: 'rub-thb',
+    label: 'RUB/THB',
+    country: 'thailand',
+    countryLabel: 'Таиланд',
+    fromCurrency: 'RUB',
+    toCurrency: 'THB',
+    rate: 0.41,
+    rateDisplay: '0.41',
+    rateText: '1 RUB = 0.41 THB',
+    amountSellExample: 5000,
+    amountBuyExample: 2050,
+    updatedAt: '2026-05-12T10:00:00Z',
+    availableMethods: ['qrcode', 'cash'],
+  },
+  {
+    fromCurrency: 'USDT',
     id: 'usdt-thb',
     label: 'USDT/THB',
     country: 'thailand',
     countryLabel: 'Таиланд',
-    fromCurrency: 'USDT',
     toCurrency: 'THB',
     rate: 36.2,
     rateDisplay: '36.20',
     rateText: '1 USDT = 36.2 THB',
     amountSellExample: 100,
     amountBuyExample: 3620,
+    updatedAt: '2026-05-12T10:00:00Z',
+    availableMethods: ['qrcode', 'cash'],
+  },
+  {
+    id: 'rub-vnd',
+    label: 'RUB/VND',
+    country: 'vietnam',
+    countryLabel: 'Вьетнам',
+    fromCurrency: 'RUB',
+    toCurrency: 'VND',
+    rate: 280,
+    rateDisplay: '280.00',
+    rateText: '1 RUB = 280 VND',
+    amountSellExample: 5000,
+    amountBuyExample: 1400000,
     updatedAt: '2026-05-12T10:00:00Z',
     availableMethods: ['qrcode', 'cash'],
   },
@@ -44,6 +74,21 @@ const rates: MiniappRateCard[] = [
     availableMethods: ['qrcode', 'cash'],
   },
   {
+    id: 'rub-gel',
+    label: 'RUB/GEL',
+    country: 'georgia',
+    countryLabel: 'Грузия',
+    fromCurrency: 'RUB',
+    toCurrency: 'GEL',
+    rate: 0.03,
+    rateDisplay: '0.03',
+    rateText: '1 RUB = 0.03 GEL',
+    amountSellExample: 5000,
+    amountBuyExample: 150,
+    updatedAt: '2026-05-12T10:00:00Z',
+    availableMethods: ['qrcode', 'cash'],
+  },
+  {
     id: 'usdt-gel',
     label: 'USDT/GEL',
     country: 'georgia',
@@ -55,36 +100,6 @@ const rates: MiniappRateCard[] = [
     rateText: '1 USDT = 2.7 GEL',
     amountSellExample: 100,
     amountBuyExample: 270,
-    updatedAt: '2026-05-12T10:00:00Z',
-    availableMethods: ['qrcode', 'cash'],
-  },
-  {
-    id: 'rub-thb',
-    label: 'RUB/THB',
-    country: 'thailand',
-    countryLabel: 'Таиланд',
-    fromCurrency: 'RUB',
-    toCurrency: 'THB',
-    rate: 0.41,
-    rateDisplay: '0.41',
-    rateText: '1 RUB = 0.41 THB',
-    amountSellExample: 5000,
-    amountBuyExample: 2050,
-    updatedAt: '2026-05-12T10:00:00Z',
-    availableMethods: ['qrcode', 'cash'],
-  },
-  {
-    id: 'rub-vnd',
-    label: 'RUB/VND',
-    country: 'vietnam',
-    countryLabel: 'Вьетнам',
-    fromCurrency: 'RUB',
-    toCurrency: 'VND',
-    rate: 280,
-    rateDisplay: '280.00',
-    rateText: '1 RUB = 280 VND',
-    amountSellExample: 5000,
-    amountBuyExample: 1400000,
     updatedAt: '2026-05-12T10:00:00Z',
     availableMethods: ['qrcode', 'cash'],
   },
@@ -150,14 +165,14 @@ describe('buildHomeRateView', () => {
     });
 
     expect(view.visibleRates.map((rate) => rate.id)).toEqual([
+      'rub-thb',
       'usdt-thb',
-      'usdt-vnd',
-      'usdt-gel',
+      'rub-vnd',
     ]);
     expect(view.canExpand).toBe(true);
   });
 
-  it('filters THB pairs by currency participation on both sides', () => {
+  it('keeps the backend priority order after THB filtering', () => {
     const view = buildHomeRateView({
       rates,
       filterKey: 'THB',
@@ -167,8 +182,8 @@ describe('buildHomeRateView', () => {
     });
 
     expect(view.filteredRates.map((rate) => rate.id)).toEqual([
-      'usdt-thb',
       'rub-thb',
+      'usdt-thb',
     ]);
   });
 
@@ -211,11 +226,12 @@ describe('buildHomeRateView', () => {
     });
 
     expect(view.visibleRates.map((rate) => rate.id)).toEqual([
-      'usdt-thb',
-      'usdt-vnd',
-      'usdt-gel',
       'rub-thb',
+      'usdt-thb',
       'rub-vnd',
+      'usdt-vnd',
+      'rub-gel',
+      'usdt-gel',
     ]);
   });
 
@@ -229,8 +245,8 @@ describe('buildHomeRateView', () => {
     });
 
     expect(view.filteredRates.map((rate) => rate.id)).toEqual([
-      'usdt-thb',
       'rub-thb',
+      'usdt-thb',
     ]);
   });
 });
@@ -260,7 +276,7 @@ describe('buildHomeRateCardPresentation', () => {
   it('keeps backend order for RUB to THB and adds display metadata', () => {
     expect(
       buildHomeRateCardPresentation({
-        card: rates[3],
+        card: rates[0],
         selectedCityId: null,
       }),
     ).toEqual({
@@ -308,7 +324,7 @@ describe('buildHomeRateCardPresentation', () => {
   it('adds cash meta when a city is selected', () => {
     expect(
       buildHomeRateCardPresentation({
-        card: rates[1],
+        card: rates[3],
         selectedCityId: '1',
       }),
     ).toEqual({
