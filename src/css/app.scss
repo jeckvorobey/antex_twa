@@ -818,8 +818,6 @@ body.body--dark .q-page {
 .app-dialog--bottom .q-card {
   width: 100%;
   max-width: 390px;
-  border-bottom-right-radius: 0;
-  border-bottom-left-radius: 0;
 }
 
 .app-sheet {
@@ -1354,12 +1352,6 @@ body.body--light .q-page,
   overflow: hidden;
 }
 
-.app-exchange-calculator__field {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
 .app-exchange-calculator__label {
   color: var(--antex-text-secondary);
   font-size: 12px;
@@ -1384,7 +1376,7 @@ body.body--light .q-page,
 }
 
 .app-exchange-calculator__currency {
-  width: 82px;
+  width: 93px;
 }
 
 .app-exchange-calculator__currency,
@@ -1561,15 +1553,6 @@ body.body--light .q-page,
 .app-dialog--bottom .q-dialog__inner {
   padding: 0;
 }
-
-.app-dialog--bottom .q-card {
-  max-width: 390px;
-  border-top-left-radius: 24px;
-  border-top-right-radius: 24px;
-  border-bottom-left-radius: 0;
-  border-bottom-right-radius: 0;
-}
-
 
 .app-order-sheet__fields {
   display: flex;

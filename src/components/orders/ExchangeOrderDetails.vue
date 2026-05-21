@@ -2,7 +2,7 @@
   <div class="column q-gutter-y-md">
     <AppSurface class="app-exchange-calculator">
       <div class="column q-gutter-sm">
-        <div class="app-exchange-calculator__field">
+        <div>
           <div class="app-exchange-calculator__label">{{ t('exchange.payAmount') }}</div>
           <div class="app-exchange-calculator__control">
             <q-select
