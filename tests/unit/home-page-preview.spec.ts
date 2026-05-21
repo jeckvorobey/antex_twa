@@ -39,6 +39,8 @@ describe('HomePage preview rates', () => {
     const source = readFileSync(homePagePath, 'utf8');
 
     expect(source).toContain('availableMethods: buildHomeAvailableMethods(selectedCityId.value)');
+    expect(source).toContain('country: selectedCountry.value');
+    expect(source).toContain('cityId: selectedCityId.value ? Number(selectedCityId.value) : null');
   });
 
   it('renders home rate currency marks through a dedicated component and the localized rate prefix', () => {

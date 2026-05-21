@@ -1,4 +1,5 @@
-import type { MiniappQuoteResponse } from '@types/miniapp';
+import type { MiniappCity, MiniappQuoteResponse } from '@types/miniapp';
+import { normalizeCityLabel, normalizeCountryLabel } from '@utils/display';
 
 export interface ExchangePairLike {
   id: string;
@@ -8,6 +9,16 @@ export interface ExchangePairLike {
   countryLabel?: string;
   rate?: number;
   availableMethods?: string[];
+}
+
+export interface ExchangeOption {
+  label: string;
+  value: string;
+}
+
+export interface ExchangeCityOption {
+  label: string;
+  value: number;
 }
 
 export type ExchangeEditedField = 'sell' | 'buy';
@@ -33,6 +44,28 @@ function parsePairId(id: string) {
   };
 }
 
+function normalizeCountryKey(value: unknown): string {
+  if (!value) {
+    return '';
+  }
+
+  const raw = String(value).trim().toLowerCase();
+  const withoutPrefix = raw.replace(/^country\./, '');
+  const map: Record<string, string> = {
+    th: 'thailand',
+    thailand: 'thailand',
+    тайланд: 'thailand',
+    vn: 'vietnam',
+    vietnam: 'vietnam',
+    вьетнам: 'vietnam',
+    ge: 'georgia',
+    georgia: 'georgia',
+    грузия: 'georgia',
+  };
+
+  return map[withoutPrefix] ?? withoutPrefix;
+}
+
 /**
  * Строит варианты валюты получения из backend-driven списка pair ids.
  */
@@ -48,8 +81,22 @@ export function buildBuyCurrencyOptions(
     .map((currency) => ({ label: currency, value: currency }));
 }
 
+export function buildCountryOptions(
+  pairs: ExchangePairLike[],
+  currencySell: string,
+): ExchangeOption[] {
+  return buildBuyCurrencyOptions(pairs, currencySell)
+    .map((option) => ({
+      value: getCountryByCurrency(pairs, option.value),
+      label: normalizeCountryLabel(
+        getCountryLabelByCurrency(pairs, option.value) ?? option.value,
+      ),
+    }))
+    .filter((option): option is ExchangeOption => Boolean(option.value));
+}
+
 export function getDefaultReceiveMethod(
-  currencyBuy: string,
+  _currencyBuy: string,
   availableMethods: string[] | null,
 ): 'qrcode' | 'cash' {
   if (availableMethods?.includes('qrcode')) {
@@ -61,6 +108,17 @@ export function getDefaultReceiveMethod(
   }
 
   return 'qrcode';
+}
+
+export function getPreferredReceiveMethod(
+  availableMethods: string[] | null,
+  selectedCityId: number | null,
+): 'qrcode' | 'cash' {
+  if (selectedCityId && availableMethods?.includes('cash')) {
+    return 'cash';
+  }
+
+  return getDefaultReceiveMethod('', availableMethods);
 }
 
 export function getReceiveLocationTitleKey(method: 'qrcode' | 'cash') {
@@ -188,6 +246,31 @@ export function getCurrencyByCountry(
 ) {
   const directPair = pairs.find((pair) => pair.country === country);
   return directPair ? parsePairId(directPair.id).currencyBuy : null;
+}
+
+export function buildCityOptions(
+  cities: MiniappCity[],
+  selectedCountry: string | null,
+): ExchangeCityOption[] {
+  const normalizedSelectedCountry = normalizeCountryKey(selectedCountry);
+  if (!normalizedSelectedCountry) {
+    return [];
+  }
+
+  return cities
+    .filter((city) => {
+      const candidates = [
+        normalizeCountryKey(city.country),
+        normalizeCountryKey(city.countryCode),
+        normalizeCountryKey(city.countryRuName),
+      ];
+
+      return candidates.includes(normalizedSelectedCountry);
+    })
+    .map((city) => ({
+      label: normalizeCityLabel(city.name),
+      value: city.id,
+    }));
 }
 
 export function resetCityForMethod(method: string, cityId: number | null) {

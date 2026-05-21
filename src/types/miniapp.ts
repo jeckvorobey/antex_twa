@@ -164,6 +164,10 @@ export interface MiniappOrderCreate {
   methodGet: 'qrcode' | 'cash';
 }
 
+export interface MiniappCitiesResponse {
+  items: MiniappCity[];
+}
+
 export interface TrustedContactState {
   ready: boolean;
   contact: string | null;

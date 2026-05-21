@@ -3,120 +3,24 @@
     <div class="app-screen app-screen--exchange fit column no-wrap">
       <q-form class="col column no-wrap" @submit.prevent="submitOrder">
         <div class="col column q-gutter-md no-wrap overflow-auto">
-          <AppSurface class="app-exchange-calculator">
-            <div class="column q-gutter-sm">
-              <div class="app-exchange-calculator__field">
-                <div class="app-exchange-calculator__label">{{ t('exchange.payAmount') }}</div>
-                <div class="app-exchange-calculator__control">
-                  <q-select
-                    v-model="selectedSellCurrency"
-                    :options="sellOptions"
-                    class="app-exchange-calculator__currency"
-                    borderless
-                    dense
-                    emit-value
-                    map-options
-                    behavior="menu"
-                  />
-                  <q-input
-                    :model-value="formattedAmountSell"
-                    class="app-exchange-calculator__amount"
-                    type="text"
-                    borderless
-                    dense
-                    inputmode="decimal"
-                    input-class="text-right"
-                    @update:model-value="handleSellAmountInput"
-                  />
-                </div>
-              </div>
+          <ExchangeOrderDetails
+            v-model:selected-sell-currency="selectedSellCurrency"
+            v-model:selected-buy-currency="selectedBuyCurrency"
+            v-model:amount-sell="amountSell"
+            v-model:amount-buy="amountBuy"
+            v-model:selected-country="selectedCountry"
+            v-model:selected-method="selectedMethod"
+            v-model:selected-city-id="selectedCityId"
+            :sell-options="sellOptions"
+            :buy-options="buyOptions"
+            :rate-label="currentRateLabel"
+            :country-options="countryOptions"
+            :city-options="cityOptions"
+          />
 
-              <div class="app-exchange-calculator__field">
-                <div class="app-exchange-calculator__label">{{ t('exchange.receiveCurrency') }}</div>
-                <div class="app-exchange-calculator__control">
-                  <q-select
-                    v-model="selectedBuyCurrency"
-                    :options="buyOptions"
-                    class="app-exchange-calculator__currency"
-                    borderless
-                    dense
-                    emit-value
-                    map-options
-                    behavior="menu"
-                  />
-                  <q-input
-                    :model-value="formattedAmountBuy"
-                    class="app-exchange-calculator__amount"
-                    type="text"
-                    borderless
-                    dense
-                    inputmode="decimal"
-                    input-class="text-right text-antex-gold"
-                    @update:model-value="handleBuyAmountInput"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div class="app-exchange-calculator__rate">
-              {{ currentRateLabel }}
-            </div>
-          </AppSurface>
-
-          <div class="app-chip-row app-chip-row--exchange">
-            <q-chip
-              v-for="country in countryOptions"
-              :key="country.value"
-              clickable
-              :class="['app-chip', selectedCountry === country.value ? 'app-chip--active' : null]"
-              @click="selectCountry(country.value)"
-            >
-              {{ country.label }}
-            </q-chip>
-          </div>
-
-          <AppSurface class="app-order-sheet">
+          <AppSurface v-if="!authStore.trustedContactReady" class="q-pa-md">
             <div class="app-order-sheet__fields">
               <div class="app-order-sheet__field">
-                <div class="app-order-sheet__label">{{ receiveLocationTitle }}</div>
-                <div class="row q-col-gutter-sm">
-                  <div v-if="receiveLocationLabel" class="col-12">
-                    <div class="app-order-sheet__control">
-                      <span class="text-body2">{{ receiveLocationLabel }}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="app-order-sheet__field">
-                <div class="app-order-sheet__label">{{ t('exchange.receiveMethod') }}</div>
-                <q-option-group
-                  v-model="selectedMethod"
-                  class="app-order-sheet__methods q-mt-xs"
-                  :options="methodOptions"
-                  color="warning"
-                />
-              </div>
-
-              <div
-                v-if="selectedMethod === 'cash'"
-                class="app-order-sheet__field"
-              >
-                <div class="app-order-sheet__label">{{ t('exchange.cashCities') }}</div>
-                <div class="app-home-location-chips">
-                  <q-chip
-                    v-for="city in cityOptions"
-                    :key="city.value"
-                    clickable
-                    :class="['app-chip', selectedCityId === city.value ? 'app-chip--active' : null]"
-                    @click="selectCity(city.value)"
-                  >
-                    {{ city.label }}
-                  </q-chip>
-                </div>
-              </div>
-
-              <div v-if="!authStore.trustedContactReady" class="app-order-sheet__field">
                 <div class="app-order-sheet__label">{{ t('exchange.trustedPhone') }}</div>
                 <div class="app-order-sheet__control">
                   <q-input
@@ -184,6 +88,7 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 
+import ExchangeOrderDetails from '@components/orders/ExchangeOrderDetails.vue';
 import AppButton from '@components/ui/AppButton.vue';
 import AppRateValue from '@components/ui/AppRateValue.vue';
 import AppSectionTitle from '@components/ui/AppSectionTitle.vue';
@@ -193,15 +98,14 @@ import { useExchangeStore } from '@stores/exchange.store';
 import { useOrdersStore } from '@stores/orders.store';
 import type { MiniappRateCard } from '@types/miniapp';
 import { getMiniappErrorMessageKey } from '@utils/api-errors';
-import { normalizeCityLabel, normalizeCountryLabel } from '@utils/display';
-import { formatMiniappDateTime, formatReadableNumber, parseReadableNumber } from '@utils/formatters';
+import { formatMiniappDateTime, formatReadableNumber } from '@utils/formatters';
 import {
-  buildReceiveLocationLabel,
+  buildCityOptions,
+  buildCountryOptions,
   buildBuyCurrencyOptions,
   getCountryByCurrency,
-  getCountryLabelByCurrency,
   getCurrencyByCountry,
-  getReceiveLocationTitleKey,
+  getPreferredReceiveMethod,
   resetCityForMethod,
 } from '@utils/exchange';
 
@@ -220,6 +124,7 @@ const selectedMethod = ref<'qrcode' | 'cash'>('qrcode');
 const selectedCityId = ref<number | null>(null);
 const contactPhone = ref('');
 const lastEditedField = ref<'sell' | 'buy'>('sell');
+const syncingQuote = ref(false);
 
 const sellOptions = computed(() =>
   [...new Set((exchangeStore.screen?.pairs ?? []).map((pair) => pair.id.split('-')[0]?.toUpperCase()))].map((currency) => ({
@@ -233,80 +138,12 @@ const buyOptions = computed(() =>
 );
 
 const countryOptions = computed(() =>
-  buyOptions.value
-    .map((option) => ({
-      value: getCountryByCurrency(exchangeStore.screen?.pairs ?? [], option.value),
-      label: normalizeCountryLabel(
-        getCountryLabelByCurrency(exchangeStore.screen?.pairs ?? [], option.value) ?? option.value,
-      ),
-    }))
-    .filter((option): option is { value: string; label: string } => Boolean(option.value)),
+  buildCountryOptions(exchangeStore.screen?.pairs ?? [], selectedSellCurrency.value),
 );
-
-const selectedCountryLabel = computed(
-  () => countryOptions.value.find((country) => country.value === selectedCountry.value)?.label ?? null,
-);
-
-const selectedCityLabel = computed(
-  () => cityOptions.value.find((city) => city.value === selectedCityId.value)?.label ?? null,
-);
-
-const receiveLocationTitle = computed(() => t(getReceiveLocationTitleKey(selectedMethod.value)));
-
-const receiveLocationLabel = computed(() => buildReceiveLocationLabel({
-  method: selectedMethod.value,
-  countryLabel: selectedCountryLabel.value,
-  cityLabel: selectedCityLabel.value,
-}));
-const formattedAmountSell = computed(() => formatReadableNumber(amountSell.value, locale.value));
-const formattedAmountBuy = computed(() => formatReadableNumber(amountBuy.value, locale.value));
-
-function normalizeCountryKey(value: unknown): string {
-  if (!value) {
-    return '';
-  }
-
-  const raw = String(value).trim().toLowerCase();
-  const withoutPrefix = raw.replace(/^country\./, '');
-  const map: Record<string, string> = {
-    th: 'thailand',
-    thailand: 'thailand',
-    тайланд: 'thailand',
-    vn: 'vietnam',
-    vietnam: 'vietnam',
-    вьетнам: 'vietnam',
-    ge: 'georgia',
-    georgia: 'georgia',
-    грузия: 'georgia',
-  };
-
-  return map[withoutPrefix] ?? withoutPrefix;
-}
 
 const cityOptions = computed(() =>
-  exchangeStore.cities
-    .filter((city) => {
-      const selected = normalizeCountryKey(selectedCountry.value);
-      if (!selected) {
-        return false;
-      }
-      const candidates = [
-        normalizeCountryKey(city.country),
-        normalizeCountryKey(city.countryCode),
-        normalizeCountryKey(city.countryRuName),
-      ];
-      return candidates.includes(selected);
-    })
-    .map((city) => ({
-      label: normalizeCityLabel(city.name),
-      value: city.id,
-    })),
+  buildCityOptions(exchangeStore.cities, selectedCountry.value),
 );
-
-const methodOptions = computed(() => [
-  { label: t('exchange.qrcode'), value: 'qrcode' },
-  { label: t('exchange.cash'), value: 'cash' },
-]);
 
 onMounted(async () => {
   if (!exchangeStore.screen) {
@@ -343,6 +180,13 @@ watch(selectedSellCurrency, () => {
   const nextBuyCurrency = buyOptions.value[0]?.value ?? selectedBuyCurrency.value;
   if (!buyOptions.value.some((option) => option.value === selectedBuyCurrency.value)) {
     selectedBuyCurrency.value = nextBuyCurrency;
+    return;
+  }
+
+  if (lastEditedField.value === 'sell') {
+    recalculateFromSell();
+  } else {
+    recalculateFromBuy();
   }
 });
 
@@ -360,6 +204,12 @@ watch(selectedMethod, (method) => {
 });
 
 watch(selectedCountry, () => {
+  const nextCurrency = getCurrencyByCountry(exchangeStore.screen?.pairs ?? [], selectedCountry.value ?? '');
+  if (nextCurrency && nextCurrency !== selectedBuyCurrency.value) {
+    selectedBuyCurrency.value = nextCurrency;
+    return;
+  }
+
   if (selectedMethod.value !== 'cash') {
     return;
   }
@@ -367,11 +217,12 @@ watch(selectedCountry, () => {
 });
 
 watch(cityOptions, (options) => {
-  if (selectedMethod.value !== 'cash') {
+  if (!options.length) {
+    selectedMethod.value = 'qrcode';
+    selectedCityId.value = null;
     return;
   }
-  if (!options.length) {
-    selectedCityId.value = null;
+  if (selectedMethod.value !== 'cash') {
     return;
   }
   if (!options.some((option) => option.value === selectedCityId.value)) {
@@ -379,7 +230,33 @@ watch(cityOptions, (options) => {
   }
 });
 
+watch(
+  () => exchangeStore.quote?.availableMethods ?? null,
+  (availableMethods) => {
+    selectedMethod.value = getPreferredReceiveMethod(availableMethods, selectedCityId.value);
+  },
+);
+
+watch(amountSell, (value, previousValue) => {
+  if (syncingQuote.value || value === previousValue) {
+    return;
+  }
+
+  lastEditedField.value = 'sell';
+  recalculateFromSell();
+});
+
+watch(amountBuy, (value, previousValue) => {
+  if (syncingQuote.value || value === previousValue) {
+    return;
+  }
+
+  lastEditedField.value = 'buy';
+  recalculateFromBuy();
+});
+
 function recalculateFromSell() {
+  syncingQuote.value = true;
   exchangeStore.recalculateQuote({
     currencySell: selectedSellCurrency.value,
     currencyBuy: selectedBuyCurrency.value,
@@ -389,9 +266,11 @@ function recalculateFromSell() {
   });
   amountSell.value = exchangeStore.quote?.amountSell ?? amountSell.value;
   amountBuy.value = exchangeStore.quote?.amountBuy ?? amountBuy.value;
+  syncingQuote.value = false;
 }
 
 function recalculateFromBuy() {
+  syncingQuote.value = true;
   exchangeStore.recalculateQuote({
     currencySell: selectedSellCurrency.value,
     currencyBuy: selectedBuyCurrency.value,
@@ -401,33 +280,7 @@ function recalculateFromBuy() {
   });
   amountSell.value = exchangeStore.quote?.amountSell ?? amountSell.value;
   amountBuy.value = exchangeStore.quote?.amountBuy ?? amountBuy.value;
-}
-
-function handleSellAmountInput(value: string | number | null) {
-  amountSell.value = parseReadableNumber(value);
-  lastEditedField.value = 'sell';
-  recalculateFromSell();
-}
-
-function handleBuyAmountInput(value: string | number | null) {
-  amountBuy.value = parseReadableNumber(value);
-  lastEditedField.value = 'buy';
-  recalculateFromBuy();
-}
-
-function selectCountry(country: string) {
-  selectedCountry.value = country;
-  const nextCurrency = getCurrencyByCountry(exchangeStore.screen?.pairs ?? [], country);
-  if (nextCurrency) {
-    selectedBuyCurrency.value = nextCurrency;
-  }
-  if (selectedMethod.value === 'cash' && cityOptions.value.length) {
-    selectedCityId.value = cityOptions.value[0].value;
-  }
-}
-
-function selectCity(cityId: number) {
-  selectedCityId.value = cityId;
+  syncingQuote.value = false;
 }
 
 function selectPair(pair: MiniappRateCard) {

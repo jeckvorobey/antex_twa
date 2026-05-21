@@ -6,7 +6,10 @@ import type { MiniappQuoteResponse } from '@types/miniapp';
 type OrderContext = Pick<
   MiniappQuoteResponse,
   'currencySell' | 'currencyBuy' | 'amountSell' | 'amountBuy' | 'rate' | 'availableMethods'
->;
+> & {
+  country?: string | null;
+  cityId?: number | null;
+};
 
 export const useUiStore = defineStore('ui', () => {
   const moreSheetOpen = ref(false);

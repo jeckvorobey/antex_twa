@@ -213,6 +213,8 @@ function openOrderFromFeatured(card?: MiniappRateCard) {
     amountSell: card.amountSellExample,
     amountBuy: card.amountBuyExample,
     rate: card.rate,
+    country: selectedCountry.value ?? card.country,
+    cityId: selectedCityId.value ? Number(selectedCityId.value) : null,
     availableMethods: buildHomeAvailableMethods(selectedCityId.value),
   });
 }

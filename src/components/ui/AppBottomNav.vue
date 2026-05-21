@@ -32,7 +32,6 @@ const items = [
   { name: 'exchange', icon: 'currency_exchange', label: t('nav.exchange') },
   { name: 'history', icon: 'history', label: t('nav.history') },
   { name: 'profile', icon: 'person_outline', label: t('nav.profile') },
-  { name: 'more', icon: 'more_horiz', label: t('nav.more') },
 ];
 
 function isActive(name: string) {
