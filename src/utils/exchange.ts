@@ -8,6 +8,10 @@ export interface ExchangePairLike {
   country?: string;
   countryLabel?: string;
   rate?: number;
+  calculationRate?: number;
+  rateDisplay?: string;
+  rateText?: string;
+  updatedAt?: string;
   availableMethods?: string[];
 }
 
@@ -21,16 +25,11 @@ export interface ExchangeCityOption {
   value: number;
 }
 
-export type ExchangeEditedField = 'sell' | 'buy';
-
 export interface LocalQuoteParams {
   pairs: ExchangePairLike[];
-  referenceQuote: MiniappQuoteResponse | null;
   currencySell: string;
   currencyBuy: string;
   amountSell: number | null;
-  amountBuy: number | null;
-  lastEdited: ExchangeEditedField;
 }
 
 /**
@@ -145,82 +144,31 @@ function roundMoney(value: number) {
   return Number(value.toFixed(2));
 }
 
-function resolvePairRate(
-  pairs: ExchangePairLike[],
-  referenceQuote: MiniappQuoteResponse | null,
-  currencySell: string,
-  currencyBuy: string,
-) {
-  if (
-    referenceQuote
-    && referenceQuote.currencySell === currencySell
-    && referenceQuote.currencyBuy === currencyBuy
-  ) {
-    return {
-      rate: referenceQuote.rate,
-      availableMethods: referenceQuote.availableMethods,
-    };
-  }
-
-  const directPair = pairs.find((pair) => {
-    const canonical = parsePairId(pair.id);
-    return canonical.currencySell === currencySell && canonical.currencyBuy === currencyBuy;
-  });
-  if (directPair?.rate && directPair.rate > 0) {
-    if (directPair.fromCurrency === currencySell && directPair.toCurrency === currencyBuy) {
-      return {
-        rate: directPair.rate,
-        availableMethods: directPair.availableMethods ?? [],
-      };
-    }
-
-    if (directPair.fromCurrency === currencyBuy && directPair.toCurrency === currencySell) {
-      return {
-        rate: roundMoney(1 / directPair.rate),
-        availableMethods: directPair.availableMethods ?? [],
-      };
-    }
-  }
-
-  return null;
-}
-
 export function calculateLocalQuote(params: LocalQuoteParams): MiniappQuoteResponse | null {
-  const rateSource = resolvePairRate(
-    params.pairs,
-    params.referenceQuote,
-    params.currencySell,
-    params.currencyBuy,
-  );
-  if (!rateSource) {
+  if (!params.amountSell || params.amountSell <= 0) {
     return null;
   }
 
-  let amountSell = params.amountSell ?? null;
-  let amountBuy = params.amountBuy ?? null;
+  const pair = params.pairs.find((item) => {
+    const parsed = parsePairId(item.id);
+    return parsed.currencySell === params.currencySell && parsed.currencyBuy === params.currencyBuy;
+  });
 
-  if (params.lastEdited === 'sell') {
-    if (!amountSell || amountSell <= 0) {
-      return null;
-    }
-    amountBuy = roundMoney(amountSell * rateSource.rate);
-  } else {
-    if (!amountBuy || amountBuy <= 0) {
-      return null;
-    }
-    amountSell = roundMoney(amountBuy / rateSource.rate);
+  const rate = pair?.calculationRate ?? pair?.rate;
+  if (!rate || rate <= 0) {
+    return null;
   }
 
   return {
     currencySell: params.currencySell,
     currencyBuy: params.currencyBuy,
-    amountSell,
-    amountBuy: amountBuy ?? 0,
-    rate: rateSource.rate,
-    rateDisplay: rateSource.rate.toFixed(2),
-    rateText: `1 ${params.currencySell} = ${rateSource.rate.toFixed(2)} ${params.currencyBuy}`,
-    updatedAt: params.referenceQuote?.updatedAt ?? new Date().toISOString(),
-    availableMethods: rateSource.availableMethods,
+    amountSell: params.amountSell,
+    amountBuy: roundMoney(params.amountSell * rate),
+    rate,
+    rateDisplay: rate.toFixed(2),
+    rateText: `1 ${params.currencySell} = ${rate.toFixed(2)} ${params.currencyBuy}`,
+    updatedAt: pair.updatedAt ?? new Date().toISOString(),
+    availableMethods: pair.availableMethods ?? [],
   };
 }
 

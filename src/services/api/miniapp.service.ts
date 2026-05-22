@@ -7,7 +7,6 @@ import type {
   MiniappOrderItem,
   MiniappOrdersResponse,
   MiniappProfileResponse,
-  MiniappQuoteResponse,
 } from '@types/miniapp';
 
 export async function fetchHome() {

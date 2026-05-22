@@ -47,9 +47,9 @@
               type="text"
               borderless
               dense
+              readonly
               inputmode="decimal"
               input-class="text-right text-antex-gold"
-              @update:model-value="handleAmountBuyInput"
             />
           </div>
         </div>
@@ -141,7 +141,6 @@ const emit = defineEmits<{
   'update:selectedSellCurrency': [value: string];
   'update:selectedBuyCurrency': [value: string];
   'update:amountSell': [value: number | null];
-  'update:amountBuy': [value: number | null];
   'update:selectedCountry': [value: string | null];
   'update:selectedMethod': [value: 'qrcode' | 'cash'];
   'update:selectedCityId': [value: number | null];
@@ -202,7 +201,4 @@ function handleAmountSellInput(value: string | number | null) {
   emit('update:amountSell', parseReadableNumber(value));
 }
 
-function handleAmountBuyInput(value: string | number | null) {
-  emit('update:amountBuy', parseReadableNumber(value));
-}
 </script>

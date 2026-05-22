@@ -212,7 +212,7 @@ function openOrderFromFeatured(card?: MiniappRateCard) {
     currencyBuy: card.toCurrency,
     amountSell: card.amountSellExample,
     amountBuy: card.amountBuyExample,
-    rate: card.rate,
+    rate: card.calculationRate,
     country: selectedCountry.value ?? card.country,
     cityId: selectedCityId.value ? Number(selectedCityId.value) : null,
     availableMethods: buildHomeAvailableMethods(selectedCityId.value),

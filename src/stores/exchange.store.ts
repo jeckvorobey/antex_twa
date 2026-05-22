@@ -12,7 +12,7 @@ import type {
   MiniappOrderCreate,
   MiniappQuoteResponse,
 } from '@types/miniapp';
-import { calculateLocalQuote, type ExchangeEditedField } from '@utils/exchange';
+import { calculateLocalQuote } from '@utils/exchange';
 
 export const useExchangeStore = defineStore('exchange', () => {
   const screen = ref<MiniappExchangeScreenResponse | null>(null);
@@ -39,13 +39,10 @@ export const useExchangeStore = defineStore('exchange', () => {
   function recalculateQuote(params: {
     currencySell: string;
     currencyBuy: string;
-    amountSell: number | null;
-    amountBuy: number | null;
-    lastEdited: ExchangeEditedField;
+    amountSell: number;
   }) {
     quote.value = calculateLocalQuote({
       pairs: screen.value?.pairs ?? [],
-      referenceQuote: screen.value?.quote ?? quote.value,
       ...params,
     });
     return quote.value;

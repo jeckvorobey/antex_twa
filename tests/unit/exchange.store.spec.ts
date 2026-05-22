@@ -36,16 +36,16 @@ function makeScreen(): MiniappExchangeScreenResponse {
     pairs: [
       {
         id: 'rub-thb',
-        label: 'THB/RUB',
+        label: 'RUB/THB',
         country: 'thailand',
         countryLabel: 'Таиланд',
-        fromCurrency: 'THB',
-        toCurrency: 'RUB',
-        rate: 2.51,
-        rateDisplay: '2.51',
-        rateText: '1 THB = 2.51 RUB',
+        fromCurrency: 'RUB',
+        toCurrency: 'THB',
+        rate: 0.4,
+        rateDisplay: '0.40',
+        rateText: '1 RUB = 0.40 THB',
         amountSellExample: 5000,
-        amountBuyExample: 12550,
+        amountBuyExample: 2000,
         updatedAt: '2026-03-28T12:00:00+00:00',
         availableMethods: ['qrcode', 'cash'],
       },
@@ -95,33 +95,21 @@ describe('exchange store', () => {
     vi.clearAllMocks();
   });
 
-  it('recalculates both amount fields locally without quote API loop', async () => {
+  it('recalculates preliminary quote locally without backend quote request', async () => {
     const store = useExchangeStore();
     vi.mocked(fetchExchangeScreen).mockResolvedValue(makeScreen());
     vi.mocked(fetchCities).mockResolvedValue({ items: makeCities() });
 
     await store.load();
 
-    const sellDriven = store.recalculateQuote({
+    const quote = store.recalculateQuote({
       currencySell: 'RUB',
       currencyBuy: 'THB',
       amountSell: 6000,
-      amountBuy: null,
-      lastEdited: 'sell',
     });
 
-    expect(sellDriven?.amountBuy).toBe(2400);
+    expect(quote?.amountSell).toBe(6000);
     expect(store.quote?.amountBuy).toBe(2400);
-
-    const buyDriven = store.recalculateQuote({
-      currencySell: 'RUB',
-      currencyBuy: 'THB',
-      amountSell: 6000,
-      amountBuy: 1200,
-      lastEdited: 'buy',
-    });
-
-    expect(buyDriven?.amountSell).toBe(3000);
   });
 
   it('loads cities together with backend-driven exchange screen', async () => {
@@ -133,5 +121,21 @@ describe('exchange store', () => {
 
     expect(store.screen?.chips).toEqual(['USDT', 'THB', 'RUB', 'GEL', 'VND']);
     expect(store.cities[0]?.name).toBe('Bangkok');
+  });
+
+  it('clears quote when local pair is missing', async () => {
+    const store = useExchangeStore();
+    vi.mocked(fetchExchangeScreen).mockResolvedValue(makeScreen());
+    vi.mocked(fetchCities).mockResolvedValue({ items: makeCities() });
+
+    await store.load();
+
+    store.recalculateQuote({
+      currencySell: 'USDT',
+      currencyBuy: 'THB',
+      amountSell: 100,
+    });
+
+    expect(store.quote).toBeNull();
   });
 });

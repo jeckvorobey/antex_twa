@@ -9,7 +9,7 @@
         v-model:selected-sell-currency="selectedSellCurrency"
         v-model:selected-buy-currency="currencyBuy"
         v-model:amount-sell="amountSell"
-        v-model:amount-buy="amountBuy"
+        :amount-buy="amountBuy"
         v-model:selected-country="selectedCountry"
         v-model:selected-method="selectedMethod"
         v-model:selected-city-id="selectedCityId"
@@ -48,10 +48,8 @@ import {
   getCountryByCurrency,
   getCurrencyByCountry,
   getPreferredReceiveMethod,
-  calculateLocalQuote,
   resetCityForMethod,
 } from '@utils/exchange';
-import { formatReadableNumber } from '@utils/formatters';
 
 const props = defineProps<{
   modelValue: boolean;
@@ -61,7 +59,7 @@ const emit = defineEmits<{
   'update:modelValue': [value: boolean];
 }>();
 
-const { locale, t } = useI18n();
+const { t } = useI18n();
 const router = useRouter();
 const exchangeStore = useExchangeStore();
 const homeStore = useHomeStore();
@@ -75,8 +73,8 @@ const currencyBuy = ref<string>('THB');
 const selectedCountry = ref<string | null>(null);
 const selectedMethod = ref<'qrcode' | 'cash'>('qrcode');
 const selectedCityId = ref<number | null>(null);
-const lastEditedField = ref<'sell' | 'buy'>('sell');
-const syncingQuote = ref(false);
+const amountSellTouched = ref(false);
+const syncingState = ref(false);
 
 const sellOptions = computed(() =>
   [...new Set((exchangeStore.screen?.pairs ?? []).map((pair) => pair.id.split('-')[0]?.toUpperCase()))].map((currency) => ({
@@ -124,7 +122,7 @@ const currentRateLabel = computed(() => {
     return t('exchange.quoteUnavailable');
   }
 
-  return `1 ${currentQuote.currencySell} = ${formatReadableNumber(currentQuote.rate, locale.value)} ${currentQuote.currencyBuy}`;
+  return currentQuote.rateText;
 });
 
 watch(
@@ -138,14 +136,18 @@ watch(
       await exchangeStore.load();
     }
 
+    syncingState.value = true;
     selectedSellCurrency.value = uiStore.orderContext?.currencySell ?? exchangeStore.quote?.currencySell ?? 'RUB';
-    amountSell.value = uiStore.orderContext?.amountSell ?? exchangeStore.quote?.amountSell ?? 5000;
+    amountSell.value = uiStore.orderContext?.amountSell ?? exchangeStore.quote?.amountSell ?? getDefaultAmountSell(selectedSellCurrency.value);
     amountBuy.value = uiStore.orderContext?.amountBuy ?? exchangeStore.quote?.amountBuy ?? null;
     currencyBuy.value = uiStore.orderContext?.currencyBuy ?? exchangeStore.quote?.currencyBuy ?? 'THB';
     selectedCountry.value = uiStore.orderContext?.country
       ?? getCountryByCurrency(exchangeStore.screen?.pairs ?? [], currencyBuy.value);
     selectedCityId.value = uiStore.orderContext?.cityId ?? null;
     selectedMethod.value = getPreferredReceiveMethod(currentQuoteMethods.value, selectedCityId.value);
+    amountSellTouched.value = Boolean(uiStore.orderContext?.amountSell);
+    syncingState.value = false;
+    refreshQuoteForCurrentState();
   },
   { immediate: true },
 );
@@ -154,14 +156,14 @@ watch(selectedSellCurrency, () => {
   const nextBuyCurrency = currencyOptions.value[0]?.value ?? currencyBuy.value;
   if (!currencyOptions.value.some((option) => option.value === currencyBuy.value)) {
     currencyBuy.value = nextBuyCurrency;
-    return;
   }
 
-  if (lastEditedField.value === 'sell') {
-    recalculateFromSell();
-  } else {
-    recalculateFromBuy();
+  if (!amountSellTouched.value || !amountSell.value) {
+    syncingState.value = true;
+    amountSell.value = getDefaultAmountSell(selectedSellCurrency.value);
+    syncingState.value = false;
   }
+  void refreshQuoteForCurrentState();
 });
 
 watch(currencyOptions, (options) => {
@@ -176,11 +178,7 @@ watch(currencyBuy, (value) => {
   selectedCountry.value = uiStore.orderContext?.country
     ?? getCountryByCurrency(exchangeStore.screen?.pairs ?? [], value);
 
-  if (lastEditedField.value === 'sell') {
-    recalculateFromSell();
-  } else {
-    recalculateFromBuy();
-  }
+  void refreshQuoteForCurrentState();
 });
 
 watch(selectedCountry, (country) => {
@@ -222,72 +220,58 @@ watch(currentQuoteMethods, (availableMethods) => {
 });
 
 watch(amountSell, (value, previousValue) => {
-  if (syncingQuote.value || value === previousValue) {
+  if (syncingState.value || value === previousValue) {
     return;
   }
 
-  lastEditedField.value = 'sell';
-  recalculateFromSell();
-});
-
-watch(amountBuy, (value, previousValue) => {
-  if (syncingQuote.value || value === previousValue) {
-    return;
-  }
-
-  lastEditedField.value = 'buy';
-  recalculateFromBuy();
+  amountSellTouched.value = true;
+  void refreshQuoteForCurrentState();
 });
 
 function resolveCurrentQuote() {
-  return calculateLocalQuote({
-    pairs: exchangeStore.screen?.pairs ?? [],
-    referenceQuote: exchangeStore.screen?.quote ?? exchangeStore.quote,
-    currencySell: selectedSellCurrency.value,
-    currencyBuy: currencyBuy.value,
-    amountSell: amountSell.value,
-    amountBuy: amountBuy.value,
-    lastEdited: lastEditedField.value,
-  });
+  const quote = exchangeStore.quote;
+  if (!quote || quote.currencySell !== selectedSellCurrency.value || quote.currencyBuy !== currencyBuy.value) {
+    return null;
+  }
+
+  return quote;
 }
 
-function recalculateFromSell() {
-  syncingQuote.value = true;
-  const quote = calculateLocalQuote({
-    pairs: exchangeStore.screen?.pairs ?? [],
-    referenceQuote: exchangeStore.screen?.quote ?? exchangeStore.quote,
+function refreshQuoteForCurrentState() {
+  if (!amountSell.value || amountSell.value <= 0) {
+    amountBuy.value = null;
+    return;
+  }
+
+  const quote = exchangeStore.recalculateQuote({
     currencySell: selectedSellCurrency.value,
     currencyBuy: currencyBuy.value,
-    amountSell: amountSell.value,
-    amountBuy: amountBuy.value,
-    lastEdited: 'sell',
+    amountSell: Math.round(amountSell.value),
   });
-  amountSell.value = quote?.amountSell ?? amountSell.value;
-  amountBuy.value = quote?.amountBuy ?? amountBuy.value;
-  syncingQuote.value = false;
+
+  if (!quote) {
+    amountBuy.value = null;
+    return;
+  }
+
+  syncingState.value = true;
+  selectedSellCurrency.value = quote.currencySell;
+  currencyBuy.value = quote.currencyBuy;
+  amountSell.value = quote.amountSell;
+  amountBuy.value = quote.amountBuy;
+  syncingState.value = false;
 }
 
-function recalculateFromBuy() {
-  syncingQuote.value = true;
-  const quote = calculateLocalQuote({
-    pairs: exchangeStore.screen?.pairs ?? [],
-    referenceQuote: exchangeStore.screen?.quote ?? exchangeStore.quote,
-    currencySell: selectedSellCurrency.value,
-    currencyBuy: currencyBuy.value,
-    amountSell: amountSell.value,
-    amountBuy: amountBuy.value,
-    lastEdited: 'buy',
-  });
-  amountSell.value = quote?.amountSell ?? amountSell.value;
-  amountBuy.value = quote?.amountBuy ?? amountBuy.value;
-  syncingQuote.value = false;
+function getDefaultAmountSell(currencySell: string) {
+  return currencySell === 'USDT' ? 100 : 5000;
 }
 
 /**
  * Отправляет miniapp-заявку и показывает локализованное сообщение по коду ошибки.
  */
 async function submit() {
-  if (!amountSell.value || amountSell.value <= 0) {
+  const quote = resolveCurrentQuote();
+  if (!amountSell.value || amountSell.value <= 0 || !amountBuy.value || !quote) {
     Notify.create({ type: 'warning', message: t('exchange.quoteUnavailable') });
     return;
   }
@@ -304,6 +288,8 @@ async function submit() {
       currencySell: selectedSellCurrency.value,
       currencyBuy: currencyBuy.value,
       amountSell: amountSell.value,
+      amountBuy: amountBuy.value,
+      rate: quote.rate,
       methodGet: selectedMethod.value,
     });
 

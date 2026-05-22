@@ -35,7 +35,7 @@ describe('ExchangePage responsive layout contract', () => {
     expect(pageSource).toContain('v-model:selected-sell-currency="selectedSellCurrency"');
     expect(pageSource).toContain('v-model:selected-buy-currency="selectedBuyCurrency"');
     expect(pageSource).toContain('v-model:amount-sell="amountSell"');
-    expect(pageSource).toContain('v-model:amount-buy="amountBuy"');
+    expect(pageSource).toContain(':amount-buy="amountBuy"');
     expect(pageSource).toContain('v-model:selected-country="selectedCountry"');
     expect(pageSource).toContain('v-model:selected-method="selectedMethod"');
     expect(pageSource).toContain('v-model:selected-city-id="selectedCityId"');
@@ -49,6 +49,7 @@ describe('ExchangePage responsive layout contract', () => {
 
     expect(detailsSource).toContain(':model-value="formattedAmountSell"');
     expect(detailsSource).toContain(':model-value="formattedAmountBuy"');
+    expect(detailsSource).toContain('readonly');
     expect(detailsSource).toContain('inputmode="decimal"');
     expect(detailsSource).toContain('parseReadableNumber(value)');
     expect(pageSource).not.toContain('v-model.number="amountSell"');

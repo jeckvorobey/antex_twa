@@ -12,7 +12,7 @@ import {
 
 describe('buildBuyCurrencyOptions', () => {
   const pairs = [
-    { id: 'rub-thb', fromCurrency: 'THB', toCurrency: 'RUB' },
+    { id: 'rub-thb', fromCurrency: 'RUB', toCurrency: 'THB' },
     { id: 'rub-gel', fromCurrency: 'RUB', toCurrency: 'GEL' },
     { id: 'rub-vnd', fromCurrency: 'RUB', toCurrency: 'VND' },
     { id: 'usdt-vnd', fromCurrency: 'USDT', toCurrency: 'VND' },
@@ -35,9 +35,12 @@ describe('calculateLocalQuote', () => {
   const pairs = [
     {
       id: 'rub-thb',
-      fromCurrency: 'THB',
-      toCurrency: 'RUB',
-      rate: 2.51,
+      fromCurrency: 'RUB',
+      toCurrency: 'THB',
+      rate: 0.4,
+      rateDisplay: '0.40',
+      rateText: '1 RUB = 0.40 THB',
+      updatedAt: '2026-03-28T12:00:00+00:00',
       availableMethods: ['qrcode', 'cash'],
     },
     {
@@ -45,58 +48,44 @@ describe('calculateLocalQuote', () => {
       fromCurrency: 'RUB',
       toCurrency: 'GEL',
       rate: 0.03,
+      rateDisplay: '0.03',
+      rateText: '1 RUB = 0.03 GEL',
+      updatedAt: '2026-03-28T12:00:00+00:00',
       availableMethods: ['qrcode', 'cash'],
     },
   ];
 
-  it('uses the last edited sell amount as the leading input', () => {
+  it('calculates preliminary receive amount from selected sell amount', () => {
     expect(calculateLocalQuote({
       pairs,
-      referenceQuote: {
-        currencySell: 'RUB',
-        currencyBuy: 'THB',
-        amountSell: 5000,
-        amountBuy: 2000,
-        rate: 0.4,
-        rateDisplay: '0.40',
-        rateText: '1 RUB = 0.40 THB',
-        updatedAt: '2026-03-28T12:00:00+00:00',
-        availableMethods: ['qrcode', 'cash'],
-      },
       currencySell: 'RUB',
       currencyBuy: 'THB',
       amountSell: 6000,
-      amountBuy: null,
-      lastEdited: 'sell',
-    })?.amountBuy).toBe(2400);
+    })).toMatchObject({
+      currencySell: 'RUB',
+      currencyBuy: 'THB',
+      amountSell: 6000,
+      amountBuy: 2400,
+      rate: 0.4,
+      rateDisplay: '0.40',
+      rateText: '1 RUB = 0.40 THB',
+      availableMethods: ['qrcode', 'cash'],
+    });
   });
 
-  it('uses the last edited receive amount as the leading input', () => {
+  it('returns null when the current pair is missing', () => {
     expect(calculateLocalQuote({
       pairs,
-      referenceQuote: {
-        currencySell: 'RUB',
-        currencyBuy: 'THB',
-        amountSell: 5000,
-        amountBuy: 2000,
-        rate: 0.4,
-        rateDisplay: '0.40',
-        rateText: '1 RUB = 0.40 THB',
-        updatedAt: '2026-03-28T12:00:00+00:00',
-        availableMethods: ['qrcode', 'cash'],
-      },
-      currencySell: 'RUB',
+      currencySell: 'USDT',
       currencyBuy: 'THB',
-      amountSell: 6000,
-      amountBuy: 1200,
-      lastEdited: 'buy',
-    })?.amountSell).toBe(3000);
+      amountSell: 100,
+    })).toBeNull();
   });
 });
 
 describe('country and city helpers', () => {
   const pairs = [
-    { id: 'rub-thb', country: 'thailand', fromCurrency: 'THB', toCurrency: 'RUB' },
+    { id: 'rub-thb', country: 'thailand', fromCurrency: 'RUB', toCurrency: 'THB' },
     { id: 'rub-gel', country: 'georgia', fromCurrency: 'RUB', toCurrency: 'GEL' },
   ];
 

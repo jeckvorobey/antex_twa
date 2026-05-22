@@ -49,6 +49,7 @@ export interface MiniappRateCard {
   fromCurrency: string;
   toCurrency: string;
   rate: number;
+  calculationRate: number;
   rateDisplay: string;
   rateText: string;
   amountSellExample: number;
@@ -161,6 +162,8 @@ export interface MiniappOrderCreate {
   currencySell: string;
   currencyBuy: string;
   amountSell: number;
+  amountBuy: number;
+  rate: number;
   methodGet: 'qrcode' | 'cash';
 }
 

@@ -1,6 +1,7 @@
 const MINIAPP_ERROR_KEYS: Record<string, string> = {
   ORDER_ALREADY_EXISTS: 'errors.order_exists',
   RATE_UNAVAILABLE: 'errors.rate_unavailable',
+  RATE_PAIR_UNAVAILABLE: 'errors.unsupported_pair',
   UNSUPPORTED_PAIR: 'errors.unsupported_pair',
   CITY_MANAGER_NOT_CONFIGURED: 'errors.city_manager_missing',
   TRUSTED_CONTACT_NOT_READY: 'errors.trusted_contact_not_ready',
