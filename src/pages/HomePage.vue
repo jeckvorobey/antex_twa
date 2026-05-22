@@ -5,27 +5,25 @@
         <AppSectionTitle>{{ t('home.locations') }}</AppSectionTitle>
 
         <div class="app-home-country-chips">
-          <q-chip
+          <AppFlagOptionButton
             v-for="country in homeStore.data?.countries ?? []"
             :key="country.id"
-            clickable
-            :class="['app-chip', selectedCountry === country.id ? 'app-chip--active' : null]"
+            :label="country.label"
+            :mark="country.flag"
+            :active="selectedCountry === country.id"
             @click="selectCountry(country.id)"
-          >
-            {{ country.label }}
-          </q-chip>
+          />
         </div>
 
         <div class="app-home-location-chips">
-          <q-chip
+          <AppFlagOptionButton
             v-for="location in visibleLocations"
             :key="location.id"
-            clickable
-            :class="['app-chip', selectedCityId === location.id ? 'app-chip--active' : null]"
+            :label="location.city"
+            :mark="location.countryFlag"
+            :active="selectedCityId === location.id"
             @click="selectCity(location.id)"
-          >
-            {{ location.city }}
-          </q-chip>
+          />
         </div>
       </section>
 
@@ -128,6 +126,7 @@ import { useI18n } from 'vue-i18n';
 
 import AppButton from '@components/ui/AppButton.vue';
 import AppCurrencyMark from '@components/ui/AppCurrencyMark.vue';
+import AppFlagOptionButton from '@components/ui/AppFlagOptionButton.vue';
 import AppRateValue from '@components/ui/AppRateValue.vue';
 import AppSectionTitle from '@components/ui/AppSectionTitle.vue';
 import AppSurface from '@components/ui/AppSurface.vue';

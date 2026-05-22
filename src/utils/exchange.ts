@@ -8,6 +8,7 @@ export interface ExchangePairLike {
   amountSellExample?: number;
   country?: string;
   countryLabel?: string;
+  countryFlag?: string;
   rate?: number;
   calculationRate?: number;
   rateDisplay?: string;
@@ -19,11 +20,13 @@ export interface ExchangePairLike {
 export interface ExchangeOption {
   label: string;
   value: string;
+  mark?: string;
 }
 
 export interface ExchangeCityOption {
   label: string;
   value: number;
+  mark: string;
 }
 
 export interface LocalQuoteParams {
@@ -106,6 +109,7 @@ export function buildCountryOptions(
       label: normalizeCountryLabel(
         getCountryLabelByCurrency(pairs, option.value) ?? option.value,
       ),
+      mark: getCountryFlagByCurrency(pairs, option.value),
     }))
     .filter((option): option is ExchangeOption => Boolean(option.value));
 }
@@ -286,6 +290,14 @@ export function getCurrencyByCountry(
   return directPair ? parsePairId(directPair.id).currencyBuy : null;
 }
 
+export function getCountryFlagByCurrency(
+  pairs: ExchangePairLike[],
+  currencyBuy: string,
+) {
+  const directPair = pairs.find((pair) => parsePairId(pair.id).currencyBuy === currencyBuy);
+  return directPair?.countryFlag ?? '';
+}
+
 export function buildCityOptions(
   cities: MiniappCity[],
   selectedCountry: string | null,
@@ -308,6 +320,7 @@ export function buildCityOptions(
     .map((city) => ({
       label: normalizeCityLabel(city.name),
       value: city.id,
+      mark: city.countryFlag,
     }));
 }
 

@@ -61,15 +61,14 @@
     </AppSurface>
 
     <div v-if="countryOptions.length" class="app-chip-row app-chip-row--exchange">
-      <q-chip
+      <AppFlagOptionButton
         v-for="country in countryOptions"
         :key="country.value"
-        clickable
-        :class="['app-chip', selectedCountryModel === country.value ? 'app-chip--active' : null]"
+        :label="country.label"
+        :mark="country.mark ?? ''"
+        :active="selectedCountryModel === country.value"
         @click="selectedCountryModel = country.value"
-      >
-        {{ country.label }}
-      </q-chip>
+      />
     </div>
 
     <AppSurface class="q-pa-md">
@@ -98,15 +97,14 @@
         <div v-if="selectedMethodModel === 'cash'" class="app-order-sheet__field">
           <div class="app-order-sheet__label">{{ t('exchange.cashCities') }}</div>
           <div class="app-home-location-chips">
-            <q-chip
+            <AppFlagOptionButton
               v-for="city in cityOptions"
               :key="city.value"
-              clickable
-              :class="['app-chip', selectedCityIdModel === city.value ? 'app-chip--active' : null]"
+              :label="city.label"
+              :mark="city.mark"
+              :active="selectedCityIdModel === city.value"
               @click="selectedCityIdModel = city.value"
-            >
-              {{ city.label }}
-            </q-chip>
+            />
           </div>
         </div>
       </div>
@@ -118,6 +116,7 @@
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 
+import AppFlagOptionButton from '@components/ui/AppFlagOptionButton.vue';
 import AppSurface from '@components/ui/AppSurface.vue';
 import { formatReadableNumber, parseReadableNumber } from '@utils/formatters';
 import { buildReceiveLocationLabel, getReceiveLocationTitleKey, type ExchangeCityOption, type ExchangeOption } from '@utils/exchange';

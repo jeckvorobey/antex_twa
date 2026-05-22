@@ -46,6 +46,7 @@ export interface MiniappRateCard {
   label: string;
   country: string;
   countryLabel: string;
+  countryFlag?: string;
   fromCurrency: string;
   toCurrency: string;
   rate: number;
@@ -85,6 +86,7 @@ export interface MiniappLocationItem {
   city: string;
   country: string;
   countryLabel: string;
+  countryFlag: string;
   hours: string;
   accent: string;
 }

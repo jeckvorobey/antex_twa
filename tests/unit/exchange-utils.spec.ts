@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  buildCityOptions,
+  buildCountryOptions,
   buildBuyCurrencyOptions,
   buildReceiveLocationLabel,
   calculateLocalQuote,
@@ -88,8 +90,45 @@ describe('calculateLocalQuote', () => {
 
 describe('country and city helpers', () => {
   const pairs = [
-    { id: 'rub-thb', country: 'thailand', fromCurrency: 'RUB', toCurrency: 'THB' },
-    { id: 'rub-gel', country: 'georgia', fromCurrency: 'RUB', toCurrency: 'GEL' },
+    {
+      id: 'rub-thb',
+      country: 'thailand',
+      countryLabel: 'Таиланд',
+      countryFlag: '🇹🇭',
+      fromCurrency: 'RUB',
+      toCurrency: 'THB',
+    },
+    {
+      id: 'rub-gel',
+      country: 'georgia',
+      countryLabel: 'Грузия',
+      countryFlag: '🇬🇪',
+      fromCurrency: 'RUB',
+      toCurrency: 'GEL',
+    },
+  ];
+
+  const cities = [
+    {
+      id: 1,
+      name: 'Bangkok',
+      country: 'thailand',
+      countryRuName: 'Таиланд',
+      countryCode: 'th',
+      countryFlag: '🇹🇭',
+      createdAt: '2026-03-28T12:00:00+00:00',
+      updatedAt: '2026-03-28T12:00:00+00:00',
+    },
+    {
+      id: 2,
+      name: 'Tbilisi',
+      country: 'georgia',
+      countryRuName: 'Грузия',
+      countryCode: 'ge',
+      countryFlag: '🇬🇪',
+      createdAt: '2026-03-28T12:00:00+00:00',
+      updatedAt: '2026-03-28T12:00:00+00:00',
+    },
   ];
 
   it('resolves country from selected buy currency', () => {
@@ -100,6 +139,19 @@ describe('country and city helpers', () => {
   it('resets city when qrcode is selected', () => {
     expect(resetCityForMethod('qrcode', 10)).toBeNull();
     expect(resetCityForMethod('cash', 10)).toBe(10);
+  });
+
+  it('builds country options with backend-provided flags', () => {
+    expect(buildCountryOptions(pairs, 'RUB')).toEqual([
+      { label: 'Таиланд', value: 'thailand', mark: '🇹🇭' },
+      { label: 'Грузия', value: 'georgia', mark: '🇬🇪' },
+    ]);
+  });
+
+  it('builds city options with backend-provided flags', () => {
+    expect(buildCityOptions(cities, 'thailand')).toEqual([
+      { label: 'Bangkok', value: 1, mark: '🇹🇭' },
+    ]);
   });
 });
 

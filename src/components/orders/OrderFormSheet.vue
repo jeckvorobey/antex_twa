@@ -100,7 +100,7 @@ const countryOptions = computed(() => {
   }
 
   return (homeStore.data?.countries ?? [])
-    .map((country) => ({ label: country.label, value: country.id }))
+    .map((country) => ({ label: country.label, value: country.id, mark: country.flag }))
     .filter((country) => country.value);
 });
 const cityOptions = computed(() => buildCityOptions(exchangeStore.cities, selectedCountry.value));

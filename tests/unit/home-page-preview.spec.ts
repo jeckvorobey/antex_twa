@@ -17,6 +17,9 @@ describe('HomePage preview rates', () => {
 
     expect(source).toContain('const selectedCountry = ref<string | null>(null)');
     expect(source).toContain('const selectedCityId = ref<string | null>(null)');
+    expect(source).toContain('AppFlagOptionButton');
+    expect(source).toContain(':mark="country.flag"');
+    expect(source).toContain(':mark="location.countryFlag"');
     expect(source).not.toContain("const locationChips = ['Тайланд', 'Вьетнам', 'Грузия']");
   });
 
