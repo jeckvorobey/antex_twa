@@ -18,24 +18,6 @@
             :city-options="cityOptions"
           />
 
-          <AppSurface v-if="!authStore.trustedContactReady" class="q-pa-md">
-            <div class="app-order-sheet__fields">
-              <div class="app-order-sheet__field">
-                <div class="app-order-sheet__label">{{ t('exchange.trustedPhone') }}</div>
-                <div class="app-order-sheet__control">
-                  <q-input
-                    v-model.trim="contactPhone"
-                    class="app-order-sheet__input"
-                    type="tel"
-                    borderless
-                    dense
-                    :placeholder="t('exchange.trustedPhonePlaceholder')"
-                  />
-                </div>
-              </div>
-            </div>
-          </AppSurface>
-
           <section class="app-section">
             <AppSectionTitle>{{ t('exchange.availablePairs') }}</AppSectionTitle>
 
@@ -69,7 +51,7 @@
           <AppButton
             block
             type="submit"
-            :loading="exchangeStore.submitting || authStore.phoneSaving"
+            :loading="exchangeStore.submitting"
             :disable="!canSubmit"
           >
             {{ t('common.submit') }}
@@ -93,7 +75,6 @@ import AppButton from '@components/ui/AppButton.vue';
 import AppRateValue from '@components/ui/AppRateValue.vue';
 import AppSectionTitle from '@components/ui/AppSectionTitle.vue';
 import AppSurface from '@components/ui/AppSurface.vue';
-import { useAuthStore } from '@stores/auth.store';
 import { useExchangeStore } from '@stores/exchange.store';
 import { useOrdersStore } from '@stores/orders.store';
 import type { MiniappRateCard } from '@types/miniapp';
@@ -111,7 +92,6 @@ import {
 } from '@utils/exchange';
 
 const router = useRouter();
-const authStore = useAuthStore();
 const exchangeStore = useExchangeStore();
 const ordersStore = useOrdersStore();
 const { locale, t } = useI18n();
@@ -123,7 +103,6 @@ const amountBuy = ref<number | null>(null);
 const selectedCountry = ref<string | null>(null);
 const selectedMethod = ref<'qrcode' | 'cash'>('qrcode');
 const selectedCityId = ref<number | null>(null);
-const contactPhone = ref('');
 const amountSellTouched = ref(false);
 const syncingState = ref(false);
 
@@ -188,11 +167,9 @@ const canSubmit = computed(() => {
   const hasAmounts = Boolean(amountSell.value && amountSell.value > 0 && amountBuy.value && amountBuy.value > 0);
   const hasBaseFields = Boolean(selectedSellCurrency.value && selectedBuyCurrency.value);
   const hasMethodFields = selectedMethod.value === 'qrcode' || Boolean(selectedCityId.value);
-  const hasTrustedContact = authStore.trustedContactReady || contactPhone.value.trim().length >= 5;
   return hasAmounts
     && hasBaseFields
     && hasMethodFields
-    && hasTrustedContact
     && preliminaryValidation.value.valid;
 });
 
@@ -334,10 +311,6 @@ async function submitOrder() {
   }
 
   try {
-    if (!authStore.trustedContactReady) {
-      await authStore.saveTrustedPhone(contactPhone.value.trim());
-    }
-
     const order = await exchangeStore.submitOrder({
       country: selectedCountry.value,
       cityId: selectedMethod.value === 'cash' ? selectedCityId.value : null,
@@ -357,7 +330,6 @@ async function submitOrder() {
     syncingState.value = false;
     selectedMethod.value = 'qrcode';
     selectedCityId.value = null;
-    contactPhone.value = '';
     await router.push({ name: 'history' });
   } catch (error: unknown) {
     const code = (error as { response?: { data?: { code?: string } } })?.response?.data?.code;

@@ -56,4 +56,5 @@ describe('ExchangePage responsive layout contract', () => {
     expect(pageSource).not.toContain('v-model.number="amountBuy"');
     expect(detailsSource).not.toContain('type="number"');
   });
+
 });
