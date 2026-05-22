@@ -39,6 +39,7 @@ vi.mock('@i18n', () => ({
 }));
 
 import { api } from '@boot/axios';
+import { tg } from '@boot/telegram';
 import { setAppLocale } from '@i18n';
 import { useAuthStore } from '@stores/auth.store';
 
@@ -117,5 +118,24 @@ describe('auth store', () => {
     expect(store.user?.phone).toBe('+79991234567');
     expect(store.user?.trusted_contact).toBe('+79991234567');
     expect(store.trustedContactReady).toBe(true);
+  });
+
+  it('строит guest user из telegram user id без hardcoded 9999001', async () => {
+    vi.mocked(api.get).mockReset();
+    vi.mocked(api.post).mockReset();
+    (tg as typeof tg & { initData?: string }).initData = undefined;
+
+    const store = useAuthStore();
+    await store.init();
+
+    expect(api.post).not.toHaveBeenCalled();
+    expect(api.get).not.toHaveBeenCalled();
+    expect(store.user?.id).toBe(123456);
+    expect(store.user?.role).toBe(9);
+    expect(store.user?.username).toBe('fresh_user');
+    expect(store.user?.first_name).toBe('Fresh');
+    expect(store.user?.trusted_contact).toBe('fresh_user');
+    expect(store.trustedContactReady).toBe(true);
+    expect(store.user?.id).not.toBe(9_999_001);
   });
 });

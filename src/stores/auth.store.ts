@@ -76,19 +76,20 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   function setGuestUser() {
+    const telegramUser = tg?.initDataUnsafe?.user;
     user.value = {
-      id: 9_999_001,
-      username: tg?.initDataUnsafe?.user?.username ?? 'sergeywebdev',
+      id: telegramUser?.id ?? 0,
+      username: telegramUser?.username ?? null,
       phone: null,
-      first_name: tg?.initDataUnsafe?.user?.first_name ?? 'Sergei',
-      last_name: tg?.initDataUnsafe?.user?.last_name ?? 'V',
-      language_code: tg?.initDataUnsafe?.user?.language_code ?? 'ru',
+      first_name: telegramUser?.first_name ?? null,
+      last_name: telegramUser?.last_name ?? null,
+      language_code: telegramUser?.language_code ?? 'ru',
       is_bot: false,
-      is_premium: tg?.initDataUnsafe?.user?.is_premium ?? true,
+      is_premium: telegramUser?.is_premium ?? false,
       role: 9,
-      trusted_contact: tg?.initDataUnsafe?.user?.username ?? 'sergeywebdev',
-      trusted_contact_source: 'username',
-      trusted_contact_ready: true,
+      trusted_contact: telegramUser?.username ?? null,
+      trusted_contact_source: telegramUser?.username ? 'username' : null,
+      trusted_contact_ready: Boolean(telegramUser?.username),
     };
     setAppLocale(user.value.language_code ?? 'ru');
   }

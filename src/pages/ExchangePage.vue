@@ -189,7 +189,11 @@ const canSubmit = computed(() => {
   const hasBaseFields = Boolean(selectedSellCurrency.value && selectedBuyCurrency.value);
   const hasMethodFields = selectedMethod.value === 'qrcode' || Boolean(selectedCityId.value);
   const hasTrustedContact = authStore.trustedContactReady || contactPhone.value.trim().length >= 5;
-  return hasAmounts && hasBaseFields && hasMethodFields && hasTrustedContact && preliminaryValidation.value.valid;
+  return hasAmounts
+    && hasBaseFields
+    && hasMethodFields
+    && hasTrustedContact
+    && preliminaryValidation.value.valid;
 });
 
 watch(selectedSellCurrency, () => {
@@ -357,7 +361,9 @@ async function submitOrder() {
     await router.push({ name: 'history' });
   } catch (error: unknown) {
     const code = (error as { response?: { data?: { code?: string } } })?.response?.data?.code;
-    Notify.create({ type: 'negative', message: t(getMiniappErrorMessageKey(code)) });
+    const status = (error as { response?: { status?: number } })?.response?.status;
+    const messageKey = status === 401 ? 'errors.auth' : getMiniappErrorMessageKey(code);
+    Notify.create({ type: 'negative', message: t(messageKey) });
   }
 }
 </script>
