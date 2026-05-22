@@ -6,6 +6,7 @@
       <div class="app-sheet__description">{{ t('order.description') }}</div>
 
       <ExchangeOrderDetails
+        ref="orderDetailsRef"
         v-model:selected-sell-currency="selectedSellCurrency"
         v-model:selected-buy-currency="currencyBuy"
         v-model:amount-sell="amountSell"
@@ -29,7 +30,7 @@
 
 <script setup lang="ts">
 import { Notify } from 'quasar';
-import { computed, ref, watch } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 
@@ -76,6 +77,8 @@ const selectedMethod = ref<'qrcode' | 'cash'>('qrcode');
 const selectedCityId = ref<number | null>(null);
 const amountSellTouched = ref(false);
 const syncingState = ref(false);
+const shouldFocusAmountSellAfterOpen = ref(false);
+const orderDetailsRef = ref<{ focusAmountSell: () => void } | null>(null);
 
 const sellOptions = computed(() =>
   [...new Set((exchangeStore.screen?.pairs ?? []).map((pair) => pair.id.split('-')[0]?.toUpperCase()))].map((currency) => ({
@@ -150,10 +153,11 @@ watch(
       await exchangeStore.load();
     }
 
+    shouldFocusAmountSellAfterOpen.value = Boolean(uiStore.orderContext);
     syncingState.value = true;
     selectedSellCurrency.value = uiStore.orderContext?.currencySell ?? exchangeStore.quote?.currencySell ?? 'RUB';
     amountSell.value = uiStore.orderContext?.amountSell ?? exchangeStore.quote?.amountSell ?? getDefaultAmountSell(selectedSellCurrency.value);
-    amountBuy.value = uiStore.orderContext?.amountBuy ?? exchangeStore.quote?.amountBuy ?? null;
+    amountBuy.value = null;
     currencyBuy.value = uiStore.orderContext?.currencyBuy ?? exchangeStore.quote?.currencyBuy ?? 'THB';
     selectedCountry.value = uiStore.orderContext?.country
       ?? getCountryByCurrency(exchangeStore.screen?.pairs ?? [], currencyBuy.value);
@@ -162,6 +166,11 @@ watch(
     amountSellTouched.value = Boolean(uiStore.orderContext?.amountSell);
     syncingState.value = false;
     refreshQuoteForCurrentState();
+    if (shouldFocusAmountSellAfterOpen.value) {
+      await nextTick();
+      orderDetailsRef.value?.focusAmountSell();
+      shouldFocusAmountSellAfterOpen.value = false;
+    }
   },
   { immediate: true },
 );

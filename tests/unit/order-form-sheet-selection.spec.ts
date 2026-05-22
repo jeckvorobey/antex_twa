@@ -27,4 +27,12 @@ describe('OrderFormSheet selection sync contract', () => {
   it('disables submit button when preliminary validation fails', () => {
     expect(source).toContain('<AppButton block :loading="exchangeStore.submitting" :disable="!canSubmit" @click="submit">');
   });
+
+  it('repeat opening recalculates quote and focuses the sell amount field', () => {
+    expect(source).toContain('ref="orderDetailsRef"');
+    expect(source).toContain('shouldFocusAmountSellAfterOpen.value = Boolean(uiStore.orderContext)');
+    expect(source).toContain('await nextTick();');
+    expect(source).toContain('orderDetailsRef.value?.focusAmountSell();');
+    expect(source).not.toContain('amountBuy.value = uiStore.orderContext?.amountBuy');
+  });
 });

@@ -58,4 +58,13 @@ describe('ExchangeOrderDetails shared component contract', () => {
     expect(source).toContain("t('exchange.cashCities')");
     expect(source).not.toContain("t('order.contact')");
   });
+
+  it('exposes focusAmountSell for repeat order flow', () => {
+    const source = readFileSync(detailsComponentPath, 'utf8');
+
+    expect(source).toContain('const amountSellInputRef = ref');
+    expect(source).toContain('function focusAmountSell()');
+    expect(source).toContain('defineExpose({ focusAmountSell });');
+    expect(source).toContain('ref="amountSellInputRef"');
+  });
 });

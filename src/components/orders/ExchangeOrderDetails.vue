@@ -16,6 +16,7 @@
               behavior="menu"
             />
             <q-input
+              ref="amountSellInputRef"
               :model-value="formattedAmountSell"
               class="app-exchange-calculator__amount"
               type="text"
@@ -113,7 +114,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 import AppFlagOptionButton from '@components/ui/AppFlagOptionButton.vue';
@@ -146,6 +147,7 @@ const emit = defineEmits<{
 }>();
 
 const { locale, t } = useI18n();
+const amountSellInputRef = ref<{ focus: () => void } | null>(null);
 
 const selectedSellCurrencyModel = computed({
   get: () => props.selectedSellCurrency,
@@ -200,4 +202,9 @@ function handleAmountSellInput(value: string | number | null) {
   emit('update:amountSell', parseReadableNumber(value));
 }
 
+function focusAmountSell() {
+  amountSellInputRef.value?.focus();
+}
+
+defineExpose({ focusAmountSell });
 </script>

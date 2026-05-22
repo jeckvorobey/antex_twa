@@ -5,8 +5,11 @@ import type { MiniappQuoteResponse } from '@types/miniapp';
 
 type OrderContext = Pick<
   MiniappQuoteResponse,
-  'currencySell' | 'currencyBuy' | 'amountSell' | 'amountBuy' | 'rate' | 'availableMethods'
+  'currencySell' | 'currencyBuy' | 'amountSell'
 > & {
+  amountBuy?: MiniappQuoteResponse['amountBuy'];
+  rate?: MiniappQuoteResponse['rate'];
+  availableMethods?: MiniappQuoteResponse['availableMethods'];
   country?: string | null;
   cityId?: number | null;
 };

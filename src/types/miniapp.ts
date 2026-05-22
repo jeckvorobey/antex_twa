@@ -139,6 +139,7 @@ export interface MiniappBankSummary {
 
 export interface MiniappOrderItem {
   id: number;
+  publicNumber: string;
   cityId: number | null;
   country: string;
   currencySell: string;
@@ -156,6 +157,10 @@ export interface MiniappOrderItem {
 
 export interface MiniappOrdersResponse {
   items: MiniappOrderItem[];
+  limit: number;
+  offset: number;
+  total: number;
+  hasMore: boolean;
 }
 
 export interface MiniappOrderCreate {

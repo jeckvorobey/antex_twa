@@ -54,6 +54,10 @@ export default {
     all: 'Все',
     active: 'Активные',
     done: 'Завершённые',
+    cancelled: 'Отменённые',
+    refresh: 'Обновить историю',
+    repeat: 'Повторить',
+    loadingMore: 'Загружаем ещё',
   },
   profile: {
     title: 'Профиль',
