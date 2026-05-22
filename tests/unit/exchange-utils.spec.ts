@@ -8,6 +8,7 @@ import {
   getDefaultReceiveMethod,
   getReceiveLocationTitleKey,
   resetCityForMethod,
+  validatePreliminaryOrderDraft,
 } from '@utils/exchange';
 
 describe('buildBuyCurrencyOptions', () => {
@@ -132,5 +133,136 @@ describe('receive location presentation', () => {
       countryLabel: 'Таиланд',
       cityLabel: 'Паттайя',
     })).toBe('Таиланд, Паттайя');
+  });
+});
+
+describe('validatePreliminaryOrderDraft', () => {
+  const pairs = [
+    {
+      id: 'rub-thb',
+      fromCurrency: 'RUB',
+      toCurrency: 'THB',
+      country: 'thailand',
+      amountSellExample: 5000,
+    },
+    {
+      id: 'usdt-gel',
+      fromCurrency: 'USDT',
+      toCurrency: 'GEL',
+      country: 'georgia',
+      amountSellExample: 100,
+    },
+  ];
+
+  const cities = [
+    {
+      id: 1,
+      name: 'Bangkok',
+      country: 'thailand',
+      countryRuName: 'Таиланд',
+      countryCode: 'th',
+      countryFlag: '🇹🇭',
+      createdAt: '2026-03-28T12:00:00+00:00',
+      updatedAt: '2026-03-28T12:00:00+00:00',
+    },
+    {
+      id: 2,
+      name: 'Tbilisi',
+      country: 'georgia',
+      countryRuName: 'Грузия',
+      countryCode: 'ge',
+      countryFlag: '🇬🇪',
+      createdAt: '2026-03-28T12:00:00+00:00',
+      updatedAt: '2026-03-28T12:00:00+00:00',
+    },
+  ];
+
+  it('returns warning key when sell amount is lower than pair default', () => {
+    expect(validatePreliminaryOrderDraft({
+      pairs,
+      cities,
+      currencySell: 'RUB',
+      currencyBuy: 'THB',
+      amountSell: 4999,
+      selectedCountry: 'thailand',
+      selectedMethod: 'qrcode',
+      selectedCityId: null,
+    })).toEqual({
+      valid: false,
+      messageKey: 'errors.exchange_min_amount',
+      params: { amount: 5000, currency: 'RUB' },
+    });
+  });
+
+  it('returns warning key when country is not selected', () => {
+    expect(validatePreliminaryOrderDraft({
+      pairs,
+      cities,
+      currencySell: 'RUB',
+      currencyBuy: 'THB',
+      amountSell: 5000,
+      selectedCountry: null,
+      selectedMethod: 'qrcode',
+      selectedCityId: null,
+    })).toEqual({
+      valid: false,
+      messageKey: 'errors.country_required',
+    });
+  });
+
+  it('returns warning key when city is missing for cash', () => {
+    expect(validatePreliminaryOrderDraft({
+      pairs,
+      cities,
+      currencySell: 'RUB',
+      currencyBuy: 'THB',
+      amountSell: 5000,
+      selectedCountry: 'thailand',
+      selectedMethod: 'cash',
+      selectedCityId: null,
+    })).toEqual({
+      valid: false,
+      messageKey: 'errors.city_required',
+    });
+  });
+
+  it('returns warning key when city country does not match selected country', () => {
+    expect(validatePreliminaryOrderDraft({
+      pairs,
+      cities,
+      currencySell: 'RUB',
+      currencyBuy: 'THB',
+      amountSell: 5000,
+      selectedCountry: 'thailand',
+      selectedMethod: 'cash',
+      selectedCityId: 2,
+    })).toEqual({
+      valid: false,
+      messageKey: 'errors.city_country_mismatch',
+    });
+  });
+
+  it('accepts qrcode and cash drafts that satisfy all rules', () => {
+    expect(validatePreliminaryOrderDraft({
+      pairs,
+      cities,
+      currencySell: 'RUB',
+      currencyBuy: 'THB',
+      amountSell: 5000,
+      selectedCountry: 'thailand',
+      selectedMethod: 'qrcode',
+      selectedCityId: null,
+    })).toEqual({ valid: true });
+
+    expect(validatePreliminaryOrderDraft({
+      pairs,
+      cities,
+      currencySell: 'RUB',
+      currencyBuy: 'THB',
+      amountSell: 5000,
+      selectedCountry: 'thailand',
+      selectedMethod: 'cash',
+      selectedCityId: 1,
+    })).toEqual({ valid: true });
   });
 });

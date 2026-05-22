@@ -16,4 +16,11 @@ describe('ExchangePage rate formatting', () => {
     expect(source).not.toContain('openOrderSheet');
     expect(source).not.toContain('fetchQuote');
   });
+
+  it('validates preliminary order and shows warning notification before submit', () => {
+    const source = readFileSync(exchangePagePath, 'utf8');
+
+    expect(source).toContain('validatePreliminaryOrderDraft');
+    expect(source).toContain("Notify.create({ type: 'negative', message: t(validation.messageKey");
+  });
 });

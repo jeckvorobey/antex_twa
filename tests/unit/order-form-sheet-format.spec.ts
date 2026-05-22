@@ -30,6 +30,13 @@ describe('OrderFormSheet amount formatting', () => {
     expect(source).toContain('v-model:selected-city-id="selectedCityId"');
     expect(source).not.toContain('show-contact');
   });
+
+  it('runs shared preliminary validation before submit and warns via Notify', () => {
+    const source = readFileSync(orderFormSheetPath, 'utf8');
+
+    expect(source).toContain('validatePreliminaryOrderDraft');
+    expect(source).toContain("Notify.create({ type: 'negative', message: t(validation.messageKey");
+  });
 });
 
 describe('ExchangeOrderDetails shared component contract', () => {

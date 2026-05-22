@@ -107,6 +107,7 @@ import {
   getCurrencyByCountry,
   getPreferredReceiveMethod,
   resetCityForMethod,
+  validatePreliminaryOrderDraft,
 } from '@utils/exchange';
 
 const router = useRouter();
@@ -172,12 +173,23 @@ const currentRateLabel = computed(() => {
     || `1 ${quote.currencySell} = ${formatReadableNumber(quote.rate, locale.value)} ${quote.currencyBuy}`;
 });
 
+const preliminaryValidation = computed(() => validatePreliminaryOrderDraft({
+  pairs: exchangeStore.screen?.pairs ?? [],
+  cities: exchangeStore.cities,
+  currencySell: selectedSellCurrency.value,
+  currencyBuy: selectedBuyCurrency.value,
+  amountSell: amountSell.value,
+  selectedCountry: selectedCountry.value,
+  selectedMethod: selectedMethod.value,
+  selectedCityId: selectedCityId.value,
+}));
+
 const canSubmit = computed(() => {
   const hasAmounts = Boolean(amountSell.value && amountSell.value > 0 && amountBuy.value && amountBuy.value > 0);
-  const hasBaseFields = Boolean(selectedCountry.value && selectedSellCurrency.value && selectedBuyCurrency.value);
+  const hasBaseFields = Boolean(selectedSellCurrency.value && selectedBuyCurrency.value);
   const hasMethodFields = selectedMethod.value === 'qrcode' || Boolean(selectedCityId.value);
   const hasTrustedContact = authStore.trustedContactReady || contactPhone.value.trim().length >= 5;
-  return hasAmounts && hasBaseFields && hasMethodFields && hasTrustedContact;
+  return hasAmounts && hasBaseFields && hasMethodFields && hasTrustedContact && preliminaryValidation.value.valid;
 });
 
 watch(selectedSellCurrency, () => {
@@ -303,7 +315,17 @@ function resolveCurrentQuote() {
 
 async function submitOrder() {
   const quote = resolveCurrentQuote();
-  if (!canSubmit.value || !amountSell.value || !amountBuy.value || !selectedCountry.value || !quote) {
+  if (!amountSell.value || !amountBuy.value || !quote) {
+    return;
+  }
+
+  const validation = preliminaryValidation.value;
+  if (!validation.valid) {
+    Notify.create({ type: 'negative', message: t(validation.messageKey, validation.params) });
+    return;
+  }
+
+  if (!canSubmit.value || !selectedCountry.value) {
     return;
   }
 

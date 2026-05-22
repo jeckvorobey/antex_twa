@@ -5,6 +5,7 @@ export interface ExchangePairLike {
   id: string;
   fromCurrency: string;
   toCurrency: string;
+  amountSellExample?: number;
   country?: string;
   countryLabel?: string;
   rate?: number;
@@ -31,6 +32,21 @@ export interface LocalQuoteParams {
   currencyBuy: string;
   amountSell: number | null;
 }
+
+export interface PreliminaryOrderValidationParams {
+  pairs: ExchangePairLike[];
+  cities: MiniappCity[];
+  currencySell: string;
+  currencyBuy: string;
+  amountSell: number | null;
+  selectedCountry: string | null;
+  selectedMethod: 'qrcode' | 'cash';
+  selectedCityId: number | null;
+}
+
+export type PreliminaryOrderValidationResult =
+  | { valid: true }
+  | { valid: false; messageKey: string; params?: Record<string, string | number> };
 
 /**
  * Возвращает canonical sell/buy из pair id `rub-thb`.
@@ -144,6 +160,32 @@ function roundMoney(value: number) {
   return Number(value.toFixed(2));
 }
 
+function getFallbackDefaultAmountSell(currencySell: string) {
+  return currencySell.toUpperCase() === 'USDT' ? 100 : 5000;
+}
+
+function resolvePairDefaultAmountSell(
+  pairs: ExchangePairLike[],
+  currencySell: string,
+  currencyBuy: string,
+) {
+  const pair = pairs.find((item) => {
+    const parsed = parsePairId(item.id);
+    return parsed.currencySell === currencySell.toUpperCase() && parsed.currencyBuy === currencyBuy.toUpperCase();
+  });
+  return pair && typeof pair.amountSellExample === 'number'
+    ? pair.amountSellExample
+    : getFallbackDefaultAmountSell(currencySell);
+}
+
+function resolveExpectedCountryByBuyCurrency(
+  pairs: ExchangePairLike[],
+  currencyBuy: string,
+) {
+  const directPair = pairs.find((item) => parsePairId(item.id).currencyBuy === currencyBuy.toUpperCase());
+  return normalizeCountryKey(directPair?.country);
+}
+
 export function calculateLocalQuote(params: LocalQuoteParams): MiniappQuoteResponse | null {
   if (!params.amountSell || params.amountSell <= 0) {
     return null;
@@ -170,6 +212,54 @@ export function calculateLocalQuote(params: LocalQuoteParams): MiniappQuoteRespo
     updatedAt: pair.updatedAt ?? new Date().toISOString(),
     availableMethods: pair.availableMethods ?? [],
   };
+}
+
+export function validatePreliminaryOrderDraft(
+  params: PreliminaryOrderValidationParams,
+): PreliminaryOrderValidationResult {
+  const minimumAmountSell = resolvePairDefaultAmountSell(
+    params.pairs,
+    params.currencySell,
+    params.currencyBuy,
+  );
+  const normalizedCountry = normalizeCountryKey(params.selectedCountry);
+  const expectedCountry = resolveExpectedCountryByBuyCurrency(params.pairs, params.currencyBuy);
+
+  if (!params.amountSell || params.amountSell < minimumAmountSell) {
+    return {
+      valid: false,
+      messageKey: 'errors.exchange_min_amount',
+      params: { amount: minimumAmountSell, currency: params.currencySell.toUpperCase() },
+    };
+  }
+
+  if (!normalizedCountry) {
+    return { valid: false, messageKey: 'errors.country_required' };
+  }
+
+  if (expectedCountry && normalizedCountry !== expectedCountry) {
+    return { valid: false, messageKey: 'errors.country_currency_mismatch' };
+  }
+
+  if (params.selectedMethod !== 'cash') {
+    return { valid: true };
+  }
+
+  if (params.selectedCityId == null) {
+    return { valid: false, messageKey: 'errors.city_required' };
+  }
+
+  const selectedCity = params.cities.find((city) => city.id === params.selectedCityId);
+  if (!selectedCity) {
+    return { valid: false, messageKey: 'errors.city_required' };
+  }
+
+  const cityCountry = normalizeCountryKey(selectedCity.country);
+  if (cityCountry !== normalizedCountry) {
+    return { valid: false, messageKey: 'errors.city_country_mismatch' };
+  }
+
+  return { valid: true };
 }
 
 export function getCountryByCurrency(

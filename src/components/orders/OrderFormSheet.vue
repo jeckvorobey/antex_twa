@@ -49,6 +49,7 @@ import {
   getCurrencyByCountry,
   getPreferredReceiveMethod,
   resetCityForMethod,
+  validatePreliminaryOrderDraft,
 } from '@utils/exchange';
 
 const props = defineProps<{
@@ -124,6 +125,17 @@ const currentRateLabel = computed(() => {
 
   return currentQuote.rateText;
 });
+
+const preliminaryValidation = computed(() => validatePreliminaryOrderDraft({
+  pairs: exchangeStore.screen?.pairs ?? [],
+  cities: exchangeStore.cities,
+  currencySell: selectedSellCurrency.value,
+  currencyBuy: currencyBuy.value,
+  amountSell: amountSell.value,
+  selectedCountry: selectedCountry.value,
+  selectedMethod: selectedMethod.value,
+  selectedCityId: selectedCityId.value,
+}));
 
 watch(
   () => props.modelValue,
@@ -272,12 +284,17 @@ function getDefaultAmountSell(currencySell: string) {
 async function submit() {
   const quote = resolveCurrentQuote();
   if (!amountSell.value || amountSell.value <= 0 || !amountBuy.value || !quote) {
-    Notify.create({ type: 'warning', message: t('exchange.quoteUnavailable') });
+    Notify.create({ type: 'negative', message: t('exchange.quoteUnavailable') });
+    return;
+  }
+
+  const validation = preliminaryValidation.value;
+  if (!validation.valid) {
+    Notify.create({ type: 'negative', message: t(validation.messageKey, validation.params) });
     return;
   }
 
   if (!selectedCountry.value) {
-    Notify.create({ type: 'warning', message: t('errors.generic') });
     return;
   }
 
