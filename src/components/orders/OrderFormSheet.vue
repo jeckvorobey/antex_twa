@@ -20,7 +20,7 @@
         :city-options="cityOptions"
       />
 
-      <AppButton block :loading="exchangeStore.submitting" @click="submit">
+      <AppButton block :loading="exchangeStore.submitting" :disable="!canSubmit" @click="submit">
         {{ t('common.submit') }}
       </AppButton>
     </AppSurface>
@@ -105,17 +105,12 @@ const countryOptions = computed(() => {
 });
 const cityOptions = computed(() => buildCityOptions(exchangeStore.cities, selectedCountry.value));
 const currentQuoteMethods = computed(() => {
-  const contextMethods = uiStore.orderContext?.availableMethods;
-  if (contextMethods?.length) {
-    return contextMethods;
-  }
-
   const quote = exchangeStore.quote;
-  if (!quote || quote.currencySell !== selectedSellCurrency.value || quote.currencyBuy !== currencyBuy.value) {
-    return null;
+  if (quote && quote.currencySell === selectedSellCurrency.value && quote.currencyBuy === currencyBuy.value) {
+    return quote.availableMethods;
   }
 
-  return quote.availableMethods;
+  return uiStore.orderContext?.availableMethods ?? null;
 });
 const currentRateLabel = computed(() => {
   const currentQuote = resolveCurrentQuote();
@@ -136,6 +131,13 @@ const preliminaryValidation = computed(() => validatePreliminaryOrderDraft({
   selectedMethod: selectedMethod.value,
   selectedCityId: selectedCityId.value,
 }));
+const canSubmit = computed(() => {
+  const hasAmounts = Boolean(amountSell.value && amountSell.value > 0 && amountBuy.value && amountBuy.value > 0);
+  const hasBaseFields = Boolean(selectedSellCurrency.value && currencyBuy.value);
+  const hasMethodFields = selectedMethod.value === 'qrcode' || Boolean(selectedCityId.value);
+
+  return hasAmounts && hasBaseFields && hasMethodFields && preliminaryValidation.value.valid;
+});
 
 watch(
   () => props.modelValue,
@@ -187,8 +189,7 @@ watch(currencyOptions, (options) => {
 });
 
 watch(currencyBuy, (value) => {
-  selectedCountry.value = uiStore.orderContext?.country
-    ?? getCountryByCurrency(exchangeStore.screen?.pairs ?? [], value);
+  selectedCountry.value = getCountryByCurrency(exchangeStore.screen?.pairs ?? [], value);
 
   void refreshQuoteForCurrentState();
 });
