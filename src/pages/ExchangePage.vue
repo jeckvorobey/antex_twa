@@ -2,7 +2,11 @@
   <q-page class="app-page app-page--exchange">
     <div class="app-screen app-screen--exchange fit column no-wrap">
       <q-form class="col column no-wrap" @submit.prevent="submitOrder">
-        <div class="col column q-gutter-md no-wrap overflow-auto">
+        <div class="app-exchange-content col column q-gutter-md no-wrap overflow-auto">
+          <AppWarningNotice class="app-exchange-rate-notice">
+            {{ t('order.rateNotice') }}
+          </AppWarningNotice>
+
           <ExchangeOrderDetails
             v-model:selected-sell-currency="selectedSellCurrency"
             v-model:selected-buy-currency="selectedBuyCurrency"
@@ -75,6 +79,7 @@ import AppButton from '@components/ui/AppButton.vue';
 import AppRateValue from '@components/ui/AppRateValue.vue';
 import AppSectionTitle from '@components/ui/AppSectionTitle.vue';
 import AppSurface from '@components/ui/AppSurface.vue';
+import AppWarningNotice from '@components/ui/AppWarningNotice.vue';
 import { useExchangeStore } from '@stores/exchange.store';
 import { useOrdersStore } from '@stores/orders.store';
 import type { MiniappRateCard } from '@types/miniapp';

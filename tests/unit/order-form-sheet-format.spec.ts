@@ -5,6 +5,8 @@ import { describe, expect, it } from 'vitest';
 
 const orderFormSheetPath = resolve(process.cwd(), 'src/components/orders/OrderFormSheet.vue');
 const detailsComponentPath = resolve(process.cwd(), 'src/components/orders/ExchangeOrderDetails.vue');
+const localePath = resolve(process.cwd(), 'src/i18n/ru/index.ts');
+const warningNoticePath = resolve(process.cwd(), 'src/components/ui/AppWarningNotice.vue');
 
 describe('OrderFormSheet amount formatting', () => {
   it('does not keep duplicated amount, currency, and contact fields after replacing them with the shared component', () => {
@@ -36,6 +38,23 @@ describe('OrderFormSheet amount formatting', () => {
 
     expect(source).toContain('validatePreliminaryOrderDraft');
     expect(source).toContain("Notify.create({ type: 'negative', message: t(validation.messageKey");
+  });
+
+  it('shows the rate warning through a reusable warning notice component', () => {
+    const source = readFileSync(orderFormSheetPath, 'utf8');
+    const localeSource = readFileSync(localePath, 'utf8');
+    const warningNoticeSource = readFileSync(warningNoticePath, 'utf8');
+
+    expect(source).toContain("import AppWarningNotice from '@components/ui/AppWarningNotice.vue'");
+    expect(source).toContain('<AppWarningNotice>');
+    expect(source).toContain("{{ t('order.rateNotice') }}");
+    expect(source).not.toContain("t('order.description')");
+    expect(localeSource).toContain('rateNotice:');
+    expect(localeSource).not.toContain('description:');
+    expect(warningNoticeSource).toContain('<q-banner');
+    expect(warningNoticeSource).toContain('bg-warning');
+    expect(warningNoticeSource).toContain('max-width: 100%;');
+    expect(warningNoticeSource).not.toMatch(/(^|\n)\s*width:\s*100%;/);
   });
 });
 

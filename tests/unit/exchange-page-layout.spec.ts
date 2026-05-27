@@ -15,7 +15,7 @@ describe('ExchangePage responsive layout contract', () => {
 
     expect(pageSource).toContain('class="app-screen app-screen--exchange fit column no-wrap"');
     expect(pageSource).toContain('class="col column no-wrap"');
-    expect(pageSource).toContain('class="col column q-gutter-md no-wrap overflow-auto"');
+    expect(pageSource).toContain('class="app-exchange-content col column q-gutter-md no-wrap overflow-auto"');
     expect(pageSource).toContain('class="q-pt-md app-exchange-submit"');
     expect(detailsSource).toContain('class="app-order-sheet__methods q-mt-xs"');
     expect(detailsSource).toContain('class="app-chip-row app-chip-row--exchange"');
@@ -23,6 +23,8 @@ describe('ExchangePage responsive layout contract', () => {
 
     expect(stylesSource).toContain('width: min(100%, 390px);');
     expect(stylesSource).toContain('.app-exchange-submit {\n  flex: 0 0 auto;');
+    expect(stylesSource).toContain('.app-exchange-content {\n  padding-top: 16px;');
+    expect(stylesSource).toContain('.app-exchange-rate-notice {\n  margin-bottom: -4px;');
     expect(stylesSource).toContain('.app-exchange-calculator__control,\n.app-order-sheet__control {\n  width: 100%;\n  min-width: 0;');
     expect(stylesSource).toContain('.app-exchange-calculator__currency,\n.app-exchange-calculator__amount,\n.app-order-sheet__input,\n.app-order-sheet__select {\n  min-width: 0;');
   });
@@ -30,6 +32,9 @@ describe('ExchangePage responsive layout contract', () => {
   it('reuses the shared exchange order details component for location and method fields', () => {
     const pageSource = readFileSync(exchangePagePath, 'utf8');
 
+    expect(pageSource).toContain("import AppWarningNotice from '@components/ui/AppWarningNotice.vue'");
+    expect(pageSource).toContain('<AppWarningNotice class="app-exchange-rate-notice">');
+    expect(pageSource).toContain("{{ t('order.rateNotice') }}");
     expect(pageSource).toContain("import ExchangeOrderDetails from '@components/orders/ExchangeOrderDetails.vue'");
     expect(pageSource).toContain('<ExchangeOrderDetails');
     expect(pageSource).toContain('v-model:selected-sell-currency="selectedSellCurrency"');

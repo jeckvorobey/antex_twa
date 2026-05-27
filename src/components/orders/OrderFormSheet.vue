@@ -3,7 +3,9 @@
     @update:model-value="$emit('update:modelValue', $event)">
     <AppSurface class="app-sheet q-pt-sm q-px-md">
       <div class="app-sheet-handle" />
-      <div class="app-sheet__description">{{ t('order.description') }}</div>
+      <AppWarningNotice>
+        {{ t('order.rateNotice') }}
+      </AppWarningNotice>
 
       <ExchangeOrderDetails
         ref="orderDetailsRef"
@@ -37,6 +39,7 @@ import { useRouter } from 'vue-router';
 import AppButton from '@components/ui/AppButton.vue';
 import ExchangeOrderDetails from '@components/orders/ExchangeOrderDetails.vue';
 import AppSurface from '@components/ui/AppSurface.vue';
+import AppWarningNotice from '@components/ui/AppWarningNotice.vue';
 import { useExchangeStore } from '@stores/exchange.store';
 import { useHomeStore } from '@stores/home.store';
 import { useOrdersStore } from '@stores/orders.store';
