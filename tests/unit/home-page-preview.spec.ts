@@ -55,6 +55,13 @@ describe('HomePage preview rates', () => {
     expect(source).toContain("t('home.ratePrefix')");
   });
 
+  it('keeps the referral banner hidden behind a local restore flag', () => {
+    const source = readFileSync(homePagePath, 'utf8');
+
+    expect(source).toContain('const showReferralBanner = false;');
+    expect(source).toContain('v-if="showReferralBanner"');
+  });
+
   it('keeps the home chips fully rounded through shared chip styles', () => {
     const source = readFileSync(resolve(process.cwd(), 'src/css/app.scss'), 'utf8');
     const pageSource = readFileSync(homePagePath, 'utf8');

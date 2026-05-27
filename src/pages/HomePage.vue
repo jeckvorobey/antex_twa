@@ -85,7 +85,7 @@
         {{ t('common.exchange') }}
       </AppButton>
 
-      <AppSurface class="app-home-bonus-card">
+      <AppSurface v-if="showReferralBanner" class="app-home-bonus-card">
         <div class="app-home-bonus-card__coin">
           <q-icon name="workspace_premium" size="22px" />
         </div>
@@ -152,6 +152,7 @@ const selectedRateChip = ref(HOME_ALL_FILTER_KEY);
 const selectedCountry = ref<string | null>(null);
 const selectedCityId = ref<string | null>(null);
 const ratesExpanded = ref(false);
+const showReferralBanner = false;
 const featuredRates = computed(() => homeStore.data?.rates.featured ?? []);
 const previewLimit = computed(() => homeStore.data?.rates.previewLimit ?? 3);
 const locations = computed(() => homeStore.data?.locations ?? []);
