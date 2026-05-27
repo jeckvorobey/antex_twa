@@ -19,6 +19,7 @@ export const useExchangeStore = defineStore('exchange', () => {
   const cities = ref<MiniappCity[]>([]);
   const quote = ref<MiniappQuoteResponse | null>(null);
   const loading = ref(false);
+  const loaded = ref(false);
   const submitting = ref(false);
 
   async function load() {
@@ -32,6 +33,7 @@ export const useExchangeStore = defineStore('exchange', () => {
       cities.value = citiesResponse.items;
       quote.value = screenResponse.quote;
     } finally {
+      loaded.value = true;
       loading.value = false;
     }
   }
@@ -62,6 +64,7 @@ export const useExchangeStore = defineStore('exchange', () => {
     cities,
     quote,
     loading,
+    loaded,
     submitting,
     load,
     recalculateQuote,

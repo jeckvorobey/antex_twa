@@ -114,8 +114,6 @@
           </AppSurface>
         </div>
       </section>
-
-      <q-inner-loading :showing="homeStore.loading" dark />
     </div>
   </q-page>
 </template>

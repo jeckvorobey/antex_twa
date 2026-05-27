@@ -10,6 +10,7 @@ const PAGE_LIMIT = 20;
 export const useOrdersStore = defineStore('orders', () => {
   const items = ref<MiniappOrderItem[]>([]);
   const loading = ref(false);
+  const loaded = ref(false);
   const loadingMore = ref(false);
   const refreshing = ref(false);
   const hasMore = ref(true);
@@ -27,6 +28,7 @@ export const useOrdersStore = defineStore('orders', () => {
       total.value = response.total;
       hasMore.value = response.hasMore;
     } finally {
+      loaded.value = true;
       loading.value = false;
     }
   }
@@ -70,6 +72,7 @@ export const useOrdersStore = defineStore('orders', () => {
   return {
     items,
     loading,
+    loaded,
     loadingMore,
     refreshing,
     hasMore,

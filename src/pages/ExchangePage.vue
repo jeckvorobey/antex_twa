@@ -62,8 +62,6 @@
           </AppButton>
         </div>
       </q-form>
-
-      <q-inner-loading :showing="exchangeStore.loading" dark />
     </div>
   </q-page>
 </template>

@@ -98,10 +98,6 @@
           </template>
         </q-infinite-scroll>
       </div>
-
-      <q-inner-loading :showing="ordersStore.loading" dark>
-        <q-spinner-dots color="warning" size="40px" />
-      </q-inner-loading>
     </div>
   </q-page>
 </template>

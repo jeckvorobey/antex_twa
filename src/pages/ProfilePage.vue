@@ -25,8 +25,6 @@
       <div class="app-version-text">
         {{ t('profile.version', { version: profileStore.data?.version ?? '1.0.0' }) }}
       </div>
-
-      <q-inner-loading :showing="profileStore.loading" dark />
     </div>
   </q-page>
 </template>
