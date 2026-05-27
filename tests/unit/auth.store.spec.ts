@@ -20,6 +20,7 @@ vi.mock('@boot/telegram', () => ({
         last_name: 'User',
         language_code: 'ru',
         is_premium: true,
+        photo_url: 'https://t.me/i/userpic/320/fresh.jpg',
       },
     },
     ready: vi.fn(),
@@ -63,6 +64,7 @@ describe('auth store', () => {
         first_name: 'Fresh',
         last_name: 'User',
         language_code: 'ru',
+        photo_url: 'https://t.me/i/userpic/320/fresh.jpg',
         is_bot: false,
         is_premium: true,
         role: 9,
@@ -104,6 +106,7 @@ describe('auth store', () => {
       first_name: 'Fresh',
       last_name: 'User',
       language_code: 'ru',
+      photo_url: null,
       is_bot: false,
       is_premium: true,
       role: 9,
@@ -134,6 +137,7 @@ describe('auth store', () => {
     expect(store.user?.role).toBe(9);
     expect(store.user?.username).toBe('fresh_user');
     expect(store.user?.first_name).toBe('Fresh');
+    expect(store.user?.photo_url).toBe('https://t.me/i/userpic/320/fresh.jpg');
     expect(store.user?.trusted_contact).toBe('fresh_user');
     expect(store.trustedContactReady).toBe(true);
     expect(store.user?.id).not.toBe(9_999_001);

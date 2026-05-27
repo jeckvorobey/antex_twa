@@ -422,6 +422,13 @@ body.body--dark .q-page {
   text-shadow: 0 0 18px rgba(242, 210, 122, 0.16);
 }
 
+.app-header-bar__avatar-button {
+  width: 42px;
+  height: 42px;
+  min-height: 42px;
+  padding: 0;
+}
+
 .app-header-bar__avatar {
   width: 42px;
   height: 42px;
@@ -1133,6 +1140,10 @@ body.body--dark .q-page {
   width: 80px;
   height: 80px;
   border-radius: 50%;
+  border: 1px solid rgba(242, 210, 122, 0.62);
+  background: rgba(212, 175, 55, 0.12);
+  color: var(--antex-gold-light);
+  overflow: hidden;
 }
 
 .app-profile-hero__name {

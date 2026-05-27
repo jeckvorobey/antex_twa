@@ -84,6 +84,7 @@ export const useAuthStore = defineStore('auth', () => {
       first_name: telegramUser?.first_name ?? null,
       last_name: telegramUser?.last_name ?? null,
       language_code: telegramUser?.language_code ?? 'ru',
+      photo_url: telegramUser?.photo_url ?? null,
       is_bot: false,
       is_premium: telegramUser?.is_premium ?? false,
       role: 9,

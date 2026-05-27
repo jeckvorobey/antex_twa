@@ -5,6 +5,7 @@ export interface MiniappUser {
   first_name: string | null;
   last_name: string | null;
   language_code: string | null;
+  photo_url: string | null;
   is_bot: boolean;
   is_premium: boolean;
   role: number;
@@ -28,6 +29,7 @@ export interface MiniappProfileSummary {
   id: number;
   displayName: string;
   username: string | null;
+  photoUrl: string | null;
   isPremium: boolean;
   languageCode: string;
 }

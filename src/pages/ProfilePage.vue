@@ -2,9 +2,18 @@
   <q-page class="app-page">
     <div class="app-screen app-screen--profile">
       <div class="app-profile-hero">
-        <div class="app-profile-hero__avatar">
-          <q-icon name="person_outline" size="34px" />
-        </div>
+        <q-avatar class="app-profile-hero__avatar">
+          <q-img
+            v-if="profilePhotoUrl"
+            :src="profilePhotoUrl"
+            fit="cover"
+            width="100%"
+            height="100%"
+            :alt="profileStore.data?.user.displayName ?? t('nav.profile')"
+            no-spinner
+          />
+          <q-icon v-else name="person_outline" size="34px" />
+        </q-avatar>
         <div class="app-profile-hero__name">{{ profileStore.data?.user.displayName }}</div>
         <div class="app-profile-hero__username">
           {{ profileStore.data?.user.username ? `@${profileStore.data.user.username}` : t('common.brand') }}
@@ -30,7 +39,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue';
+import { computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 
@@ -44,6 +53,8 @@ const router = useRouter();
 const uiStore = useUiStore();
 const profileStore = useProfileStore();
 const { t } = useI18n();
+
+const profilePhotoUrl = computed(() => profileStore.data?.user.photoUrl ?? null);
 
 onMounted(async () => {
   if (!profileStore.data) {

@@ -16,12 +16,23 @@
     </div>
     <q-btn
       round
-      unelevated
-      class="app-header-bar__avatar"
+      flat
+      class="app-header-bar__avatar-button"
       :aria-label="t('nav.profile')"
       @click="openProfile"
     >
-      <span>{{ userInitials }}</span>
+      <q-avatar class="app-header-bar__avatar">
+        <q-img
+          v-if="userPhotoUrl"
+          :src="userPhotoUrl"
+          fit="cover"
+          width="100%"
+          height="100%"
+          :alt="t('nav.profile')"
+          no-spinner
+        />
+        <span v-else>{{ userInitials }}</span>
+      </q-avatar>
     </q-btn>
   </div>
 </template>
@@ -36,6 +47,8 @@ import logoImage from '../../assets/images/logo.PNG';
 const { t } = useI18n();
 const router = useRouter();
 const authStore = useAuthStore();
+
+const userPhotoUrl = computed(() => authStore.user?.photo_url ?? null);
 
 const userInitials = computed(() => {
   const user = authStore.user;
