@@ -27,6 +27,35 @@ export default {
     ratePrefix: 'от',
     bonus: 'Приведи друга и получи бонус',
     bonusAction: 'Подробнее',
+    social: {
+      title: 'Наши социальные сети',
+      links: {
+        reviews: {
+          title: 'Отзывы ТГ',
+          subtitle: 'Опыт клиентов',
+        },
+        news: {
+          title: 'Новостной канал',
+          subtitle: 'Курсы и обновления',
+        },
+        instagram: {
+          title: 'Instagram',
+          subtitle: 'Фото и сторис',
+        },
+        vk: {
+          title: 'ВКонтакте',
+          subtitle: 'Сообщество AntEx',
+        },
+        max: {
+          title: 'Max',
+          subtitle: 'Канал AntEx',
+        },
+        threads: {
+          title: 'Threads',
+          subtitle: 'Короткие заметки',
+        },
+      },
+    },
     rateMeta: {
       market: 'СБП, перевод',
       qrcode: 'по qrcode',

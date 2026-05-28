@@ -85,6 +85,36 @@
         {{ t('common.exchange') }}
       </AppButton>
 
+      <section class="app-section app-section--home">
+        <AppSectionTitle>{{ t('home.social.title') }}</AppSectionTitle>
+
+        <div class="app-home-social-grid">
+          <AppSurface
+            v-for="link in socialLinks"
+            :key="link.id"
+            class="app-home-social-card"
+          >
+            <a
+              class="app-home-social-card__link"
+              :href="link.href"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <span class="app-home-social-card__icon">
+                <q-icon v-if="link.icon" :name="link.icon" size="18px" />
+                <span v-else class="app-home-social-card__max-mark" aria-hidden="true">
+                  {{ link.maxMark }}
+                </span>
+              </span>
+              <span class="app-home-social-card__copy">
+                <span class="app-home-social-card__title">{{ t(link.titleKey) }}</span>
+                <span class="app-home-social-card__subtitle">{{ t(link.subtitleKey) }}</span>
+              </span>
+            </a>
+          </AppSurface>
+        </div>
+      </section>
+
       <AppSurface v-if="showReferralBanner" class="app-home-bonus-card">
         <div class="app-home-bonus-card__coin">
           <q-icon name="workspace_premium" size="22px" />
@@ -151,6 +181,51 @@ const selectedCountry = ref<string | null>(null);
 const selectedCityId = ref<string | null>(null);
 const ratesExpanded = ref(false);
 const showReferralBanner = false;
+const socialLinks = [
+  {
+    id: 'reviews',
+    titleKey: 'home.social.links.reviews.title',
+    subtitleKey: 'home.social.links.reviews.subtitle',
+    href: 'https://t.me/+Rw2BRymXRnk1ZGUy',
+    icon: 'fa-brands fa-telegram',
+  },
+  {
+    id: 'news',
+    titleKey: 'home.social.links.news.title',
+    subtitleKey: '',
+    href: 'https://t.me/+vN7FXrXBReszNDg1',
+    icon: 'fa-brands fa-telegram',
+  },
+  {
+    id: 'instagram',
+    titleKey: 'home.social.links.instagram.title',
+    subtitleKey: 'home.social.links.instagram.subtitle',
+    href: 'https://www.instagram.com/antex.change',
+    icon: 'fa-brands fa-instagram',
+  },
+  {
+    id: 'vk',
+    titleKey: 'home.social.links.vk.title',
+    subtitleKey: 'home.social.links.vk.subtitle',
+    href: 'https://vk.ru/antex.finance',
+    icon: 'fa-brands fa-vk',
+  },
+  {
+    id: 'max',
+    titleKey: 'home.social.links.max.title',
+    subtitleKey: 'home.social.links.max.subtitle',
+    href: 'https://max.ru/join/UgGFm4-mQ2lg33aJvK80IZwjxWGF3z-7QL61i-_CMVU',
+    icon: null,
+    maxMark: 'MAX',
+  },
+  {
+    id: 'threads',
+    titleKey: 'home.social.links.threads.title',
+    subtitleKey: 'home.social.links.threads.subtitle',
+    href: 'https://www.threads.com/@antex.change?igshid=NTc4MTIwNjQ2YQ==',
+    icon: 'fa-brands fa-threads',
+  },
+] as const;
 const featuredRates = computed(() => homeStore.data?.rates.featured ?? []);
 const previewLimit = computed(() => homeStore.data?.rates.previewLimit ?? 3);
 const locations = computed(() => homeStore.data?.locations ?? []);

@@ -1385,6 +1385,7 @@ body.body--light .q-page,
 
 .app-home-quick-grid,
 .app-home-stats-grid,
+.app-home-social-grid,
 .app-home-services-grid,
 .app-home-location-grid {
   display: grid;
@@ -1394,6 +1395,7 @@ body.body--light .q-page,
 
 .app-home-quick-card,
 .app-home-stat-card,
+.app-home-social-card,
 .app-home-service-card,
 .app-home-location-card,
 .app-home-rate-item {
@@ -1416,6 +1418,7 @@ body.body--light .q-page,
 }
 
 .app-home-quick-card__icon,
+.app-home-social-card__icon,
 .app-home-service-card__icon {
   display: flex;
   align-items: center;
@@ -1429,6 +1432,7 @@ body.body--light .q-page,
 
 .app-home-quick-card__title,
 .app-home-stat-card__label,
+.app-home-social-card__title,
 .app-home-service-card__title,
 .app-home-location-card__title {
   font-family: 'Montserrat', 'Inter', sans-serif;
@@ -1611,6 +1615,64 @@ body.body--light .q-page,
 .app-home-bonus-card__button {
   min-width: 110px;
   min-height: 38px;
+}
+
+.app-home-social-card {
+  overflow: hidden;
+  background: rgba(18, 53, 48, 0.96);
+  transition:
+    border-color 0.24s ease,
+    box-shadow 0.24s ease,
+    transform 0.24s ease;
+}
+
+.app-home-social-card:focus-within,
+.app-home-social-card:hover {
+  border-color: rgba(212, 175, 55, 0.58);
+  box-shadow:
+    var(--antex-shadow-card),
+    0 0 18px rgba(212, 175, 55, 0.16);
+  transform: translateY(-1px);
+}
+
+.app-home-social-card__link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 76px;
+  padding: 12px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.app-home-social-card__icon {
+  flex: 0 0 auto;
+}
+
+.app-home-social-card__copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.app-home-social-card__title,
+.app-home-social-card__subtitle {
+  overflow-wrap: anywhere;
+}
+
+.app-home-social-card__subtitle {
+  color: var(--antex-text-secondary);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.app-home-social-card__max-mark {
+  font-family: 'Montserrat', 'Inter', sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0;
 }
 
 .app-home-service-card {

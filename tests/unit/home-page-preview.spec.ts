@@ -62,6 +62,47 @@ describe('HomePage preview rates', () => {
     expect(source).toContain('v-if="showReferralBanner"');
   });
 
+  it('renders social links after the primary exchange button and before services', () => {
+    const source = readFileSync(homePagePath, 'utf8');
+
+    const exchangeButtonIndex = source.indexOf('class="app-home-primary-button"');
+    const socialTitleIndex = source.indexOf("t('home.social.title')");
+    const servicesTitleIndex = source.indexOf("t('home.services')");
+
+    expect(exchangeButtonIndex).toBeGreaterThan(-1);
+    expect(socialTitleIndex).toBeGreaterThan(exchangeButtonIndex);
+    expect(servicesTitleIndex).toBeGreaterThan(socialTitleIndex);
+  });
+
+  it('keeps social links frontend-only and opens them safely in a new tab', () => {
+    const source = readFileSync(homePagePath, 'utf8');
+
+    expect(source).toContain('const socialLinks');
+    expect(source).toContain('https://t.me/+Rw2BRymXRnk1ZGUy');
+    expect(source).toContain('https://t.me/+vN7FXrXBReszNDg1');
+    expect(source).toContain('https://www.instagram.com/antex.change');
+    expect(source).toContain('https://vk.ru/antex.finance');
+    expect(source).toContain('https://max.ru/join/UgGFm4-mQ2lg33aJvK80IZwjxWGF3z-7QL61i-_CMVU');
+    expect(source).toContain('https://www.threads.com/@antex.change?igshid=NTc4MTIwNjQ2YQ==');
+    expect(source).toContain('target="_blank"');
+    expect(source).toContain('rel="noopener noreferrer"');
+    expect(source).not.toContain('/api/miniapp/home/social');
+  });
+
+  it('uses localized visible labels for social links', () => {
+    const source = readFileSync(homePagePath, 'utf8');
+
+    expect(source).toContain("t('home.social.title')");
+    expect(source).toContain('t(link.titleKey)');
+    expect(source).toContain('t(link.subtitleKey)');
+    expect(source).toContain("titleKey: 'home.social.links.reviews.title'");
+    expect(source).toContain("titleKey: 'home.social.links.news.title'");
+    expect(source).toContain("titleKey: 'home.social.links.instagram.title'");
+    expect(source).toContain("titleKey: 'home.social.links.vk.title'");
+    expect(source).toContain("titleKey: 'home.social.links.max.title'");
+    expect(source).toContain("titleKey: 'home.social.links.threads.title'");
+  });
+
   it('keeps the home chips fully rounded through shared chip styles', () => {
     const source = readFileSync(resolve(process.cwd(), 'src/css/app.scss'), 'utf8');
     const pageSource = readFileSync(homePagePath, 'utf8');
