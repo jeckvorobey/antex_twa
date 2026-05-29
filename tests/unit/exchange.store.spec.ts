@@ -125,6 +125,31 @@ describe('exchange store', () => {
     expect(store.cities[0]?.name).toBe('Bangkok');
   });
 
+  it('refreshes screen data in background without enabling initial loader', async () => {
+    const store = useExchangeStore();
+    vi.mocked(fetchExchangeScreen)
+      .mockResolvedValueOnce(makeScreen())
+      .mockResolvedValueOnce({
+        ...makeScreen(),
+        chips: ['RUB', 'THB'],
+      });
+    vi.mocked(fetchCities)
+      .mockResolvedValueOnce({ items: makeCities() })
+      .mockResolvedValueOnce({ items: [] });
+
+    await store.load();
+    const refreshPromise = store.refresh();
+
+    expect(store.loading).toBe(false);
+    expect(store.refreshing).toBe(true);
+
+    await refreshPromise;
+
+    expect(store.screen?.chips).toEqual(['RUB', 'THB']);
+    expect(store.cities).toEqual([]);
+    expect(store.refreshing).toBe(false);
+  });
+
   it('clears quote when local pair is missing', async () => {
     const store = useExchangeStore();
     vi.mocked(fetchExchangeScreen).mockResolvedValue(makeScreen());

@@ -57,8 +57,10 @@ const { t } = useI18n();
 const profilePhotoUrl = computed(() => profileStore.data?.user.photoUrl ?? null);
 
 onMounted(async () => {
-  if (!profileStore.data) {
+  if (!profileStore.loaded || !profileStore.data) {
     await profileStore.load();
+  } else {
+    void profileStore.refresh();
   }
 });
 

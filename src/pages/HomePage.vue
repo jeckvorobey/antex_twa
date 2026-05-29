@@ -261,8 +261,10 @@ const defaultExchangeCard = computed(() => (
 ));
 
 onMounted(async () => {
-  if (!homeStore.data) {
-  await homeStore.load();
+  if (!homeStore.loaded || !homeStore.data) {
+    await homeStore.load();
+  } else {
+    void homeStore.refresh();
   }
 
   selectedRateChip.value = HOME_ALL_FILTER_KEY;

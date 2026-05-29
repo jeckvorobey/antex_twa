@@ -129,8 +129,10 @@ const cityOptions = computed(() =>
 );
 
 onMounted(async () => {
-  if (!exchangeStore.screen) {
+  if (!exchangeStore.loaded || !exchangeStore.screen || !exchangeStore.cities.length) {
     await exchangeStore.load();
+  } else {
+    void exchangeStore.refresh();
   }
 
   syncingState.value = true;

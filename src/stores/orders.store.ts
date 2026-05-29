@@ -20,6 +20,10 @@ export const useOrdersStore = defineStore('orders', () => {
   const groups = computed(() => groupOrdersByDate(items.value));
 
   async function loadFirstPage() {
+    if (loading.value) {
+      return;
+    }
+
     loading.value = true;
     try {
       const response = await fetchOrders({ limit: PAGE_LIMIT, offset: 0 });
@@ -51,6 +55,10 @@ export const useOrdersStore = defineStore('orders', () => {
   }
 
   async function refresh() {
+    if (loading.value || refreshing.value) {
+      return;
+    }
+
     refreshing.value = true;
     try {
       const response = await fetchOrders({ limit: PAGE_LIMIT, offset: 0 });

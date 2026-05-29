@@ -156,8 +156,10 @@ const filteredGroups = computed(() =>
 );
 
 onMounted(async () => {
-  if (!ordersStore.items.length) {
+  if (!ordersStore.loaded || !ordersStore.items.length) {
     await ordersStore.loadFirstPage();
+  } else {
+    void ordersStore.refresh();
   }
 });
 
