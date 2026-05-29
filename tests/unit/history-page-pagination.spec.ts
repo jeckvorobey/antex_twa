@@ -36,4 +36,13 @@ describe('HistoryPage pagination and repeat contract', () => {
     expect(historySource).not.toContain('amountBuy: item.amountBuy');
     expect(historySource).not.toContain('rate: item.rate');
   });
+
+  it('keeps history card amount, status, and time split across Quasar rows', () => {
+    expect(historySource).toContain('class="row justify-center no-wrap"');
+    expect(historySource).toContain('class="col-12 app-history-item__amount text-center ellipsis"');
+    expect(historySource).toContain('class="row items-center no-wrap q-mt-xs"');
+    expect(historySource).toContain('class="col-4 row justify-start"');
+    expect(historySource).toContain('class="col-4 row justify-center"');
+    expect(historySource).toContain('class="col-4 app-history-item__time text-right"');
+  });
 });

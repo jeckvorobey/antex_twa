@@ -50,37 +50,42 @@
                   :key="item.id"
                   class="app-history-item"
                 >
-                  <div class="row items-start no-wrap q-col-gutter-sm">
-                    <div class="col">
-                      <div class="app-history-item__amount">
+                  <div class="column">
+                    <div class="row justify-center no-wrap">
+                      <div class="col-12 app-history-item__amount text-center ellipsis">
                         {{ resolveAmountLine(item) }}
                       </div>
-                      <q-btn
-                        flat
-                        dense
-                        no-caps
-                        color="warning"
-                        icon="autorenew"
-                        :label="t('history.repeat')"
-                        size="sm"
-                        class="q-mt-xs app-history-item__repeat-btn"
-                        @click="repeatOrder(item)"
-                      />
                     </div>
 
-                    <div class="column items-end app-history-item__meta">
-                      <div class="app-history-item__time">{{ formatTime(item.createdAt) }}</div>
-                      <q-chip
-                        dense
-                        square
-                        :color="statusColor(item.status)"
-                        text-color="white"
-                        class="q-ma-none"
-                      >
-                        {{ t(getStatusLabelKey(item.status)) }}
-                      </q-chip>
-                    </div>
+                    <div class="row items-center no-wrap q-mt-xs">
+                      <div class="col-4 row justify-start">
+                        <q-btn
+                          flat
+                          dense
+                          no-caps
+                          color="warning"
+                          icon="autorenew"
+                          :label="t('history.repeat')"
+                          size="sm"
+                          class="app-history-item__repeat-btn"
+                          @click="repeatOrder(item)"
+                        />
+                      </div>
 
+                      <div class="col-4 row justify-center">
+                        <q-chip
+                          dense
+                          square
+                          :color="statusColor(item.status)"
+                          text-color="white"
+                          class="q-ma-none"
+                        >
+                          {{ t(getStatusLabelKey(item.status)) }}
+                        </q-chip>
+                      </div>
+
+                      <div class="col-4 app-history-item__time text-right">{{ formatTime(item.createdAt) }}</div>
+                    </div>
                   </div>
                 </div>
               </AppSurface>
