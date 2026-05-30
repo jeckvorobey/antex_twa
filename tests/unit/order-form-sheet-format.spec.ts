@@ -52,11 +52,11 @@ describe('OrderFormSheet amount formatting', () => {
     expect(localeSource).toContain('rateNotice:');
     expect(localeSource).not.toContain('description:');
     expect(warningNoticeSource).toContain('<q-banner');
-    expect(warningNoticeSource).toContain('bg-warning');
+    expect(warningNoticeSource).toContain('<template #avatar>');
+    expect(warningNoticeSource).toContain('text-body2 text-weight-medium');
     expect(warningNoticeSource).toContain('max-width: 100%;');
-    expect(warningNoticeSource).not.toMatch(/(^|\n)\s*width:\s*100%;/);
+    expect(warningNoticeSource).not.toContain('app-warning-notice__body');
     expect(warningNoticeSource).not.toContain('overflow: hidden;');
-    expect(warningNoticeSource).toContain('align-items: flex-start;');
   });
 });
 
