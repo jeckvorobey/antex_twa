@@ -55,6 +55,8 @@ describe('OrderFormSheet amount formatting', () => {
     expect(warningNoticeSource).toContain('bg-warning');
     expect(warningNoticeSource).toContain('max-width: 100%;');
     expect(warningNoticeSource).not.toMatch(/(^|\n)\s*width:\s*100%;/);
+    expect(warningNoticeSource).not.toContain('overflow: hidden;');
+    expect(warningNoticeSource).toContain('align-items: flex-start;');
   });
 });
 

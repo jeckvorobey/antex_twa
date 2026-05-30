@@ -15,7 +15,6 @@
   display: block;
   box-sizing: border-box;
   max-width: 100%;
-  overflow: hidden;
   border: 1px solid var(--antex-gold-base);
   border-right-color: var(--antex-gold-base);
   border-left-color: var(--antex-gold-base);
@@ -29,20 +28,23 @@
 
 .app-warning-notice__body {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
   min-height: 64px;
 }
 
 .app-warning-notice__icon {
   flex: 0 0 auto;
+  margin-top: 2px;
 }
 
 .app-warning-notice__content {
   flex: 1 1 auto;
   min-width: 0;
+  padding-top: 1px;
   font-size: 13px;
   font-weight: 500;
   line-height: 1.35;
+  white-space: normal;
 }
 </style>
