@@ -51,11 +51,12 @@ describe('OrderFormSheet amount formatting', () => {
     expect(source).not.toContain("t('order.description')");
     expect(localeSource).toContain('rateNotice:');
     expect(localeSource).not.toContain('description:');
-    expect(warningNoticeSource).toContain('<q-banner');
-    expect(warningNoticeSource).toContain('<template #avatar>');
+    expect(warningNoticeSource).toContain('row no-wrap items-start');
+    expect(warningNoticeSource).toContain('col-auto self-start q-pr-md');
+    expect(warningNoticeSource).toContain('role="alert"');
     expect(warningNoticeSource).toContain('text-body2 text-weight-medium');
     expect(warningNoticeSource).toContain('max-width: 100%;');
-    expect(warningNoticeSource).not.toContain('app-warning-notice__body');
+    expect(warningNoticeSource).not.toContain('<q-banner');
     expect(warningNoticeSource).not.toContain('overflow: hidden;');
   });
 });

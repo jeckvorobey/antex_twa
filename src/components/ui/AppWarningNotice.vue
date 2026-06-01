@@ -1,13 +1,16 @@
 <template>
-  <q-banner class="app-warning-notice rounded-borders q-px-md q-py-sm" rounded>
-    <template #avatar>
+  <div
+    class="app-warning-notice row no-wrap items-start rounded-borders q-pa-md"
+    role="alert"
+  >
+    <div class="col-auto self-start q-pr-md">
       <q-icon name="warning" size="26px" class="text-warning" />
-    </template>
+    </div>
 
-    <div class="text-body2 text-weight-medium">
+    <div class="col text-body2 text-weight-medium">
       <slot />
     </div>
-  </q-banner>
+  </div>
 </template>
 
 <style scoped lang="scss">
