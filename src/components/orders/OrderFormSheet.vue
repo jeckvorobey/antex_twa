@@ -1,9 +1,9 @@
 <template>
-  <q-dialog :model-value="modelValue" position="bottom" class="app-dialog--bottom"
+  <q-dialog :model-value="modelValue" position="bottom" class="app-dialog--bottom app-dialog--order"
     @update:model-value="$emit('update:modelValue', $event)">
     <AppSurface class="app-sheet q-pt-sm q-px-md">
       <div class="app-sheet-handle" />
-      <AppWarningNotice>
+      <AppWarningNotice class="app-order-rate-notice">
         {{ t('order.rateNotice') }}
       </AppWarningNotice>
 

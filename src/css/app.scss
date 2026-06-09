@@ -1352,6 +1352,10 @@ body.body--light .q-page,
   margin-bottom: -4px;
 }
 
+.app-order-rate-notice {
+  margin-bottom: -4px;
+}
+
 .app-screen--history {
   min-height: 0;
 }
@@ -1999,6 +2003,14 @@ body.body--light .q-page,
 
 .app-dialog--bottom .q-dialog__inner {
   padding: 0;
+}
+
+.app-dialog--order .q-dialog__inner {
+  padding: 0 16px;
+}
+
+.app-dialog--order .q-card {
+  max-width: 430px;
 }
 
 .app-order-sheet__fields {
