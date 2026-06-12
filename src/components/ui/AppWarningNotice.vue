@@ -3,7 +3,7 @@
     class="app-warning-notice row no-wrap items-start q-pa-md"
     role="alert"
   >
-    <div class="col-auto self-start q-pr-md">
+    <div class="col-auto self-center q-pr-md">
       <q-icon name="warning" size="26px" class="text-warning" />
     </div>
 
@@ -14,16 +14,13 @@
 </template>
 
 <style scoped lang="scss">
-.app-warning-notice {
+.app-warning-notice { 
   box-sizing: border-box;
-  width: 100%;
-  max-width: 100%;
-  border: 1px solid var(--antex-gold-base);
-  border-radius: var(--antex-radius-card);
+  border: 1px solid var(--antex-gold-base) !important;
+  border-radius: var(--antex-radius-card) !important;
   background: rgba(212, 175, 55, 0.14) !important;
-  color: var(--antex-gold-light);
+  color: var(--antex-gold-light) !important;
   box-shadow: none;
-  overflow: hidden;
 }
 
 .app-warning-notice__content {
