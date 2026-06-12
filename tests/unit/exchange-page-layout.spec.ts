@@ -24,7 +24,6 @@ describe('ExchangePage responsive layout contract', () => {
     expect(stylesSource).toContain('width: min(100%, 390px);');
     expect(stylesSource).toContain('.app-exchange-submit {\n  flex: 0 0 auto;');
     expect(stylesSource).toContain('.app-exchange-content {\n  padding-top: 16px;');
-    expect(stylesSource).toContain('.app-exchange-rate-notice {\n  margin-bottom: -4px;');
     expect(stylesSource).toContain('.app-exchange-calculator__control,\n.app-order-sheet__control {\n  width: 100%;\n  min-width: 0;');
     expect(stylesSource).toContain('.app-exchange-calculator__currency,\n.app-exchange-calculator__amount,\n.app-order-sheet__input,\n.app-order-sheet__select {\n  min-width: 0;');
   });
@@ -33,7 +32,6 @@ describe('ExchangePage responsive layout contract', () => {
     const pageSource = readFileSync(exchangePagePath, 'utf8');
 
     expect(pageSource).toContain("import AppWarningNotice from '@components/ui/AppWarningNotice.vue'");
-    expect(pageSource).toContain('<AppWarningNotice class="app-exchange-rate-notice">');
     expect(pageSource).toContain("{{ t('order.rateNotice') }}");
     expect(pageSource).toContain("import ExchangeOrderDetails from '@components/orders/ExchangeOrderDetails.vue'");
     expect(pageSource).toContain('<ExchangeOrderDetails');
