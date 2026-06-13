@@ -3,7 +3,7 @@
     @update:model-value="$emit('update:modelValue', $event)">
     <AppSurface class="app-sheet q-pt-sm q-px-md">
       <div class="app-sheet-handle" />
-      <AppWarningNotice>
+      <AppWarningNotice class="app-order-rate-notice">
         {{ t('order.rateNotice') }}
       </AppWarningNotice>
 
