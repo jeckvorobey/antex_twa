@@ -28,6 +28,9 @@ describe('HomePage preview rates', () => {
 
     expect(source).not.toContain("router.push({ name: 'exchange' })");
     expect(source).toContain("t('home.expandRates')");
+    expect(source).toContain("t('home.collapseRates')");
+    expect(source).toContain('@click="toggleRatesExpansion"');
+    expect(source).toContain('ratesExpanded.value = !ratesExpanded.value');
   });
 
   it('uses backend-prepared rate display values', () => {

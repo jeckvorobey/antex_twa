@@ -24,6 +24,7 @@ export default {
     locations: 'Выбрать страну',
     all: 'Все',
     expandRates: 'Развернуть',
+    collapseRates: 'Свернуть',
     ratePrefix: 'от',
     bonus: 'Приведи друга и получи бонус',
     bonusAction: 'Подробнее',

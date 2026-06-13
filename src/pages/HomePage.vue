@@ -75,9 +75,9 @@
           variant="secondary"
           block
           class="app-home-rates-card__footer"
-          @click="expandRates"
+          @click="toggleRatesExpansion"
         >
-          {{ t('home.expandRates') }}
+          {{ ratesExpanded ? t('home.collapseRates') : t('home.expandRates') }}
         </AppButton>
       </AppSurface>
 
@@ -334,9 +334,9 @@ function selectCity(cityId: string) {
 }
 
 /**
- * Раскрывает все пары текущего фильтра прямо в home-блоке.
+ * Переключает preview/full список пар текущего фильтра прямо в home-блоке.
  */
-function expandRates() {
-  ratesExpanded.value = true;
+function toggleRatesExpansion() {
+  ratesExpanded.value = !ratesExpanded.value;
 }
 </script>
