@@ -633,13 +633,17 @@ body.body--dark .q-page {
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 4px;
   padding: 3px;
-  border: 1px solid rgba(212, 175, 55, 0.15);
+  border: 1px solid rgba(242, 210, 122, 0.18);
   border-radius: 36px;
-  background: rgba(18, 53, 48, 0.98);
+  background:
+    linear-gradient(180deg, rgba(28, 73, 65, 0.62), rgba(10, 31, 28, 0.48)),
+    rgba(18, 53, 48, 0.46);
   box-shadow:
-    0 8px 24px rgba(0, 0, 0, 0.34),
-    0 0 18px rgba(212, 175, 55, 0.08);
-  backdrop-filter: blur(18px);
+    0 18px 42px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 22px rgba(212, 175, 55, 0.08);
+  backdrop-filter: blur(22px) saturate(145%);
+  -webkit-backdrop-filter: blur(22px) saturate(145%);
 }
 
 .app-bottom-nav__item {
@@ -652,8 +656,11 @@ body.body--dark .q-page {
 }
 
 .app-bottom-nav__item--active {
-  background: rgba(212, 175, 55, 0.08);
+  background: rgba(212, 175, 55, 0.14);
   color: var(--antex-gold-base);
+  box-shadow:
+    inset 0 0 0 1px rgba(242, 210, 122, 0.12),
+    0 6px 14px rgba(0, 0, 0, 0.18);
 }
 
 .app-bottom-nav__item .q-btn__content {
