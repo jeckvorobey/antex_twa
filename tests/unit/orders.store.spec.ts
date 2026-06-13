@@ -33,7 +33,7 @@ function makeOrder(id: number): MiniappOrderItem {
 function makeResponse(ids: number[], params: Partial<MiniappOrdersResponse> = {}): MiniappOrdersResponse {
   return {
     items: ids.map(makeOrder),
-    limit: params.limit ?? 20,
+    limit: params.limit ?? 10,
     offset: params.offset ?? 0,
     total: params.total ?? ids.length,
     hasMore: params.hasMore ?? false,
@@ -53,7 +53,7 @@ describe('orders store pagination', () => {
 
     await store.refresh();
 
-    expect(fetchOrders).toHaveBeenCalledWith({ limit: 20, offset: 0 });
+    expect(fetchOrders).toHaveBeenCalledWith({ limit: 10, offset: 0 });
     expect(store.items.map((item) => item.id)).toEqual([1, 2]);
     expect(store.offset).toBe(2);
     expect(store.hasMore).toBe(false);
@@ -70,7 +70,7 @@ describe('orders store pagination', () => {
     await store.loadNextPage();
 
     expect(fetchOrders).toHaveBeenCalledTimes(2);
-    expect(fetchOrders).toHaveBeenNthCalledWith(2, { limit: 20, offset: 2 });
+    expect(fetchOrders).toHaveBeenNthCalledWith(2, { limit: 10, offset: 2 });
     expect(store.items.map((item) => item.id)).toEqual([1, 2, 3]);
     expect(store.hasMore).toBe(false);
   });
