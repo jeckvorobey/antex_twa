@@ -5,7 +5,7 @@ import { fetchOrders } from '@services/api/miniapp.service';
 import type { MiniappOrderItem } from '@types/miniapp';
 import { groupOrdersByDate } from '@utils/miniapp';
 
-const PAGE_LIMIT = 20;
+const PAGE_LIMIT = 10;
 
 export const useOrdersStore = defineStore('orders', () => {
   const items = ref<MiniappOrderItem[]>([]);
@@ -45,7 +45,9 @@ export const useOrdersStore = defineStore('orders', () => {
     loadingMore.value = true;
     try {
       const response = await fetchOrders({ limit: PAGE_LIMIT, offset: offset.value });
-      items.value = [...items.value, ...response.items];
+      const existingIds = new Set(items.value.map((item) => item.id));
+      const nextItems = response.items.filter((item) => !existingIds.has(item.id));
+      items.value = [...items.value, ...nextItems];
       offset.value += response.items.length;
       total.value = response.total;
       hasMore.value = response.hasMore;
@@ -72,9 +74,12 @@ export const useOrdersStore = defineStore('orders', () => {
   }
 
   function prepend(order: MiniappOrderItem) {
-    items.value = [order, ...items.value];
-    offset.value += 1;
-    total.value += 1;
+    const existed = items.value.some((item) => item.id === order.id);
+    items.value = [order, ...items.value.filter((item) => item.id !== order.id)];
+    offset.value = items.value.length;
+    if (!existed) {
+      total.value += 1;
+    }
   }
 
   return {
