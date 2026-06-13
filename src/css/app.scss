@@ -457,6 +457,11 @@ body.body--dark .q-page {
   backdrop-filter: blur(18px);
 }
 
+.shadow-radius {
+  border-radius: var(--antex-radius-card);
+  overflow: hidden;
+}
+
 .app-surface--deep {
   background: rgba(10, 31, 28, 0.96);
 }
@@ -1183,6 +1188,8 @@ body.body--dark .q-page {
 }
 
 .app-sheet-handle {
+  display: block;
+  flex: 0 0 auto;
   width: 40px;
   height: 4px;
   margin: 0 auto;

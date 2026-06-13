@@ -2,6 +2,7 @@
   <q-card
     :class="[
       'app-surface',
+      'shadow-radius',
       deep ? 'app-surface--deep' : null,
       elevated ? 'app-surface--elevated' : null,
       padded ? 'q-pa-md' : null,
