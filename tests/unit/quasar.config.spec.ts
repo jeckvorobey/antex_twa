@@ -29,9 +29,9 @@ describe('quasar.config', () => {
       allowedHosts: true,
     });
     expect(quasarConfig.build.alias).toMatchObject({
-      '@': expect.stringContaining('/miniapp/src'),
-      '@boot': expect.stringContaining('/miniapp/src/boot'),
-      '@i18n': expect.stringContaining('/miniapp/src/i18n'),
+      '@': expect.stringContaining('/src'),
+      '@boot': expect.stringContaining('/src/boot'),
+      '@i18n': expect.stringContaining('/src/i18n'),
     });
     expect(viteConf).toMatchObject({
       optimizeDeps: {

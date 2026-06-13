@@ -15,7 +15,7 @@ describe('ExchangePage responsive layout contract', () => {
 
     expect(pageSource).toContain('class="app-screen app-screen--exchange fit column no-wrap"');
     expect(pageSource).toContain('class="col column no-wrap"');
-    expect(pageSource).toContain('class="app-exchange-content col column q-gutter-md no-wrap overflow-auto"');
+    expect(pageSource).toContain('class="app-exchange-content col column q-gutter-md no-wrap overflow-hidden"');
     expect(pageSource).toContain('class="q-pt-md app-exchange-submit"');
     expect(detailsSource).toContain('class="app-order-sheet__methods q-mt-xs"');
     expect(detailsSource).toContain('class="app-chip-row app-chip-row--exchange"');
@@ -32,6 +32,7 @@ describe('ExchangePage responsive layout contract', () => {
     const pageSource = readFileSync(exchangePagePath, 'utf8');
 
     expect(pageSource).toContain("import AppWarningNotice from '@components/ui/AppWarningNotice.vue'");
+    expect(pageSource).toContain('<AppWarningNotice>');
     expect(pageSource).toContain("{{ t('order.rateNotice') }}");
     expect(pageSource).toContain("import ExchangeOrderDetails from '@components/orders/ExchangeOrderDetails.vue'");
     expect(pageSource).toContain('<ExchangeOrderDetails');

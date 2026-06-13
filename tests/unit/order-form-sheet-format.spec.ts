@@ -52,10 +52,9 @@ describe('OrderFormSheet amount formatting', () => {
     expect(localeSource).toContain('rateNotice:');
     expect(localeSource).not.toContain('description:');
     expect(warningNoticeSource).toContain('row no-wrap items-start');
-    expect(warningNoticeSource).toContain('col-auto self-start q-pr-md');
+    expect(warningNoticeSource).toContain('col-auto self-center q-px-sm');
     expect(warningNoticeSource).toContain('role="alert"');
     expect(warningNoticeSource).toContain('text-body2 text-weight-medium');
-    expect(warningNoticeSource).toContain('max-width: 100%;');
     expect(warningNoticeSource).not.toContain('<q-banner');
     expect(warningNoticeSource).not.toContain('overflow: hidden;');
   });
@@ -71,7 +70,9 @@ describe('ExchangeOrderDetails shared component contract', () => {
     expect(source).toContain("amountSell: number | null");
     expect(source).toContain("amountBuy: number | null");
     expect(source).toContain('readonly');
-    expect(source).toContain("selectedMethod: 'qrcode' | 'cash'");
+    expect(source).toContain('selectedMethod: MiniappReceiveMethod');
+    expect(source).toContain('bank_account');
+    expect(source).toContain('pay_services');
     expect(source).toContain("selectedCountry: string | null");
     expect(source).toContain("selectedCityId: number | null");
     expect(source).toContain("t('exchange.payAmount')");

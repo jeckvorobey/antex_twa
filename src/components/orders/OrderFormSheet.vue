@@ -21,6 +21,7 @@
         :rate-label="currentRateLabel"
         :country-options="countryOptions"
         :city-options="cityOptions"
+        :available-methods="currentQuoteMethods"
       />
 
       <AppButton block :loading="exchangeStore.submitting" :disable="!canSubmit" @click="submit">
@@ -44,6 +45,7 @@ import { useExchangeStore } from '@stores/exchange.store';
 import { useHomeStore } from '@stores/home.store';
 import { useOrdersStore } from '@stores/orders.store';
 import { useUiStore } from '@stores/ui.store';
+import type { MiniappReceiveMethod } from '@types/miniapp';
 import { getMiniappErrorMessageKey } from '@utils/api-errors';
 import {
   buildCityOptions,
@@ -76,7 +78,7 @@ const amountBuy = ref<number | null>(null);
 const selectedSellCurrency = ref<string>('RUB');
 const currencyBuy = ref<string>('THB');
 const selectedCountry = ref<string | null>(null);
-const selectedMethod = ref<'qrcode' | 'cash'>('qrcode');
+const selectedMethod = ref<MiniappReceiveMethod>('qrcode');
 const selectedCityId = ref<number | null>(null);
 const amountSellTouched = ref(false);
 const syncingState = ref(false);
@@ -140,7 +142,7 @@ const preliminaryValidation = computed(() => validatePreliminaryOrderDraft({
 const canSubmit = computed(() => {
   const hasAmounts = Boolean(amountSell.value && amountSell.value > 0 && amountBuy.value && amountBuy.value > 0);
   const hasBaseFields = Boolean(selectedSellCurrency.value && currencyBuy.value);
-  const hasMethodFields = selectedMethod.value === 'qrcode' || Boolean(selectedCityId.value);
+  const hasMethodFields = selectedMethod.value !== 'cash' || Boolean(selectedCityId.value);
 
   return hasAmounts && hasBaseFields && hasMethodFields && preliminaryValidation.value.valid;
 });
@@ -226,7 +228,9 @@ watch(selectedMethod, (method) => {
 
 watch(cityOptions, (options) => {
   if (!options.length) {
-    selectedMethod.value = 'qrcode';
+    if (selectedMethod.value === 'cash') {
+      selectedMethod.value = 'qrcode';
+    }
     selectedCityId.value = null;
     return;
   }
@@ -241,6 +245,10 @@ watch(cityOptions, (options) => {
 });
 
 watch(currentQuoteMethods, (availableMethods) => {
+  if (availableMethods?.includes(selectedMethod.value)) {
+    return;
+  }
+
   selectedMethod.value = getPreferredReceiveMethod(availableMethods, selectedCityId.value);
 });
 

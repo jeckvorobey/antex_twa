@@ -274,9 +274,9 @@ describe('home locations and methods', () => {
     expect(resolveHomeCountryByCity(locations, '2')).toBe('georgia');
   });
 
-  it('enables cash only when a city is selected', () => {
-    expect(buildHomeAvailableMethods(null)).toEqual(['qrcode']);
-    expect(buildHomeAvailableMethods('1')).toEqual(['qrcode', 'cash']);
+  it('enables cash delivery only when a city is selected', () => {
+    expect(buildHomeAvailableMethods(null)).toEqual(['qrcode', 'bank_account', 'pay_services']);
+    expect(buildHomeAvailableMethods('1')).toEqual(['qrcode', 'cash', 'bank_account', 'pay_services']);
   });
 });
 
@@ -296,7 +296,7 @@ describe('buildHomeRateCardPresentation', () => {
       right: {
         title: 'THB',
         flag: '🇹🇭',
-        meta: 'по qrcode',
+        meta: 'QR, перевод',
       },
       ratePrefix: 'от',
     });
@@ -323,7 +323,7 @@ describe('buildHomeRateCardPresentation', () => {
       right: {
         title: 'THB',
         flag: '🇹🇭',
-        meta: 'по qrcode',
+        meta: 'QR, перевод',
       },
       ratePrefix: 'от',
     });
@@ -344,7 +344,7 @@ describe('buildHomeRateCardPresentation', () => {
       right: {
         title: 'VND',
         flag: '🇻🇳',
-        meta: 'по qrcode, наличными',
+        meta: 'QR, доставка, перевод',
       },
       ratePrefix: 'от',
     });

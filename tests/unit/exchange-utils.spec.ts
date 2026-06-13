@@ -171,7 +171,7 @@ describe('receive method helper', () => {
 
 describe('receive location presentation', () => {
   it('switches the title to cash mode and appends city to the country label', () => {
-    expect(getReceiveLocationTitleKey('qrcode')).toBe('exchange.qrcodeCountries');
+    expect(getReceiveLocationTitleKey('qrcode')).toBe('exchange.receiveCountry');
     expect(getReceiveLocationTitleKey('cash')).toBe('exchange.cash');
 
     expect(buildReceiveLocationLabel({

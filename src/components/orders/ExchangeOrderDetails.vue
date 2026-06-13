@@ -119,8 +119,9 @@ import { useI18n } from 'vue-i18n';
 
 import AppFlagOptionButton from '@components/ui/AppFlagOptionButton.vue';
 import AppSurface from '@components/ui/AppSurface.vue';
+import type { MiniappReceiveMethod } from '@types/miniapp';
 import { formatReadableNumber, parseReadableNumber } from '@utils/formatters';
-import { buildReceiveLocationLabel, getReceiveLocationTitleKey, type ExchangeCityOption, type ExchangeOption } from '@utils/exchange';
+import { buildReceiveLocationLabel, getReceiveLocationTitleKey, normalizeReceiveMethods, type ExchangeCityOption, type ExchangeOption } from '@utils/exchange';
 
 const props = defineProps<{
   sellOptions: ExchangeOption[];
@@ -133,8 +134,9 @@ const props = defineProps<{
   countryOptions: ExchangeOption[];
   cityOptions: ExchangeCityOption[];
   selectedCountry: string | null;
-  selectedMethod: 'qrcode' | 'cash';
+  selectedMethod: MiniappReceiveMethod;
   selectedCityId: number | null;
+  availableMethods?: string[] | null;
 }>();
 
 const emit = defineEmits<{
@@ -142,7 +144,7 @@ const emit = defineEmits<{
   'update:selectedBuyCurrency': [value: string];
   'update:amountSell': [value: number | null];
   'update:selectedCountry': [value: string | null];
-  'update:selectedMethod': [value: 'qrcode' | 'cash'];
+  'update:selectedMethod': [value: MiniappReceiveMethod];
   'update:selectedCityId': [value: number | null];
 }>();
 
@@ -166,7 +168,7 @@ const selectedCountryModel = computed({
 
 const selectedMethodModel = computed({
   get: () => props.selectedMethod,
-  set: (value: 'qrcode' | 'cash') => emit('update:selectedMethod', value),
+  set: (value: MiniappReceiveMethod) => emit('update:selectedMethod', value),
 });
 
 const selectedCityIdModel = computed({
@@ -190,10 +192,18 @@ const receiveLocationLabel = computed(() => buildReceiveLocationLabel({
   cityLabel: selectedCityLabel.value,
 }));
 
-const methodOptions = computed(() => [
-  { label: t('exchange.qrcode'), value: 'qrcode' },
-  { label: t('exchange.cash'), value: 'cash' },
-]);
+const methodOptions = computed(() => {
+  const labels: Record<MiniappReceiveMethod, string> = {
+    qrcode: t('exchange.qrcode'),
+    cash: t('exchange.cash'),
+    bank_account: t('exchange.bankAccount'),
+    pay_services: t('exchange.payServices'),
+  };
+  return normalizeReceiveMethods(props.availableMethods).map((method) => ({
+    label: labels[method],
+    value: method,
+  }));
+});
 
 const formattedAmountSell = computed(() => formatReadableNumber(props.amountSell, locale.value));
 const formattedAmountBuy = computed(() => formatReadableNumber(props.amountBuy, locale.value));

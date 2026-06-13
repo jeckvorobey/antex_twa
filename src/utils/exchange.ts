@@ -1,4 +1,4 @@
-import type { MiniappCity, MiniappQuoteResponse } from '@types/miniapp';
+import type { MiniappCity, MiniappQuoteResponse, MiniappReceiveMethod } from '@types/miniapp';
 import { normalizeCityLabel, normalizeCountryLabel } from '@utils/display';
 
 export interface ExchangePairLike {
@@ -43,7 +43,7 @@ export interface PreliminaryOrderValidationParams {
   currencyBuy: string;
   amountSell: number | null;
   selectedCountry: string | null;
-  selectedMethod: 'qrcode' | 'cash';
+  selectedMethod: MiniappReceiveMethod;
   selectedCityId: number | null;
 }
 
@@ -114,25 +114,27 @@ export function buildCountryOptions(
     .filter((option): option is ExchangeOption => Boolean(option.value));
 }
 
+export function normalizeReceiveMethods(methods: string[] | null | undefined): MiniappReceiveMethod[] {
+  const supported: MiniappReceiveMethod[] = ['qrcode', 'cash', 'bank_account', 'pay_services'];
+  if (!methods?.length) {
+    return supported;
+  }
+
+  return supported.filter((method) => methods.includes(method));
+}
+
 export function getDefaultReceiveMethod(
   _currencyBuy: string,
   availableMethods: string[] | null,
-): 'qrcode' | 'cash' {
-  if (availableMethods?.includes('qrcode')) {
-    return 'qrcode';
-  }
-
-  if (availableMethods?.includes('cash')) {
-    return 'cash';
-  }
-
-  return 'qrcode';
+): MiniappReceiveMethod {
+  const methods = normalizeReceiveMethods(availableMethods);
+  return methods[0] ?? 'qrcode';
 }
 
 export function getPreferredReceiveMethod(
   availableMethods: string[] | null,
   selectedCityId: number | null,
-): 'qrcode' | 'cash' {
+): MiniappReceiveMethod {
   if (selectedCityId && availableMethods?.includes('cash')) {
     return 'cash';
   }
@@ -140,12 +142,12 @@ export function getPreferredReceiveMethod(
   return getDefaultReceiveMethod('', availableMethods);
 }
 
-export function getReceiveLocationTitleKey(method: 'qrcode' | 'cash') {
-  return method === 'cash' ? 'exchange.cash' : 'exchange.qrcodeCountries';
+export function getReceiveLocationTitleKey(method: MiniappReceiveMethod) {
+  return method === 'cash' ? 'exchange.cash' : 'exchange.receiveCountry';
 }
 
 export function buildReceiveLocationLabel(params: {
-  method: 'qrcode' | 'cash';
+  method: MiniappReceiveMethod;
   countryLabel: string | null;
   cityLabel?: string | null;
 }) {

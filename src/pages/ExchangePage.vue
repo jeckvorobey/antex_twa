@@ -20,6 +20,7 @@
             :rate-label="currentRateLabel"
             :country-options="countryOptions"
             :city-options="cityOptions"
+            :available-methods="currentQuoteMethods"
           />
 
           <section class="app-section">
@@ -80,7 +81,7 @@ import AppSurface from '@components/ui/AppSurface.vue';
 import AppWarningNotice from '@components/ui/AppWarningNotice.vue';
 import { useExchangeStore } from '@stores/exchange.store';
 import { useOrdersStore } from '@stores/orders.store';
-import type { MiniappRateCard } from '@types/miniapp';
+import type { MiniappRateCard, MiniappReceiveMethod } from '@types/miniapp';
 import { getMiniappErrorMessageKey } from '@utils/api-errors';
 import { formatMiniappDateTime, formatReadableNumber } from '@utils/formatters';
 import {
@@ -104,7 +105,7 @@ const selectedBuyCurrency = ref('THB');
 const amountSell = ref<number | null>(5000);
 const amountBuy = ref<number | null>(null);
 const selectedCountry = ref<string | null>(null);
-const selectedMethod = ref<'qrcode' | 'cash'>('qrcode');
+const selectedMethod = ref<MiniappReceiveMethod>('qrcode');
 const selectedCityId = ref<number | null>(null);
 const amountSellTouched = ref(false);
 const syncingState = ref(false);
@@ -127,6 +128,8 @@ const countryOptions = computed(() =>
 const cityOptions = computed(() =>
   buildCityOptions(exchangeStore.cities, selectedCountry.value),
 );
+
+const currentQuoteMethods = computed(() => resolveCurrentQuote()?.availableMethods ?? null);
 
 onMounted(async () => {
   if (!exchangeStore.loaded || !exchangeStore.screen || !exchangeStore.cities.length) {
@@ -171,7 +174,7 @@ const preliminaryValidation = computed(() => validatePreliminaryOrderDraft({
 const canSubmit = computed(() => {
   const hasAmounts = Boolean(amountSell.value && amountSell.value > 0 && amountBuy.value && amountBuy.value > 0);
   const hasBaseFields = Boolean(selectedSellCurrency.value && selectedBuyCurrency.value);
-  const hasMethodFields = selectedMethod.value === 'qrcode' || Boolean(selectedCityId.value);
+  const hasMethodFields = selectedMethod.value !== 'cash' || Boolean(selectedCityId.value);
   return hasAmounts
     && hasBaseFields
     && hasMethodFields
@@ -216,7 +219,9 @@ watch(selectedCountry, () => {
 
 watch(cityOptions, (options) => {
   if (!options.length) {
-    selectedMethod.value = 'qrcode';
+    if (selectedMethod.value === 'cash') {
+      selectedMethod.value = 'qrcode';
+    }
     selectedCityId.value = null;
     return;
   }
@@ -229,8 +234,12 @@ watch(cityOptions, (options) => {
 });
 
 watch(
-  () => resolveCurrentQuote()?.availableMethods ?? null,
+  () => currentQuoteMethods.value,
   (availableMethods) => {
+    if (availableMethods?.includes(selectedMethod.value)) {
+      return;
+    }
+
     selectedMethod.value = getPreferredReceiveMethod(availableMethods, selectedCityId.value);
   },
 );

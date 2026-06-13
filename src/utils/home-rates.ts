@@ -113,7 +113,7 @@ export function resolveHomeCountryByCity(
 }
 
 export function buildHomeAvailableMethods(selectedCityId: string | null) {
-  return selectedCityId ? ['qrcode', 'cash'] : ['qrcode'];
+  return selectedCityId ? ['qrcode', 'cash', 'bank_account', 'pay_services'] : ['qrcode', 'bank_account', 'pay_services'];
 }
 
 export function resetHomeRateExpansion(_expanded: boolean) {
@@ -135,7 +135,7 @@ export function buildHomeRateCardPresentation({
     right: {
       title: rightCurrency,
       flag: getCurrencyBadge(rightCurrency),
-      meta: selectedCityId ? 'по qrcode, наличными' : 'по qrcode',
+      meta: selectedCityId ? 'QR, доставка, перевод' : 'QR, перевод',
     },
     ratePrefix: 'от',
   };

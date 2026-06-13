@@ -165,6 +165,8 @@ export interface MiniappOrdersResponse {
   hasMore: boolean;
 }
 
+export type MiniappReceiveMethod = 'qrcode' | 'cash' | 'bank_account' | 'pay_services';
+
 export interface MiniappOrderCreate {
   country: string;
   cityId?: number | null;
@@ -173,7 +175,7 @@ export interface MiniappOrderCreate {
   amountSell: number;
   amountBuy: number;
   rate: number;
-  methodGet: 'qrcode' | 'cash';
+  methodGet: MiniappReceiveMethod;
 }
 
 export interface MiniappCitiesResponse {
