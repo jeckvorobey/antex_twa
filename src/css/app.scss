@@ -671,6 +671,10 @@ body.body--dark .q-page {
   font-size: 16px;
 }
 
+.app-bottom-nav__item:not(.app-bottom-nav__item--active) .q-icon {
+  color: var(--antex-text-primary);
+}
+
 .app-bottom-nav__item .block {
   overflow: hidden;
   max-width: 100%;

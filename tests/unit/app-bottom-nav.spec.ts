@@ -32,6 +32,9 @@ describe('AppBottomNav', () => {
     const styles = readFileSync(stylesPath, 'utf8');
 
     expect(styles).toContain('.app-bottom-nav__item .q-icon {\n  font-size: 16px;\n}');
+    expect(styles).toContain(
+      '.app-bottom-nav__item:not(.app-bottom-nav__item--active) .q-icon {\n  color: var(--antex-text-primary);\n}'
+    );
   });
 
   it('renders the header from the shared layout on every page', () => {
