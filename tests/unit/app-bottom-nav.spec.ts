@@ -35,6 +35,9 @@ describe('AppBottomNav', () => {
     expect(styles).toContain(
       '.app-bottom-nav__item:not(.app-bottom-nav__item--active) .q-icon {\n  color: var(--antex-text-primary);\n}'
     );
+    expect(styles).toContain(
+      '.app-bottom-nav__item:not(.app-bottom-nav__item--active) .block {\n  color: var(--antex-text-primary);\n}'
+    );
   });
 
   it('renders the header from the shared layout on every page', () => {

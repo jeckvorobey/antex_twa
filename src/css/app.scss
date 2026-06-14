@@ -675,6 +675,10 @@ body.body--dark .q-page {
   color: var(--antex-text-primary);
 }
 
+.app-bottom-nav__item:not(.app-bottom-nav__item--active) .block {
+  color: var(--antex-text-primary);
+}
+
 .app-bottom-nav__item .block {
   overflow: hidden;
   max-width: 100%;
