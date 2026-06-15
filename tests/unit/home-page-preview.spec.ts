@@ -106,6 +106,21 @@ describe('HomePage preview rates', () => {
     expect(source).toContain("titleKey: 'home.social.links.threads.title'");
   });
 
+  it('makes every service card open the manager Telegram chat via profile support link with bot fallback', () => {
+    const source = readFileSync(homePagePath, 'utf8');
+    const styleSource = readFileSync(resolve(process.cwd(), 'src/css/app.scss'), 'utf8');
+
+    expect(source).toContain('const profileStore = useProfileStore();');
+    expect(source).toContain("item.id === 'support' && item.action === 'link'");
+    expect(source).toContain('import.meta.env.VITE_TG_BOT_USERNAME');
+    expect(source).toContain('class="app-home-service-card__link"');
+    expect(source).toContain(':href="managerTelegramHref"');
+    expect(source).toContain('target="_blank"');
+    expect(source).toContain('rel="noopener noreferrer"');
+    expect(styleSource).toContain('.app-home-service-card__link');
+    expect(styleSource).toContain('.app-home-service-card:focus-within');
+  });
+
   it('keeps the home chips fully rounded through shared chip styles', () => {
     const source = readFileSync(resolve(process.cwd(), 'src/css/app.scss'), 'utf8');
     const pageSource = readFileSync(homePagePath, 'utf8');

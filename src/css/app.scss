@@ -1653,6 +1653,24 @@ body.body--light .q-page,
   transform: translateY(-1px);
 }
 
+.app-home-service-card {
+  overflow: hidden;
+  background: rgba(18, 53, 48, 0.96);
+  transition:
+    border-color 0.24s ease,
+    box-shadow 0.24s ease,
+    transform 0.24s ease;
+}
+
+.app-home-service-card:focus-within,
+.app-home-service-card:hover {
+  border-color: rgba(212, 175, 55, 0.58);
+  box-shadow:
+    var(--antex-shadow-card),
+    0 0 18px rgba(212, 175, 55, 0.16);
+  transform: translateY(-1px);
+}
+
 .app-home-social-card__link {
   display: flex;
   align-items: center;
@@ -1698,7 +1716,20 @@ body.body--light .q-page,
   flex-direction: column;
   gap: 10px;
   min-height: 112px;
+}
+
+.app-home-service-card__link {
+  display: flex;
+  min-height: 112px;
+  flex-direction: column;
+  gap: 10px;
   padding: 14px 12px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.app-home-service-card__link--disabled {
+  cursor: default;
 }
 
 .app-home-location-chip {

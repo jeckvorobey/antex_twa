@@ -136,11 +136,26 @@
             :key="service.id"
             class="app-home-service-card"
           >
-            <div class="app-home-service-card__icon">
-              <q-icon :name="service.icon" size="18px" />
+            <a
+              v-if="managerTelegramHref"
+              class="app-home-service-card__link"
+              :href="managerTelegramHref"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <div class="app-home-service-card__icon">
+                <q-icon :name="service.icon" size="18px" />
+              </div>
+              <div class="app-home-service-card__title">{{ service.title }}</div>
+              <div class="app-home-service-card__subtitle">{{ service.subtitle }}</div>
+            </a>
+            <div v-else class="app-home-service-card__link app-home-service-card__link--disabled">
+              <div class="app-home-service-card__icon">
+                <q-icon :name="service.icon" size="18px" />
+              </div>
+              <div class="app-home-service-card__title">{{ service.title }}</div>
+              <div class="app-home-service-card__subtitle">{{ service.subtitle }}</div>
             </div>
-            <div class="app-home-service-card__title">{{ service.title }}</div>
-            <div class="app-home-service-card__subtitle">{{ service.subtitle }}</div>
           </AppSurface>
         </div>
       </section>
@@ -159,6 +174,7 @@ import AppRateValue from '@components/ui/AppRateValue.vue';
 import AppSectionTitle from '@components/ui/AppSectionTitle.vue';
 import AppSurface from '@components/ui/AppSurface.vue';
 import { useHomeStore } from '@stores/home.store';
+import { useProfileStore } from '@stores/profile.store';
 import { useUiStore } from '@stores/ui.store';
 import type { MiniappRateCard } from '@types/miniapp';
 import {
@@ -173,6 +189,7 @@ import {
 } from '@utils/home-rates';
 
 const homeStore = useHomeStore();
+const profileStore = useProfileStore();
 const uiStore = useUiStore();
 const { t } = useI18n();
 
@@ -259,12 +276,27 @@ const defaultExchangeCard = computed(() => (
   featuredRates.value.find((card) => card.id === 'rub-thb')
   ?? featuredRates.value[0]
 ));
+const managerTelegramHref = computed(() => {
+  const supportHref = profileStore.data?.menu.find((item) => item.id === 'support' && item.action === 'link')?.href?.trim();
+  if (supportHref) {
+    return supportHref;
+  }
+
+  const fallbackUsername = (import.meta.env.VITE_TG_BOT_USERNAME as string | undefined)?.trim().replace(/^@/, '');
+  return fallbackUsername ? `https://t.me/${fallbackUsername}` : null;
+});
 
 onMounted(async () => {
   if (!homeStore.loaded || !homeStore.data) {
     await homeStore.load();
   } else {
     void homeStore.refresh();
+  }
+
+  if (!profileStore.loaded || !profileStore.data) {
+    await profileStore.load();
+  } else {
+    void profileStore.refresh();
   }
 
   selectedRateChip.value = HOME_ALL_FILTER_KEY;
