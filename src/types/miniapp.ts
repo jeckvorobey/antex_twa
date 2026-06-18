@@ -1,3 +1,5 @@
+export type MiniappUserRole = 2 | 9;
+
 export interface MiniappUser {
   id: number;
   username: string | null;
@@ -8,7 +10,7 @@ export interface MiniappUser {
   photo_url: string | null;
   is_bot: boolean;
   is_premium: boolean;
-  role: number;
+  role: MiniappUserRole;
   trusted_contact: string | null;
   trusted_contact_source: string | null;
   trusted_contact_ready: boolean;
