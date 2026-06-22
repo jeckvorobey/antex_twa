@@ -1,6 +1,9 @@
 import js from '@eslint/js';
 
 export default [
+  {
+    ignores: ['.quasar/**', 'dist/**'],
+  },
   js.configs.recommended,
   {
     rules: {

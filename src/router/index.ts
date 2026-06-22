@@ -1,4 +1,4 @@
-import { route } from 'quasar/wrappers';
+import { defineRouter } from '#q-app/wrappers';
 import {
   createMemoryHistory,
   createRouter,
@@ -8,7 +8,7 @@ import {
 
 import routes from './routes';
 
-export default route(function () {
+export default defineRouter(function () {
   const createHistory = process.env.SERVER
     ? createMemoryHistory
     : process.env.VUE_ROUTER_MODE === 'history'

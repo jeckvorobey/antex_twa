@@ -3,50 +3,73 @@ import { ref } from 'vue';
 
 import {
   createOrder,
+  fetchCities,
   fetchExchangeScreen,
-  fetchQuote,
 } from '@services/api/miniapp.service';
 import type {
+  MiniappCity,
   MiniappExchangeScreenResponse,
   MiniappOrderCreate,
   MiniappQuoteResponse,
 } from '@types/miniapp';
+import { calculateLocalQuote } from '@utils/exchange';
 
 export const useExchangeStore = defineStore('exchange', () => {
   const screen = ref<MiniappExchangeScreenResponse | null>(null);
+  const cities = ref<MiniappCity[]>([]);
   const quote = ref<MiniappQuoteResponse | null>(null);
   const loading = ref(false);
-  const quoteLoading = ref(false);
+  const loaded = ref(false);
+  const refreshing = ref(false);
   const submitting = ref(false);
-  const quoteRequestId = ref(0);
+
+  async function fetchData() {
+    const [screenResponse, citiesResponse] = await Promise.all([
+      fetchExchangeScreen(),
+      fetchCities(),
+    ]);
+    screen.value = screenResponse;
+    cities.value = citiesResponse.items;
+    quote.value = screenResponse.quote;
+  }
 
   async function load() {
+    if (loading.value) {
+      return;
+    }
+
     loading.value = true;
     try {
-      screen.value = await fetchExchangeScreen();
-      quote.value = screen.value.quote;
+      await fetchData();
     } finally {
+      loaded.value = true;
       loading.value = false;
     }
   }
 
-  async function refreshQuote(params: { currencySell: string; currencyBuy: string; amountSell: number }) {
-    const requestId = ++quoteRequestId.value;
-    quoteLoading.value = true;
-
-    try {
-      const nextQuote = await fetchQuote(params);
-      if (requestId !== quoteRequestId.value) {
-        return null;
-      }
-
-      quote.value = nextQuote;
-      return nextQuote;
-    } finally {
-      if (requestId === quoteRequestId.value) {
-        quoteLoading.value = false;
-      }
+  async function refresh() {
+    if (loading.value || refreshing.value) {
+      return;
     }
+
+    refreshing.value = true;
+    try {
+      await fetchData();
+    } finally {
+      refreshing.value = false;
+    }
+  }
+
+  function recalculateQuote(params: {
+    currencySell: string;
+    currencyBuy: string;
+    amountSell: number;
+  }) {
+    quote.value = calculateLocalQuote({
+      pairs: screen.value?.pairs ?? [],
+      ...params,
+    });
+    return quote.value;
   }
 
   async function submitOrder(payload: MiniappOrderCreate) {
@@ -60,12 +83,15 @@ export const useExchangeStore = defineStore('exchange', () => {
 
   return {
     screen,
+    cities,
     quote,
     loading,
-    quoteLoading,
+    loaded,
+    refreshing,
     submitting,
     load,
-    refreshQuote,
+    refresh,
+    recalculateQuote,
     submitOrder,
   };
 });

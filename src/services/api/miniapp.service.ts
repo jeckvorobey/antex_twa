@@ -1,12 +1,12 @@
 import { api } from '@boot/axios';
 import type {
+  MiniappCitiesResponse,
   MiniappExchangeScreenResponse,
   MiniappHomeResponse,
   MiniappOrderCreate,
   MiniappOrderItem,
   MiniappOrdersResponse,
   MiniappProfileResponse,
-  MiniappQuoteResponse,
 } from '@types/miniapp';
 
 export async function fetchHome() {
@@ -19,13 +19,13 @@ export async function fetchExchangeScreen() {
   return response.data;
 }
 
-export async function fetchQuote(params: { currencySell: string; currencyBuy: string; amountSell: number }) {
-  const response = await api.get<MiniappQuoteResponse>('/api/miniapp/exchange/quote', { params });
+export async function fetchCities() {
+  const response = await api.get<MiniappCitiesResponse>('/api/miniapp/cities');
   return response.data;
 }
 
-export async function fetchOrders() {
-  const response = await api.get<MiniappOrdersResponse>('/api/miniapp/orders');
+export async function fetchOrders(params: { limit?: number; offset?: number } = {}) {
+  const response = await api.get<MiniappOrdersResponse>('/api/miniapp/orders', { params });
   return response.data;
 }
 

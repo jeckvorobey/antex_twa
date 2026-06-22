@@ -5,26 +5,27 @@
     class="app-dialog--bottom"
     @update:model-value="$emit('update:modelValue', $event)"
   >
-    <AppSurface class="q-pa-md">
+    <AppSurface class="app-sheet q-pa-md">
       <div class="app-sheet-handle" />
-      <div class="text-h6 q-mb-xs">{{ t('more.title') }}</div>
-      <div class="app-secondary-text q-mb-md">{{ t('more.subtitle') }}</div>
+      <div class="app-sheet__title">{{ t('more.title') }}</div>
+      <div class="app-sheet__description">{{ t('more.subtitle') }}</div>
 
-      <div class="column q-gutter-sm">
-        <q-btn
+      <div class="column q-gutter-xs">
+        <button
           v-for="item in menuItems"
           :key="item.id"
-          flat
-          no-caps
-          class="app-surface q-pa-sm row items-center justify-between"
+          type="button"
+          class="app-sheet-menu-item"
           @click="handleAction(item)"
         >
-          <div class="row items-center q-gutter-sm">
-            <q-icon :name="item.icon" color="primary" size="20px" />
+          <div class="app-sheet-menu-item__left">
+            <div class="app-sheet-menu-item__icon">
+              <q-icon :name="item.icon" size="18px" />
+            </div>
             <span>{{ item.title }}</span>
           </div>
-          <q-icon name="chevron_right" color="grey-6" />
-        </q-btn>
+          <q-icon name="chevron_right" size="16px" class="app-sheet-menu-item__chevron" />
+        </button>
       </div>
     </AppSurface>
   </q-dialog>

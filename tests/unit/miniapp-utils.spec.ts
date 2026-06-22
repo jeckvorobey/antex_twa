@@ -6,6 +6,18 @@ import {
   groupOrdersByDate,
   isQuoteCurrent,
 } from '@utils/miniapp';
+import type { MiniappCity } from '@types/miniapp';
+
+const city: MiniappCity = {
+  id: 1,
+  name: 'Bangkok',
+  country: 'thailand',
+  countryRuName: 'Таиланд',
+  countryCode: 'th',
+  countryFlag: '🇹🇭',
+  createdAt: '2026-03-28T09:00:00+00:00',
+  updatedAt: '2026-03-28T09:00:00+00:00',
+};
 
 describe('miniapp utils', () => {
   it('groups orders by localized date label', () => {
@@ -18,10 +30,13 @@ describe('miniapp utils', () => {
         amountBuy: 13500,
         rate: 2.7,
         status: 1,
+        cityId: 1,
+        country: 'thailand',
         methodGet: 'cash',
-        contactTelegram: '@serg',
+        contactTelegram: 'serg',
         createdAt: '2026-03-28T09:30:00+00:00',
-        bank: { id: 1, code: 'SCB', name: 'Siam Commercial Bank' },
+        updatedAt: '2026-03-28T09:30:00+00:00',
+        city,
       },
       {
         id: 2,
@@ -30,21 +45,25 @@ describe('miniapp utils', () => {
         currencyBuy: 'THB',
         amountBuy: 4950,
         rate: 33,
-        status: 4,
+        status: 3,
+        cityId: 1,
+        country: 'thailand',
         methodGet: 'cash',
-        contactTelegram: '@serg',
+        contactTelegram: 'serg',
         createdAt: '2026-03-28T10:30:00+00:00',
-        bank: { id: 1, code: 'SCB', name: 'Siam Commercial Bank' },
+        updatedAt: '2026-03-28T10:30:00+00:00',
+        city,
       },
     ]);
 
     expect(result).toHaveLength(1);
+    expect(result[0].label).toBe('28 марта 2026');
     expect(result[0].items).toHaveLength(2);
   });
 
   it('maps status keys and tones', () => {
-    expect(getStatusLabelKey(4)).toBe('status.completed');
-    expect(getStatusTone(4)).toBe('positive');
+    expect(getStatusLabelKey(3)).toBe('status.completed');
+    expect(getStatusTone(3)).toBe('positive');
     expect(getStatusTone(99)).toBe('warning');
   });
 
@@ -57,6 +76,7 @@ describe('miniapp utils', () => {
           amountSell: 5000,
           amountBuy: 55.56,
           rate: 0.0111,
+          rateDisplay: '0.01',
           rateText: 'stub',
           updatedAt: '2026-03-28T09:30:00+00:00',
           availableMethods: ['cash'],
@@ -77,6 +97,7 @@ describe('miniapp utils', () => {
           amountSell: 5000,
           amountBuy: 55.56,
           rate: 0.0111,
+          rateDisplay: '0.01',
           rateText: 'stub',
           updatedAt: '2026-03-28T09:30:00+00:00',
           availableMethods: ['cash'],
