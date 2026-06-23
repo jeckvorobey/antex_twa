@@ -1851,6 +1851,16 @@ body.body--light .q-page,
   min-width: 0;
 }
 
+.app-exchange-calculator__error {
+  display: flex;
+  align-items: center;
+  padding: 4px 12px 0;
+  color: $negative;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
 .app-exchange-calculator__currency {
   width: 93px;
 }
