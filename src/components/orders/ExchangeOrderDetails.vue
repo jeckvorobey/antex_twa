@@ -24,6 +24,7 @@
               dense
               inputmode="decimal"
               input-class="text-right"
+              bottom-slots
               :error="amountSellError"
               :error-message="amountSellErrorMessage"
               @update:model-value="handleAmountSellInput"
@@ -242,6 +243,7 @@ watch(
       emit('update:amountSell', min);
     }
   },
+  { immediate: true },
 );
 
 watch(
@@ -252,6 +254,7 @@ watch(
       emit('update:amountSell', min);
     }
   },
+  { immediate: true },
 );
 
 function handleAmountSellInput(value: string | number | null) {
