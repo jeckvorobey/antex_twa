@@ -88,10 +88,7 @@ function normalizeCountryKey(value: unknown): string {
 /**
  * Строит варианты валюты получения из backend-driven списка pair ids.
  */
-export function buildBuyCurrencyOptions(
-  pairs: ExchangePairLike[],
-  currencySell: string,
-) {
+export function buildBuyCurrencyOptions(pairs: ExchangePairLike[], currencySell: string) {
   return pairs
     .map((pair) => parsePairId(pair.id))
     .filter((pair) => pair.currencySell === currencySell)
@@ -107,15 +104,15 @@ export function buildCountryOptions(
   return buildBuyCurrencyOptions(pairs, currencySell)
     .map((option) => ({
       value: getCountryByCurrency(pairs, option.value),
-      label: normalizeCountryLabel(
-        getCountryLabelByCurrency(pairs, option.value) ?? option.value,
-      ),
+      label: normalizeCountryLabel(getCountryLabelByCurrency(pairs, option.value) ?? option.value),
       mark: getCountryFlagByCurrency(pairs, option.value),
     }))
     .filter((option): option is ExchangeOption => Boolean(option.value));
 }
 
-export function normalizeReceiveMethods(methods: string[] | null | undefined): MiniappReceiveMethod[] {
+export function normalizeReceiveMethods(
+  methods: string[] | null | undefined,
+): MiniappReceiveMethod[] {
   const supported: MiniappReceiveMethod[] = ['qrcode', 'cash', 'bank_account', 'pay_services'];
   if (!methods?.length) {
     return supported;
@@ -178,18 +175,20 @@ function resolvePairDefaultAmountSell(
 ) {
   const pair = pairs.find((item) => {
     const parsed = parsePairId(item.id);
-    return parsed.currencySell === currencySell.toUpperCase() && parsed.currencyBuy === currencyBuy.toUpperCase();
+    return (
+      parsed.currencySell === currencySell.toUpperCase() &&
+      parsed.currencyBuy === currencyBuy.toUpperCase()
+    );
   });
   return pair && typeof pair.amountSellExample === 'number'
     ? pair.amountSellExample
     : getFallbackDefaultAmountSell(currencySell);
 }
 
-function resolveExpectedCountryByBuyCurrency(
-  pairs: ExchangePairLike[],
-  currencyBuy: string,
-) {
-  const directPair = pairs.find((item) => parsePairId(item.id).currencyBuy === currencyBuy.toUpperCase());
+function resolveExpectedCountryByBuyCurrency(pairs: ExchangePairLike[], currencyBuy: string) {
+  const directPair = pairs.find(
+    (item) => parsePairId(item.id).currencyBuy === currencyBuy.toUpperCase(),
+  );
   return normalizeCountryKey(directPair?.country);
 }
 
@@ -265,34 +264,22 @@ export function validatePreliminaryOrderDraft(
   return { valid: true };
 }
 
-export function getCountryByCurrency(
-  pairs: ExchangePairLike[],
-  currencyBuy: string,
-) {
+export function getCountryByCurrency(pairs: ExchangePairLike[], currencyBuy: string) {
   const directPair = pairs.find((pair) => parsePairId(pair.id).currencyBuy === currencyBuy);
   return directPair?.country ?? null;
 }
 
-export function getCountryLabelByCurrency(
-  pairs: ExchangePairLike[],
-  currencyBuy: string,
-) {
+export function getCountryLabelByCurrency(pairs: ExchangePairLike[], currencyBuy: string) {
   const directPair = pairs.find((pair) => parsePairId(pair.id).currencyBuy === currencyBuy);
   return directPair?.countryLabel ?? null;
 }
 
-export function getCurrencyByCountry(
-  pairs: ExchangePairLike[],
-  country: string,
-) {
+export function getCurrencyByCountry(pairs: ExchangePairLike[], country: string) {
   const directPair = pairs.find((pair) => pair.country === country);
   return directPair ? parsePairId(directPair.id).currencyBuy : null;
 }
 
-export function getCountryFlagByCurrency(
-  pairs: ExchangePairLike[],
-  currencyBuy: string,
-) {
+export function getCountryFlagByCurrency(pairs: ExchangePairLike[], currencyBuy: string) {
   const directPair = pairs.find((pair) => parsePairId(pair.id).currencyBuy === currencyBuy);
   return directPair?.countryFlag ?? '';
 }

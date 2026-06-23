@@ -78,9 +78,12 @@ export function buildHomeRateView({
   const countryRates = selectedCountry
     ? rates.filter((rate) => rate.country === selectedCountry)
     : rates;
-  const filteredRates = filterKey === HOME_ALL_FILTER_KEY
-    ? countryRates
-    : countryRates.filter((rate) => rate.fromCurrency === filterKey || rate.toCurrency === filterKey);
+  const filteredRates =
+    filterKey === HOME_ALL_FILTER_KEY
+      ? countryRates
+      : countryRates.filter(
+          (rate) => rate.fromCurrency === filterKey || rate.toCurrency === filterKey,
+        );
   const canExpand = filteredRates.length > previewLimit;
 
   return {
@@ -105,15 +108,14 @@ export function buildHomeVisibleLocations(
   }));
 }
 
-export function resolveHomeCountryByCity(
-  locations: MiniappLocationItem[],
-  cityId: string,
-) {
+export function resolveHomeCountryByCity(locations: MiniappLocationItem[], cityId: string) {
   return locations.find((location) => location.id === cityId)?.country ?? null;
 }
 
 export function buildHomeAvailableMethods(selectedCityId: string | null) {
-  return selectedCityId ? ['qrcode', 'cash', 'bank_account', 'pay_services'] : ['qrcode', 'bank_account', 'pay_services'];
+  return selectedCityId
+    ? ['qrcode', 'cash', 'bank_account', 'pay_services']
+    : ['qrcode', 'bank_account', 'pay_services'];
 }
 
 export function resetHomeRateExpansion(_expanded: boolean) {
@@ -146,8 +148,12 @@ function getHomeRateSourceLabel(currency: string) {
 }
 
 function sortHomeRateCurrencies(left: string, right: string): [string, string] {
-  const leftPriority = HOME_RATE_DISPLAY_PRIORITY.indexOf(left as (typeof HOME_RATE_DISPLAY_PRIORITY)[number]);
-  const rightPriority = HOME_RATE_DISPLAY_PRIORITY.indexOf(right as (typeof HOME_RATE_DISPLAY_PRIORITY)[number]);
+  const leftPriority = HOME_RATE_DISPLAY_PRIORITY.indexOf(
+    left as (typeof HOME_RATE_DISPLAY_PRIORITY)[number],
+  );
+  const rightPriority = HOME_RATE_DISPLAY_PRIORITY.indexOf(
+    right as (typeof HOME_RATE_DISPLAY_PRIORITY)[number],
+  );
 
   if (leftPriority === -1 || rightPriority === -1) {
     return [left, right];

@@ -26,8 +26,8 @@
               input-class="text-right"
               bottom-slots
               hide-bottom-space
-              :error="amountSellError"
-              :error-message="amountSellErrorMessage"
+              :rules="amountSellRules"
+              lazy-rules
               @update:model-value="handleAmountSellInput"
             />
           </div>
@@ -65,7 +65,12 @@
       </div>
 
       <div v-if="minAmount > 0" class="app-exchange-calculator__hint">
-        {{ t('order.minAmountHint', { amount: formatReadableNumber(minAmount, locale), currency: selectedSellCurrency }) }}
+        {{
+          t('order.minAmountHint', {
+            amount: formatReadableNumber(minAmount, locale),
+            currency: selectedSellCurrency,
+          })
+        }}
       </div>
     </AppSurface>
 
@@ -130,7 +135,13 @@ import AppSurface from '@components/ui/AppSurface.vue';
 import { getMinAmount } from '@constants/limits';
 import type { MiniappReceiveMethod } from '@types/miniapp';
 import { formatReadableNumber, parseReadableNumber } from '@utils/formatters';
-import { buildReceiveLocationLabel, getReceiveLocationTitleKey, normalizeReceiveMethods, type ExchangeCityOption, type ExchangeOption } from '@utils/exchange';
+import {
+  buildReceiveLocationLabel,
+  getReceiveLocationTitleKey,
+  normalizeReceiveMethods,
+  type ExchangeCityOption,
+  type ExchangeOption,
+} from '@utils/exchange';
 
 const props = defineProps<{
   sellOptions: ExchangeOption[];
@@ -186,7 +197,8 @@ const selectedCityIdModel = computed({
 });
 
 const selectedCountryLabel = computed(
-  () => props.countryOptions.find((country) => country.value === props.selectedCountry)?.label ?? null,
+  () =>
+    props.countryOptions.find((country) => country.value === props.selectedCountry)?.label ?? null,
 );
 
 const selectedCityLabel = computed(
@@ -195,11 +207,13 @@ const selectedCityLabel = computed(
 
 const receiveLocationTitle = computed(() => t(getReceiveLocationTitleKey(props.selectedMethod)));
 
-const receiveLocationLabel = computed(() => buildReceiveLocationLabel({
-  method: props.selectedMethod,
-  countryLabel: selectedCountryLabel.value,
-  cityLabel: selectedCityLabel.value,
-}));
+const receiveLocationLabel = computed(() =>
+  buildReceiveLocationLabel({
+    method: props.selectedMethod,
+    countryLabel: selectedCountryLabel.value,
+    cityLabel: selectedCityLabel.value,
+  }),
+);
 
 const methodOptions = computed(() => {
   const labels: Record<MiniappReceiveMethod, string> = {
@@ -220,24 +234,25 @@ const formattedAmountBuy = computed(() => formatReadableNumber(props.amountBuy, 
 /** Минимальная сумма для текущего метода и валюты. */
 const minAmount = computed(() => getMinAmount(props.selectedMethod, props.selectedSellCurrency));
 
-/** Показывать ошибку если сумма введена и меньше минимальной. */
-const amountSellError = computed(() => {
-  if (!props.amountSell || props.amountSell <= 0) {
-    return false;
-  }
-  return minAmount.value > 0 && props.amountSell < minAmount.value;
-});
-
-/** Локализованное сообщение об ошибке валидации суммы. */
-const amountSellErrorMessage = computed(() => {
-  if (!amountSellError.value) {
-    return '';
-  }
-  return t('errors.exchange_min_amount', {
-    amount: formatReadableNumber(minAmount.value, locale.value),
-    currency: props.selectedSellCurrency,
-  });
-});
+/** Правила валидации для поля суммы отправки. */
+const amountSellRules = computed(() => [
+  (val: string | number | null) => {
+    if (!val) {
+      return true;
+    }
+    const amount = parseReadableNumber(val);
+    if (amount <= 0) {
+      return true;
+    }
+    if (minAmount.value > 0 && amount < minAmount.value) {
+      return t('errors.exchange_min_amount', {
+        amount: formatReadableNumber(minAmount.value, locale.value),
+        currency: props.selectedSellCurrency,
+      });
+    }
+    return true;
+  },
+]);
 
 /** Автоподстановка минимальной суммы при смене метода получения. */
 watch(

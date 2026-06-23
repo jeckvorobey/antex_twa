@@ -33,10 +33,10 @@ describe('AppBottomNav', () => {
 
     expect(styles).toContain('.app-bottom-nav__item .q-icon {\n  font-size: 16px;\n}');
     expect(styles).toContain(
-      '.app-bottom-nav__item:not(.app-bottom-nav__item--active) .q-icon {\n  color: var(--antex-text-primary);\n}'
+      '.app-bottom-nav__item:not(.app-bottom-nav__item--active) .q-icon {\n  color: var(--antex-text-primary);\n}',
     );
     expect(styles).toContain(
-      '.app-bottom-nav__item:not(.app-bottom-nav__item--active) .block {\n  color: var(--antex-text-primary);\n}'
+      '.app-bottom-nav__item:not(.app-bottom-nav__item--active) .block {\n  color: var(--antex-text-primary);\n}',
     );
   });
 
@@ -53,7 +53,9 @@ describe('AppBottomNav', () => {
 
     expect(styles).toContain('.app-header-shell {');
     expect(styles).toContain('position: relative;');
-    expect(styles).toContain('margin:\n    calc(env(safe-area-inset-top) + var(--antex-space-md))');
+    expect(styles).toContain(
+      'margin: calc(env(safe-area-inset-top) + var(--antex-space-md)) auto 0',
+    );
     expect(styles).toContain('width: min(calc(100vw - (var(--antex-space-md) * 2)), 390px)');
     expect(styles).toContain('transform: none;');
   });

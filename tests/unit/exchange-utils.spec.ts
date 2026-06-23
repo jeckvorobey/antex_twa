@@ -61,12 +61,14 @@ describe('calculateLocalQuote', () => {
   ];
 
   it('calculates preliminary receive amount from selected sell amount', () => {
-    expect(calculateLocalQuote({
-      pairs,
-      currencySell: 'RUB',
-      currencyBuy: 'THB',
-      amountSell: 6000,
-    })).toMatchObject({
+    expect(
+      calculateLocalQuote({
+        pairs,
+        currencySell: 'RUB',
+        currencyBuy: 'THB',
+        amountSell: 6000,
+      }),
+    ).toMatchObject({
       currencySell: 'RUB',
       currencyBuy: 'THB',
       amountSell: 6000,
@@ -79,12 +81,14 @@ describe('calculateLocalQuote', () => {
   });
 
   it('returns null when the current pair is missing', () => {
-    expect(calculateLocalQuote({
-      pairs,
-      currencySell: 'USDT',
-      currencyBuy: 'THB',
-      amountSell: 100,
-    })).toBeNull();
+    expect(
+      calculateLocalQuote({
+        pairs,
+        currencySell: 'USDT',
+        currencyBuy: 'THB',
+        amountSell: 100,
+      }),
+    ).toBeNull();
   });
 });
 
@@ -174,17 +178,21 @@ describe('receive location presentation', () => {
     expect(getReceiveLocationTitleKey('qrcode')).toBe('exchange.receiveCountry');
     expect(getReceiveLocationTitleKey('cash')).toBe('exchange.cash');
 
-    expect(buildReceiveLocationLabel({
-      method: 'qrcode',
-      countryLabel: 'Таиланд',
-      cityLabel: 'Паттайя',
-    })).toBe('Таиланд');
+    expect(
+      buildReceiveLocationLabel({
+        method: 'qrcode',
+        countryLabel: 'Таиланд',
+        cityLabel: 'Паттайя',
+      }),
+    ).toBe('Таиланд');
 
-    expect(buildReceiveLocationLabel({
-      method: 'cash',
-      countryLabel: 'Таиланд',
-      cityLabel: 'Паттайя',
-    })).toBe('Таиланд, Паттайя');
+    expect(
+      buildReceiveLocationLabel({
+        method: 'cash',
+        countryLabel: 'Таиланд',
+        cityLabel: 'Паттайя',
+      }),
+    ).toBe('Таиланд, Паттайя');
   });
 });
 
@@ -230,16 +238,18 @@ describe('validatePreliminaryOrderDraft', () => {
   ];
 
   it('returns warning key when sell amount is lower than pair default', () => {
-    expect(validatePreliminaryOrderDraft({
-      pairs,
-      cities,
-      currencySell: 'RUB',
-      currencyBuy: 'THB',
-      amountSell: 14999,
-      selectedCountry: 'thailand',
-      selectedMethod: 'qrcode',
-      selectedCityId: null,
-    })).toEqual({
+    expect(
+      validatePreliminaryOrderDraft({
+        pairs,
+        cities,
+        currencySell: 'RUB',
+        currencyBuy: 'THB',
+        amountSell: 14999,
+        selectedCountry: 'thailand',
+        selectedMethod: 'qrcode',
+        selectedCityId: null,
+      }),
+    ).toEqual({
       valid: false,
       messageKey: 'errors.exchange_min_amount',
       params: { amount: 15000, currency: 'RUB' },
@@ -247,74 +257,84 @@ describe('validatePreliminaryOrderDraft', () => {
   });
 
   it('returns warning key when country is not selected', () => {
-    expect(validatePreliminaryOrderDraft({
-      pairs,
-      cities,
-      currencySell: 'RUB',
-      currencyBuy: 'THB',
-      amountSell: 20000,
-      selectedCountry: null,
-      selectedMethod: 'qrcode',
-      selectedCityId: null,
-    })).toEqual({
+    expect(
+      validatePreliminaryOrderDraft({
+        pairs,
+        cities,
+        currencySell: 'RUB',
+        currencyBuy: 'THB',
+        amountSell: 20000,
+        selectedCountry: null,
+        selectedMethod: 'qrcode',
+        selectedCityId: null,
+      }),
+    ).toEqual({
       valid: false,
       messageKey: 'errors.country_required',
     });
   });
 
   it('returns warning key when city is missing for cash', () => {
-    expect(validatePreliminaryOrderDraft({
-      pairs,
-      cities,
-      currencySell: 'RUB',
-      currencyBuy: 'THB',
-      amountSell: 30000,
-      selectedCountry: 'thailand',
-      selectedMethod: 'cash',
-      selectedCityId: null,
-    })).toEqual({
+    expect(
+      validatePreliminaryOrderDraft({
+        pairs,
+        cities,
+        currencySell: 'RUB',
+        currencyBuy: 'THB',
+        amountSell: 30000,
+        selectedCountry: 'thailand',
+        selectedMethod: 'cash',
+        selectedCityId: null,
+      }),
+    ).toEqual({
       valid: false,
       messageKey: 'errors.city_required',
     });
   });
 
   it('returns warning key when city country does not match selected country', () => {
-    expect(validatePreliminaryOrderDraft({
-      pairs,
-      cities,
-      currencySell: 'RUB',
-      currencyBuy: 'THB',
-      amountSell: 30000,
-      selectedCountry: 'thailand',
-      selectedMethod: 'cash',
-      selectedCityId: 2,
-    })).toEqual({
+    expect(
+      validatePreliminaryOrderDraft({
+        pairs,
+        cities,
+        currencySell: 'RUB',
+        currencyBuy: 'THB',
+        amountSell: 30000,
+        selectedCountry: 'thailand',
+        selectedMethod: 'cash',
+        selectedCityId: 2,
+      }),
+    ).toEqual({
       valid: false,
       messageKey: 'errors.city_country_mismatch',
     });
   });
 
   it('accepts qrcode and cash drafts that satisfy all rules', () => {
-    expect(validatePreliminaryOrderDraft({
-      pairs,
-      cities,
-      currencySell: 'RUB',
-      currencyBuy: 'THB',
-      amountSell: 20000,
-      selectedCountry: 'thailand',
-      selectedMethod: 'qrcode',
-      selectedCityId: null,
-    })).toEqual({ valid: true });
+    expect(
+      validatePreliminaryOrderDraft({
+        pairs,
+        cities,
+        currencySell: 'RUB',
+        currencyBuy: 'THB',
+        amountSell: 20000,
+        selectedCountry: 'thailand',
+        selectedMethod: 'qrcode',
+        selectedCityId: null,
+      }),
+    ).toEqual({ valid: true });
 
-    expect(validatePreliminaryOrderDraft({
-      pairs,
-      cities,
-      currencySell: 'RUB',
-      currencyBuy: 'THB',
-      amountSell: 30000,
-      selectedCountry: 'thailand',
-      selectedMethod: 'cash',
-      selectedCityId: 1,
-    })).toEqual({ valid: true });
+    expect(
+      validatePreliminaryOrderDraft({
+        pairs,
+        cities,
+        currencySell: 'RUB',
+        currencyBuy: 'THB',
+        amountSell: 30000,
+        selectedCountry: 'thailand',
+        selectedMethod: 'cash',
+        selectedCityId: 1,
+      }),
+    ).toEqual({ valid: true });
   });
 });

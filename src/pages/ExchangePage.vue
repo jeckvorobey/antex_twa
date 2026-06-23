@@ -53,12 +53,7 @@
         </div>
 
         <div class="q-pt-md app-exchange-submit">
-          <AppButton
-            block
-            type="submit"
-            :loading="exchangeStore.submitting"
-            :disable="!canSubmit"
-          >
+          <AppButton block type="submit" :loading="exchangeStore.submitting" :disable="!canSubmit">
             {{ t('common.submit') }}
           </AppButton>
         </div>
@@ -111,7 +106,11 @@ const amountSellTouched = ref(false);
 const syncingState = ref(false);
 
 const sellOptions = computed(() =>
-  [...new Set((exchangeStore.screen?.pairs ?? []).map((pair) => pair.id.split('-')[0]?.toUpperCase()))].map((currency) => ({
+  [
+    ...new Set(
+      (exchangeStore.screen?.pairs ?? []).map((pair) => pair.id.split('-')[0]?.toUpperCase()),
+    ),
+  ].map((currency) => ({
     label: currency,
     value: currency,
   })),
@@ -125,9 +124,7 @@ const countryOptions = computed(() =>
   buildCountryOptions(exchangeStore.screen?.pairs ?? [], selectedSellCurrency.value),
 );
 
-const cityOptions = computed(() =>
-  buildCityOptions(exchangeStore.cities, selectedCountry.value),
-);
+const cityOptions = computed(() => buildCityOptions(exchangeStore.cities, selectedCountry.value));
 
 const currentQuoteMethods = computed(() => resolveCurrentQuote()?.availableMethods ?? null);
 
@@ -141,7 +138,8 @@ onMounted(async () => {
   syncingState.value = true;
   selectedSellCurrency.value = exchangeStore.screen?.calculator.fromCurrency ?? 'RUB';
   selectedBuyCurrency.value = exchangeStore.screen?.calculator.toCurrency ?? 'THB';
-  amountSell.value = exchangeStore.screen?.calculator.amountSell ?? getDefaultAmountSell(selectedSellCurrency.value);
+  amountSell.value =
+    exchangeStore.screen?.calculator.amountSell ?? getDefaultAmountSell(selectedSellCurrency.value);
   selectedCountry.value = getCountryByCurrency(
     exchangeStore.screen?.pairs ?? [],
     selectedBuyCurrency.value,
@@ -156,29 +154,32 @@ const currentRateLabel = computed(() => {
     return t('exchange.quoteUnavailable');
   }
 
-  return quote.rateText
-    || `1 ${quote.currencySell} = ${formatReadableNumber(quote.rate, locale.value)} ${quote.currencyBuy}`;
+  return (
+    quote.rateText ||
+    `1 ${quote.currencySell} = ${formatReadableNumber(quote.rate, locale.value)} ${quote.currencyBuy}`
+  );
 });
 
-const preliminaryValidation = computed(() => validatePreliminaryOrderDraft({
-  pairs: exchangeStore.screen?.pairs ?? [],
-  cities: exchangeStore.cities,
-  currencySell: selectedSellCurrency.value,
-  currencyBuy: selectedBuyCurrency.value,
-  amountSell: amountSell.value,
-  selectedCountry: selectedCountry.value,
-  selectedMethod: selectedMethod.value,
-  selectedCityId: selectedCityId.value,
-}));
+const preliminaryValidation = computed(() =>
+  validatePreliminaryOrderDraft({
+    pairs: exchangeStore.screen?.pairs ?? [],
+    cities: exchangeStore.cities,
+    currencySell: selectedSellCurrency.value,
+    currencyBuy: selectedBuyCurrency.value,
+    amountSell: amountSell.value,
+    selectedCountry: selectedCountry.value,
+    selectedMethod: selectedMethod.value,
+    selectedCityId: selectedCityId.value,
+  }),
+);
 
 const canSubmit = computed(() => {
-  const hasAmounts = Boolean(amountSell.value && amountSell.value > 0 && amountBuy.value && amountBuy.value > 0);
+  const hasAmounts = Boolean(
+    amountSell.value && amountSell.value > 0 && amountBuy.value && amountBuy.value > 0,
+  );
   const hasBaseFields = Boolean(selectedSellCurrency.value && selectedBuyCurrency.value);
   const hasMethodFields = selectedMethod.value !== 'cash' || Boolean(selectedCityId.value);
-  return hasAmounts
-    && hasBaseFields
-    && hasMethodFields
-    && preliminaryValidation.value.valid;
+  return hasAmounts && hasBaseFields && hasMethodFields && preliminaryValidation.value.valid;
 });
 
 watch(selectedSellCurrency, () => {
@@ -205,7 +206,10 @@ watch(selectedMethod, (method) => {
 });
 
 watch(selectedCountry, () => {
-  const nextCurrency = getCurrencyByCountry(exchangeStore.screen?.pairs ?? [], selectedCountry.value ?? '');
+  const nextCurrency = getCurrencyByCountry(
+    exchangeStore.screen?.pairs ?? [],
+    selectedCountry.value ?? '',
+  );
   if (nextCurrency && nextCurrency !== selectedBuyCurrency.value) {
     selectedBuyCurrency.value = nextCurrency;
     return;
@@ -298,9 +302,9 @@ function getDefaultAmountSell(currencySell: string) {
 function resolveCurrentQuote() {
   const quote = exchangeStore.quote;
   if (
-    !quote
-    || quote.currencySell !== selectedSellCurrency.value
-    || quote.currencyBuy !== selectedBuyCurrency.value
+    !quote ||
+    quote.currencySell !== selectedSellCurrency.value ||
+    quote.currencyBuy !== selectedBuyCurrency.value
   ) {
     return null;
   }
@@ -338,7 +342,9 @@ async function submitOrder() {
 
     ordersStore.prepend(order);
     syncingState.value = true;
-    amountSell.value = exchangeStore.screen?.calculator.amountSell ?? getDefaultAmountSell(selectedSellCurrency.value);
+    amountSell.value =
+      exchangeStore.screen?.calculator.amountSell ??
+      getDefaultAmountSell(selectedSellCurrency.value);
     amountBuy.value = exchangeStore.screen?.quote.amountBuy ?? null;
     amountSellTouched.value = false;
     syncingState.value = false;

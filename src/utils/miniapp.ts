@@ -1,8 +1,4 @@
-import type {
-  GroupedOrders,
-  MiniappOrderItem,
-  MiniappQuoteResponse,
-} from '@types/miniapp';
+import type { GroupedOrders, MiniappOrderItem, MiniappQuoteResponse } from '@types/miniapp';
 import { formatMiniappLongDate } from '@utils/formatters';
 
 type QuoteParams = {
@@ -53,8 +49,8 @@ export function isQuoteCurrent(quote: MiniappQuoteResponse | null, params: Quote
   }
 
   return (
-    quote.currencySell === params.currencySell
-    && quote.currencyBuy === params.currencyBuy
-    && quote.amountSell === params.amountSell
+    quote.currencySell === params.currencySell &&
+    quote.currencyBuy === params.currencyBuy &&
+    quote.amountSell === params.amountSell
   );
 }

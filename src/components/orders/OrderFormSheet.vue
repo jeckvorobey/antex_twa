@@ -1,6 +1,10 @@
 <template>
-  <q-dialog :model-value="modelValue" position="bottom" class="app-dialog--bottom app-dialog--order"
-    @update:model-value="$emit('update:modelValue', $event)">
+  <q-dialog
+    :model-value="modelValue"
+    position="bottom"
+    class="app-dialog--bottom app-dialog--order"
+    @update:model-value="$emit('update:modelValue', $event)"
+  >
     <AppSurface class="app-sheet q-pt-sm q-px-md">
       <div class="app-sheet-handle" />
       <AppWarningNotice>
@@ -86,13 +90,20 @@ const shouldFocusAmountSellAfterOpen = ref(false);
 const orderDetailsRef = ref<{ focusAmountSell: () => void } | null>(null);
 
 const sellOptions = computed(() =>
-  [...new Set((exchangeStore.screen?.pairs ?? []).map((pair) => pair.id.split('-')[0]?.toUpperCase()))].map((currency) => ({
+  [
+    ...new Set(
+      (exchangeStore.screen?.pairs ?? []).map((pair) => pair.id.split('-')[0]?.toUpperCase()),
+    ),
+  ].map((currency) => ({
     label: currency,
     value: currency,
   })),
 );
 const currencyOptions = computed(() => {
-  const options = buildBuyCurrencyOptions(exchangeStore.screen?.pairs ?? [], selectedSellCurrency.value);
+  const options = buildBuyCurrencyOptions(
+    exchangeStore.screen?.pairs ?? [],
+    selectedSellCurrency.value,
+  );
   const contextBuyCurrency = uiStore.orderContext?.currencyBuy;
   if (options.length || !contextBuyCurrency) {
     return options;
@@ -114,7 +125,11 @@ const countryOptions = computed(() => {
 const cityOptions = computed(() => buildCityOptions(exchangeStore.cities, selectedCountry.value));
 const currentQuoteMethods = computed(() => {
   const quote = exchangeStore.quote;
-  if (quote && quote.currencySell === selectedSellCurrency.value && quote.currencyBuy === currencyBuy.value) {
+  if (
+    quote &&
+    quote.currencySell === selectedSellCurrency.value &&
+    quote.currencyBuy === currencyBuy.value
+  ) {
     return quote.availableMethods;
   }
 
@@ -129,18 +144,22 @@ const currentRateLabel = computed(() => {
   return currentQuote.rateText;
 });
 
-const preliminaryValidation = computed(() => validatePreliminaryOrderDraft({
-  pairs: exchangeStore.screen?.pairs ?? [],
-  cities: exchangeStore.cities,
-  currencySell: selectedSellCurrency.value,
-  currencyBuy: currencyBuy.value,
-  amountSell: amountSell.value,
-  selectedCountry: selectedCountry.value,
-  selectedMethod: selectedMethod.value,
-  selectedCityId: selectedCityId.value,
-}));
+const preliminaryValidation = computed(() =>
+  validatePreliminaryOrderDraft({
+    pairs: exchangeStore.screen?.pairs ?? [],
+    cities: exchangeStore.cities,
+    currencySell: selectedSellCurrency.value,
+    currencyBuy: currencyBuy.value,
+    amountSell: amountSell.value,
+    selectedCountry: selectedCountry.value,
+    selectedMethod: selectedMethod.value,
+    selectedCityId: selectedCityId.value,
+  }),
+);
 const canSubmit = computed(() => {
-  const hasAmounts = Boolean(amountSell.value && amountSell.value > 0 && amountBuy.value && amountBuy.value > 0);
+  const hasAmounts = Boolean(
+    amountSell.value && amountSell.value > 0 && amountBuy.value && amountBuy.value > 0,
+  );
   const hasBaseFields = Boolean(selectedSellCurrency.value && currencyBuy.value);
   const hasMethodFields = selectedMethod.value !== 'cash' || Boolean(selectedCityId.value);
 
@@ -160,14 +179,23 @@ watch(
 
     shouldFocusAmountSellAfterOpen.value = Boolean(uiStore.orderContext);
     syncingState.value = true;
-    selectedSellCurrency.value = uiStore.orderContext?.currencySell ?? exchangeStore.quote?.currencySell ?? 'RUB';
-    amountSell.value = uiStore.orderContext?.amountSell ?? exchangeStore.quote?.amountSell ?? getDefaultAmountSell(selectedSellCurrency.value);
+    selectedSellCurrency.value =
+      uiStore.orderContext?.currencySell ?? exchangeStore.quote?.currencySell ?? 'RUB';
+    amountSell.value =
+      uiStore.orderContext?.amountSell ??
+      exchangeStore.quote?.amountSell ??
+      getDefaultAmountSell(selectedSellCurrency.value);
     amountBuy.value = null;
-    currencyBuy.value = uiStore.orderContext?.currencyBuy ?? exchangeStore.quote?.currencyBuy ?? 'THB';
-    selectedCountry.value = uiStore.orderContext?.country
-      ?? getCountryByCurrency(exchangeStore.screen?.pairs ?? [], currencyBuy.value);
+    currencyBuy.value =
+      uiStore.orderContext?.currencyBuy ?? exchangeStore.quote?.currencyBuy ?? 'THB';
+    selectedCountry.value =
+      uiStore.orderContext?.country ??
+      getCountryByCurrency(exchangeStore.screen?.pairs ?? [], currencyBuy.value);
     selectedCityId.value = uiStore.orderContext?.cityId ?? null;
-    selectedMethod.value = getPreferredReceiveMethod(currentQuoteMethods.value, selectedCityId.value);
+    selectedMethod.value = getPreferredReceiveMethod(
+      currentQuoteMethods.value,
+      selectedCityId.value,
+    );
     amountSellTouched.value = Boolean(uiStore.orderContext?.amountSell);
     syncingState.value = false;
     refreshQuoteForCurrentState();
@@ -263,7 +291,11 @@ watch(amountSell, (value, previousValue) => {
 
 function resolveCurrentQuote() {
   const quote = exchangeStore.quote;
-  if (!quote || quote.currencySell !== selectedSellCurrency.value || quote.currencyBuy !== currencyBuy.value) {
+  if (
+    !quote ||
+    quote.currencySell !== selectedSellCurrency.value ||
+    quote.currencyBuy !== currencyBuy.value
+  ) {
     return null;
   }
 
@@ -336,13 +368,16 @@ async function submit() {
     emit('update:modelValue', false);
     await router.push({ name: 'history' });
   } catch (error: unknown) {
-    const data = (error as { response?: { data?: { code?: string; params?: Record<string, unknown> } } })?.response?.data;
+    const data = (
+      error as { response?: { data?: { code?: string; params?: Record<string, unknown> } } }
+    )?.response?.data;
     const code = data?.code;
     const params = data?.params ?? {};
     const messageKey = getMiniappErrorMessageKey(code);
-    const message = code === 'MIN_AMOUNT'
-      ? t(messageKey, { amount: params.minAmount, currency: params.currency })
-      : t(messageKey);
+    const message =
+      code === 'MIN_AMOUNT'
+        ? t(messageKey, { amount: params.minAmount, currency: params.currency })
+        : t(messageKey);
     Notify.create({ type: 'negative', message });
   }
 }

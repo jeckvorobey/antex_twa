@@ -4,7 +4,10 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const orderFormSheetPath = resolve(process.cwd(), 'src/components/orders/OrderFormSheet.vue');
-const detailsComponentPath = resolve(process.cwd(), 'src/components/orders/ExchangeOrderDetails.vue');
+const detailsComponentPath = resolve(
+  process.cwd(),
+  'src/components/orders/ExchangeOrderDetails.vue',
+);
 const localePath = resolve(process.cwd(), 'src/i18n/ru/index.ts');
 const warningNoticePath = resolve(process.cwd(), 'src/components/ui/AppWarningNotice.vue');
 
@@ -21,7 +24,9 @@ describe('OrderFormSheet amount formatting', () => {
   it('reuses the shared exchange order details component instead of duplicating location fields', () => {
     const source = readFileSync(orderFormSheetPath, 'utf8');
 
-    expect(source).toContain("import ExchangeOrderDetails from '@components/orders/ExchangeOrderDetails.vue'");
+    expect(source).toContain(
+      "import ExchangeOrderDetails from '@components/orders/ExchangeOrderDetails.vue'",
+    );
     expect(source).toContain('<ExchangeOrderDetails');
     expect(source).toContain('v-model:selected-sell-currency="selectedSellCurrency"');
     expect(source).toContain('v-model:selected-buy-currency="currencyBuy"');
@@ -64,17 +69,17 @@ describe('ExchangeOrderDetails shared component contract', () => {
   it('owns the full shared exchange form used by exchange and order sheet', () => {
     const source = readFileSync(detailsComponentPath, 'utf8');
 
-    expect(source).toContain("defineProps<{");
-    expect(source).toContain("selectedSellCurrency: string");
-    expect(source).toContain("selectedBuyCurrency: string");
-    expect(source).toContain("amountSell: number | null");
-    expect(source).toContain("amountBuy: number | null");
+    expect(source).toContain('defineProps<{');
+    expect(source).toContain('selectedSellCurrency: string');
+    expect(source).toContain('selectedBuyCurrency: string');
+    expect(source).toContain('amountSell: number | null');
+    expect(source).toContain('amountBuy: number | null');
     expect(source).toContain('readonly');
     expect(source).toContain('selectedMethod: MiniappReceiveMethod');
     expect(source).toContain('bank_account');
     expect(source).toContain('pay_services');
-    expect(source).toContain("selectedCountry: string | null");
-    expect(source).toContain("selectedCityId: number | null");
+    expect(source).toContain('selectedCountry: string | null');
+    expect(source).toContain('selectedCityId: number | null');
     expect(source).toContain("t('exchange.payAmount')");
     expect(source).toContain("t('exchange.receiveCurrency')");
     expect(source).toContain("t('exchange.receiveMethod')");

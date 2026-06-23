@@ -45,11 +45,7 @@
               <div class="app-group-label app-group-label--history q-mb-sm">{{ group.label }}</div>
 
               <AppSurface class="app-history-list">
-                <div
-                  v-for="item in group.items"
-                  :key="item.id"
-                  class="app-history-item"
-                >
+                <div v-for="item in group.items" :key="item.id" class="app-history-item">
                   <div class="column">
                     <div class="row justify-center no-wrap">
                       <div class="col-12 app-history-item__amount text-center ellipsis">
@@ -84,7 +80,9 @@
                         </q-chip>
                       </div>
 
-                      <div class="col-4 app-history-item__time text-right">{{ formatTime(item.createdAt) }}</div>
+                      <div class="col-4 app-history-item__time text-right">
+                        {{ formatTime(item.createdAt) }}
+                      </div>
                     </div>
                   </div>
                 </div>

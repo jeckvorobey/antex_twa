@@ -7,9 +7,9 @@ const detailsPath = resolve(process.cwd(), 'src/components/orders/ExchangeOrderD
 const source = readFileSync(detailsPath, 'utf8');
 
 describe('ExchangeOrderDetails validation contract', () => {
-  it('shows error state on amountSell input when amount is below minimum', () => {
-    expect(source).toContain(':error="amountSellError"');
-    expect(source).toContain(':error-message="amountSellErrorMessage"');
+  it('uses rules prop for validation on amountSell input', () => {
+    expect(source).toContain(':rules="amountSellRules"');
+    expect(source).toContain('lazy-rules');
   });
 
   it('enables bottom-slots with hide-bottom-space for compact error display', () => {
@@ -17,13 +17,9 @@ describe('ExchangeOrderDetails validation contract', () => {
     expect(source).toContain('hide-bottom-space');
   });
 
-  it('computes amountSellError from minAmount threshold', () => {
-    expect(source).toContain('const amountSellError = computed(() => {');
-    expect(source).toContain('return minAmount.value > 0 && props.amountSell < minAmount.value;');
-  });
-
-  it('computes amountSellErrorMessage with localized text', () => {
-    expect(source).toContain('const amountSellErrorMessage = computed(() => {');
+  it('computes amountSellRules with minAmount validation', () => {
+    expect(source).toContain('const amountSellRules = computed(() => [');
+    expect(source).toContain('if (minAmount.value > 0 && amount < minAmount.value)');
     expect(source).toContain("return t('errors.exchange_min_amount', {");
   });
 

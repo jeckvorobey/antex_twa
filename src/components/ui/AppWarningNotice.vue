@@ -1,8 +1,5 @@
 <template>
-  <div
-    class="app-warning-notice row no-wrap items-start"
-    role="alert"
-  >
+  <div class="app-warning-notice row no-wrap items-start" role="alert">
     <div class="app-warning-notice__icon col-auto self-center q-px-sm">
       <q-icon name="warning" class="text-warning" size="2.5rem" />
     </div>

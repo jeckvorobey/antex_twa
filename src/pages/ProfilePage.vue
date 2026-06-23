@@ -16,7 +16,11 @@
         </q-avatar>
         <div class="app-profile-hero__name">{{ profileStore.data?.user.displayName }}</div>
         <div class="app-profile-hero__username">
-          {{ profileStore.data?.user.username ? `@${profileStore.data.user.username}` : t('common.brand') }}
+          {{
+            profileStore.data?.user.username
+              ? `@${profileStore.data.user.username}`
+              : t('common.brand')
+          }}
         </div>
       </div>
 

@@ -3,10 +3,7 @@ import { ref } from 'vue';
 
 import type { MiniappQuoteResponse } from '@types/miniapp';
 
-type OrderContext = Pick<
-  MiniappQuoteResponse,
-  'currencySell' | 'currencyBuy' | 'amountSell'
-> & {
+type OrderContext = Pick<MiniappQuoteResponse, 'currencySell' | 'currencyBuy' | 'amountSell'> & {
   amountBuy?: MiniappQuoteResponse['amountBuy'];
   rate?: MiniappQuoteResponse['rate'];
   availableMethods?: MiniappQuoteResponse['availableMethods'];

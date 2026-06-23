@@ -4,7 +4,10 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const homePageSource = readFileSync(resolve(process.cwd(), 'src/pages/HomePage.vue'), 'utf8');
-const exchangePageSource = readFileSync(resolve(process.cwd(), 'src/pages/ExchangePage.vue'), 'utf8');
+const exchangePageSource = readFileSync(
+  resolve(process.cwd(), 'src/pages/ExchangePage.vue'),
+  'utf8',
+);
 const historyPageSource = readFileSync(resolve(process.cwd(), 'src/pages/HistoryPage.vue'), 'utf8');
 const profilePageSource = readFileSync(resolve(process.cwd(), 'src/pages/ProfilePage.vue'), 'utf8');
 
@@ -16,7 +19,9 @@ describe('miniapp background refresh on route revisit', () => {
   });
 
   it('keeps initial blocking load only for the first exchange visit', () => {
-    expect(exchangePageSource).toContain('if (!exchangeStore.loaded || !exchangeStore.screen || !exchangeStore.cities.length) {');
+    expect(exchangePageSource).toContain(
+      'if (!exchangeStore.loaded || !exchangeStore.screen || !exchangeStore.cities.length) {',
+    );
     expect(exchangePageSource).toContain('await exchangeStore.load();');
     expect(exchangePageSource).toContain('void exchangeStore.refresh();');
   });

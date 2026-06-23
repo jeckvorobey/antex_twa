@@ -134,12 +134,14 @@ const locations: MiniappLocationItem[] = [
 
 describe('buildHomeRateFilterChips', () => {
   it('adds the all filter as the first chip', () => {
-    expect(buildHomeRateFilterChips({
-      backendChips: ['USDT', 'THB', 'RUB'],
-      allLabel: 'Все',
-      rates,
-      selectedCountry: null,
-    })).toEqual<HomeRateFilterChip[]>([
+    expect(
+      buildHomeRateFilterChips({
+        backendChips: ['USDT', 'THB', 'RUB'],
+        allLabel: 'Все',
+        rates,
+        selectedCountry: null,
+      }),
+    ).toEqual<HomeRateFilterChip[]>([
       { key: 'ALL', label: 'Все' },
       { key: 'USDT', label: 'USDT' },
       { key: 'THB', label: 'THB' },
@@ -148,12 +150,14 @@ describe('buildHomeRateFilterChips', () => {
   });
 
   it('narrows chips to the selected country currencies', () => {
-    expect(buildHomeRateFilterChips({
-      backendChips: ['USDT', 'THB', 'RUB', 'GEL', 'VND'],
-      allLabel: 'Все',
-      rates,
-      selectedCountry: 'thailand',
-    })).toEqual<HomeRateFilterChip[]>([
+    expect(
+      buildHomeRateFilterChips({
+        backendChips: ['USDT', 'THB', 'RUB', 'GEL', 'VND'],
+        allLabel: 'Все',
+        rates,
+        selectedCountry: 'thailand',
+      }),
+    ).toEqual<HomeRateFilterChip[]>([
       { key: 'ALL', label: 'Все' },
       { key: 'USDT', label: 'USDT' },
       { key: 'THB', label: 'THB' },
@@ -172,11 +176,7 @@ describe('buildHomeRateView', () => {
       selectedCountry: null,
     });
 
-    expect(view.visibleRates.map((rate) => rate.id)).toEqual([
-      'rub-thb',
-      'usdt-thb',
-      'rub-vnd',
-    ]);
+    expect(view.visibleRates.map((rate) => rate.id)).toEqual(['rub-thb', 'usdt-thb', 'rub-vnd']);
     expect(view.canExpand).toBe(true);
   });
 
@@ -189,10 +189,7 @@ describe('buildHomeRateView', () => {
       selectedCountry: null,
     });
 
-    expect(view.filteredRates.map((rate) => rate.id)).toEqual([
-      'rub-thb',
-      'usdt-thb',
-    ]);
+    expect(view.filteredRates.map((rate) => rate.id)).toEqual(['rub-thb', 'usdt-thb']);
   });
 
   it('does not show expand for USDT when there are only 3 pairs', () => {
@@ -204,11 +201,7 @@ describe('buildHomeRateView', () => {
       selectedCountry: null,
     });
 
-    expect(view.visibleRates.map((rate) => rate.id)).toEqual([
-      'usdt-thb',
-      'usdt-vnd',
-      'usdt-gel',
-    ]);
+    expect(view.visibleRates.map((rate) => rate.id)).toEqual(['usdt-thb', 'usdt-vnd', 'usdt-gel']);
     expect(view.canExpand).toBe(false);
   });
 
@@ -252,10 +245,7 @@ describe('buildHomeRateView', () => {
       selectedCountry: 'thailand',
     });
 
-    expect(view.filteredRates.map((rate) => rate.id)).toEqual([
-      'rub-thb',
-      'usdt-thb',
-    ]);
+    expect(view.filteredRates.map((rate) => rate.id)).toEqual(['rub-thb', 'usdt-thb']);
   });
 });
 
@@ -276,7 +266,12 @@ describe('home locations and methods', () => {
 
   it('enables cash delivery only when a city is selected', () => {
     expect(buildHomeAvailableMethods(null)).toEqual(['qrcode', 'bank_account', 'pay_services']);
-    expect(buildHomeAvailableMethods('1')).toEqual(['qrcode', 'cash', 'bank_account', 'pay_services']);
+    expect(buildHomeAvailableMethods('1')).toEqual([
+      'qrcode',
+      'cash',
+      'bank_account',
+      'pay_services',
+    ]);
   });
 });
 
