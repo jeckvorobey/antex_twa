@@ -74,6 +74,9 @@ import AppRateValue from '@components/ui/AppRateValue.vue';
 import AppSectionTitle from '@components/ui/AppSectionTitle.vue';
 import AppSurface from '@components/ui/AppSurface.vue';
 import AppWarningNotice from '@components/ui/AppWarningNotice.vue';
+import { getMinAmount } from '@constants/limits';
+import AppSurface from '@components/ui/AppSurface.vue';
+import AppWarningNotice from '@components/ui/AppWarningNotice.vue';
 import { useExchangeStore } from '@stores/exchange.store';
 import { useOrdersStore } from '@stores/orders.store';
 import type { MiniappRateCard, MiniappReceiveMethod } from '@types/miniapp';
@@ -140,6 +143,12 @@ onMounted(async () => {
   selectedBuyCurrency.value = exchangeStore.screen?.calculator.toCurrency ?? 'THB';
   amountSell.value =
     exchangeStore.screen?.calculator.amountSell ?? getDefaultAmountSell(selectedSellCurrency.value);
+
+  const min = getMinAmount(selectedMethod.value, selectedSellCurrency.value);
+  if (min > 0 && (!amountSell.value || amountSell.value < min)) {
+    amountSell.value = min;
+  }
+
   selectedCountry.value = getCountryByCurrency(
     exchangeStore.screen?.pairs ?? [],
     selectedBuyCurrency.value,
@@ -191,6 +200,10 @@ watch(selectedSellCurrency, () => {
   if (!amountSellTouched.value || !amountSell.value) {
     syncingState.value = true;
     amountSell.value = getDefaultAmountSell(selectedSellCurrency.value);
+    const min = getMinAmount(selectedMethod.value, selectedSellCurrency.value);
+    if (min > 0 && (!amountSell.value || amountSell.value < min)) {
+      amountSell.value = min;
+    }
     syncingState.value = false;
   }
   void refreshQuoteForCurrentState();
