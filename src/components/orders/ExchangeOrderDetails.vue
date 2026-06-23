@@ -217,8 +217,10 @@ const methodOptions = computed(() => {
 const formattedAmountSell = computed(() => formatReadableNumber(props.amountSell, locale.value));
 const formattedAmountBuy = computed(() => formatReadableNumber(props.amountBuy, locale.value));
 
+/** Минимальная сумма для текущего метода и валюты. */
 const minAmount = computed(() => getMinAmount(props.selectedMethod, props.selectedSellCurrency));
 
+/** Показывать ошибку если сумма введена и меньше минимальной. */
 const amountSellError = computed(() => {
   if (!props.amountSell || props.amountSell <= 0) {
     return false;
@@ -226,6 +228,7 @@ const amountSellError = computed(() => {
   return minAmount.value > 0 && props.amountSell < minAmount.value;
 });
 
+/** Локализованное сообщение об ошибке валидации суммы. */
 const amountSellErrorMessage = computed(() => {
   if (!amountSellError.value) {
     return '';
@@ -236,6 +239,7 @@ const amountSellErrorMessage = computed(() => {
   });
 });
 
+/** Автоподстановка минимальной суммы при смене метода получения. */
 watch(
   () => props.selectedMethod,
   (method) => {
@@ -247,6 +251,7 @@ watch(
   { immediate: true },
 );
 
+/** Автоподстановка минимальной суммы при смене валюты отправки. */
 watch(
   () => props.selectedSellCurrency,
   (currency) => {
