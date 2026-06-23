@@ -29,6 +29,7 @@ module.exports = configure(() => ({
         '@types': resolve(__dirname, 'src/types'),
         '@utils': resolve(__dirname, 'src/utils'),
         '@i18n': resolve(__dirname, 'src/i18n'),
+        '@constants': resolve(__dirname, 'src/constants'),
       });
     },
   },

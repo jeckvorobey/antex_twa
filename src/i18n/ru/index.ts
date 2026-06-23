@@ -49,9 +49,12 @@ export default {
     description: 'Заполните форму и мы свяжемся с вами для подтверждения заявки',
     amount: 'Сумма',
     currency: 'Получаю',
+    method: 'Способ получения',
     contact: 'Telegram для связи',
     contactPlaceholder: '@telegram',
     success: 'Заявка создана',
+    minAmountHint: 'Мин. {amount} {currency}',
+    minAmountError: 'Минимальная сумма {amount} {currency}',
   },
   status: {
     new: 'Новая',
@@ -67,6 +70,13 @@ export default {
     rate_unavailable: 'Курс временно недоступен. Попробуйте позже.',
     bank_missing: 'Сейчас нельзя создать заявку. Попробуйте позже.',
     unsupported_pair: 'Выбранная валютная пара пока не поддерживается.',
+    min_amount: 'Минимальная сумма для обмена — {amount} {currency}',
+  },
+  methods: {
+    cash: 'Доставка наличных',
+    qrcode: 'Наличные по QR',
+    bank_account: 'Перевод на счёт',
+    pay_services: 'Оплата сервисов',
   },
   more: {
     title: 'Еще',

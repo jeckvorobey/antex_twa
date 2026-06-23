@@ -31,6 +31,9 @@
       v-bind="$attrs"
       @update:model-value="$emit('update:modelValue', $event)"
     />
+
+    <div v-if="error" class="text-negative text-caption">{{ error }}</div>
+    <div v-else-if="hint" class="app-muted text-caption">{{ hint }}</div>
   </div>
 </template>
 
@@ -40,6 +43,8 @@ const props = defineProps<{
   modelValue: string | number | null;
   options?: Array<{ label: string; value: string }>;
   type?: 'text' | 'number' | 'select';
+  hint?: string;
+  error?: string;
 }>();
 
 const emit = defineEmits<{
