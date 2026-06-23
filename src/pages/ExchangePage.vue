@@ -1,189 +1,355 @@
 <template>
-  <q-page class="app-page q-pt-md">
-    <div class="app-page__content">
-      <AppSurface padded>
-        <div class="column q-gutter-md">
-          <div class="row q-col-gutter-sm">
-            <div
-              v-for="chip in exchangeStore.screen?.chips ?? []"
-              :key="chip"
-              class="col-auto"
-            >
-              <q-chip
-                clickable
-                :class="['app-chip', selectedSellCurrency === chip ? 'app-chip--active' : null]"
-                @click="selectedSellCurrency = chip"
+  <q-page class="app-page app-page--exchange">
+    <div class="app-screen app-screen--exchange fit column no-wrap">
+      <q-form class="col column no-wrap" @submit.prevent="submitOrder">
+        <div class="app-exchange-content col column q-gutter-md no-wrap overflow-hidden">
+          <AppWarningNotice>
+            {{ t('order.rateNotice') }}
+          </AppWarningNotice>
+
+          <ExchangeOrderDetails
+            v-model:selected-sell-currency="selectedSellCurrency"
+            v-model:selected-buy-currency="selectedBuyCurrency"
+            v-model:amount-sell="amountSell"
+            :amount-buy="amountBuy"
+            v-model:selected-country="selectedCountry"
+            v-model:selected-method="selectedMethod"
+            v-model:selected-city-id="selectedCityId"
+            :sell-options="sellOptions"
+            :buy-options="buyOptions"
+            :rate-label="currentRateLabel"
+            :country-options="countryOptions"
+            :city-options="cityOptions"
+            :available-methods="currentQuoteMethods"
+          />
+
+          <section class="app-section">
+            <AppSectionTitle>{{ t('exchange.availablePairs') }}</AppSectionTitle>
+
+            <div class="app-exchange-pairs app-exchange-pairs--carousel">
+              <AppSurface
+                v-for="pair in exchangeStore.screen?.pairs ?? []"
+                :key="pair.id"
+                class="app-exchange-pair-card"
               >
-                {{ chip }}
-              </q-chip>
+                <div class="app-exchange-pair-card__pair">
+                  <span>{{ pair.fromCurrency }}</span>
+                  <q-icon name="arrow_forward" size="14px" />
+                  <span>{{ pair.toCurrency }}</span>
+                </div>
+
+                <AppRateValue :value="pair.rateDisplay" />
+
+                <div class="app-exchange-pair-card__meta">
+                  {{ formatMiniappDateTime(pair.updatedAt, locale) }}
+                </div>
+
+                <AppButton block class="app-exchange-pair-card__button" @click="selectPair(pair)">
+                  {{ t('common.exchange') }}
+                </AppButton>
+              </AppSurface>
             </div>
-          </div>
-
-          <AppInputField
-            v-model="amountSell"
-            :label="t('exchange.payAmount')"
-            type="number"
-            min="1"
-          />
-
-          <AppInputField
-            v-model="selectedBuyCurrency"
-            :label="t('exchange.receiveCurrency')"
-            :options="buyOptions"
-            type="select"
-          />
-
-          <div class="app-surface app-surface--deep q-pa-md" style="position: relative;">
-            <div class="app-muted text-caption q-mb-xs">{{ t('exchange.rateLabel') }}</div>
-            <div class="app-rate-value app-gradient-text q-mb-xs">{{ exchangeStore.quote?.rateText }}</div>
-            <div class="app-secondary-text text-body2">
-              {{ exchangeStore.quote ? formatAmount(exchangeStore.quote.amountBuy) : '—' }}
-              {{ exchangeStore.quote?.currencyBuy }}
-            </div>
-            <q-inner-loading :showing="exchangeStore.quoteLoading" dark />
-          </div>
+          </section>
         </div>
-      </AppSurface>
 
-      <section>
-        <AppSectionTitle class="q-mb-md">{{ t('exchange.availablePairs') }}</AppSectionTitle>
-        <div class="column q-gutter-md">
-          <AppSurface
-            v-for="pair in exchangeStore.screen?.pairs ?? []"
-            :key="pair.id"
-            padded
+        <div class="q-pt-md app-exchange-submit">
+          <AppButton
+            block
+            type="submit"
+            :loading="exchangeStore.submitting"
+            :disable="!canSubmit"
           >
-            <div class="row items-center justify-between q-mb-sm">
-              <div class="text-body1 text-weight-medium">{{ pair.label }}</div>
-              <div class="app-muted text-caption">{{ formatUpdatedAt(pair.updatedAt) }}</div>
-            </div>
-            <div class="app-rate-value app-gold-glow q-mb-xs">{{ pair.rateText }}</div>
-            <div class="app-secondary-text text-caption q-mb-md">
-              {{ pair.amountSellExample }} {{ pair.fromCurrency }} -> {{ formatAmount(pair.amountBuyExample) }}
-              {{ pair.toCurrency }}
-            </div>
-            <AppButton block @click="selectPair(pair)">{{ t('common.exchange') }}</AppButton>
-          </AppSurface>
+            {{ t('common.submit') }}
+          </AppButton>
         </div>
-      </section>
-
-      <AppButton
-        block
-        :loading="exchangeStore.quoteLoading"
-        :disable="!canSubmitQuote"
-        @click="openSheetFromQuote"
-      >{{ t('common.submit') }}</AppButton>
-
-      <q-inner-loading :showing="exchangeStore.loading" dark />
+      </q-form>
     </div>
   </q-page>
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { Notify } from 'quasar';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useRouter } from 'vue-router';
 
+import ExchangeOrderDetails from '@components/orders/ExchangeOrderDetails.vue';
 import AppButton from '@components/ui/AppButton.vue';
-import AppInputField from '@components/ui/AppInputField.vue';
+import AppRateValue from '@components/ui/AppRateValue.vue';
 import AppSectionTitle from '@components/ui/AppSectionTitle.vue';
 import AppSurface from '@components/ui/AppSurface.vue';
+import AppWarningNotice from '@components/ui/AppWarningNotice.vue';
 import { useExchangeStore } from '@stores/exchange.store';
-import { useUiStore } from '@stores/ui.store';
-import type { MiniappRateCard } from '@types/miniapp';
-import { formatAmount, formatMiniappDateTime } from '@utils/formatters';
-import { isQuoteCurrent } from '@utils/miniapp';
+import { useOrdersStore } from '@stores/orders.store';
+import type { MiniappRateCard, MiniappReceiveMethod } from '@types/miniapp';
+import { getMiniappErrorMessageKey } from '@utils/api-errors';
+import { formatMiniappDateTime, formatReadableNumber } from '@utils/formatters';
+import {
+  buildCityOptions,
+  buildCountryOptions,
+  buildBuyCurrencyOptions,
+  getCountryByCurrency,
+  getCurrencyByCountry,
+  getPreferredReceiveMethod,
+  resetCityForMethod,
+  validatePreliminaryOrderDraft,
+} from '@utils/exchange';
 
+const router = useRouter();
 const exchangeStore = useExchangeStore();
-const uiStore = useUiStore();
+const ordersStore = useOrdersStore();
 const { locale, t } = useI18n();
 
 const selectedSellCurrency = ref('RUB');
 const selectedBuyCurrency = ref('THB');
 const amountSell = ref<number | null>(5000);
+const amountBuy = ref<number | null>(null);
+const selectedCountry = ref<string | null>(null);
+const selectedMethod = ref<MiniappReceiveMethod>('qrcode');
+const selectedCityId = ref<number | null>(null);
+const amountSellTouched = ref(false);
+const syncingState = ref(false);
 
-onMounted(async () => {
-  if (!exchangeStore.screen) {
-    await exchangeStore.load();
-    selectedSellCurrency.value = exchangeStore.screen?.calculator.fromCurrency ?? 'RUB';
-    selectedBuyCurrency.value = exchangeStore.screen?.calculator.toCurrency ?? 'THB';
-    amountSell.value = exchangeStore.screen?.calculator.amountSell ?? 5000;
-  }
-});
-
-const buyOptions = computed(() => {
-  if (selectedSellCurrency.value === 'USDT') {
-    return [{ label: 'THB', value: 'THB' }];
-  }
-
-  return [
-    { label: 'THB', value: 'THB' },
-    { label: 'USDT', value: 'USDT' },
-  ];
-});
-
-const canSubmitQuote = computed(() =>
-  !exchangeStore.quoteLoading
-  && isQuoteCurrent(exchangeStore.quote, {
-    currencySell: selectedSellCurrency.value,
-    currencyBuy: selectedBuyCurrency.value,
-    amountSell: amountSell.value,
-  }),
+const sellOptions = computed(() =>
+  [...new Set((exchangeStore.screen?.pairs ?? []).map((pair) => pair.id.split('-')[0]?.toUpperCase()))].map((currency) => ({
+    label: currency,
+    value: currency,
+  })),
 );
 
-watch(selectedSellCurrency, (value) => {
-  if (value === 'USDT' && selectedBuyCurrency.value !== 'THB') {
-    selectedBuyCurrency.value = 'THB';
+const buyOptions = computed(() =>
+  buildBuyCurrencyOptions(exchangeStore.screen?.pairs ?? [], selectedSellCurrency.value),
+);
+
+const countryOptions = computed(() =>
+  buildCountryOptions(exchangeStore.screen?.pairs ?? [], selectedSellCurrency.value),
+);
+
+const cityOptions = computed(() =>
+  buildCityOptions(exchangeStore.cities, selectedCountry.value),
+);
+
+const currentQuoteMethods = computed(() => resolveCurrentQuote()?.availableMethods ?? null);
+
+onMounted(async () => {
+  if (!exchangeStore.loaded || !exchangeStore.screen || !exchangeStore.cities.length) {
+    await exchangeStore.load();
+  } else {
+    void exchangeStore.refresh();
   }
+
+  syncingState.value = true;
+  selectedSellCurrency.value = exchangeStore.screen?.calculator.fromCurrency ?? 'RUB';
+  selectedBuyCurrency.value = exchangeStore.screen?.calculator.toCurrency ?? 'THB';
+  amountSell.value = exchangeStore.screen?.calculator.amountSell ?? getDefaultAmountSell(selectedSellCurrency.value);
+  selectedCountry.value = getCountryByCurrency(
+    exchangeStore.screen?.pairs ?? [],
+    selectedBuyCurrency.value,
+  );
+  amountBuy.value = exchangeStore.quote?.amountBuy ?? null;
+  syncingState.value = false;
 });
 
-let quoteDebounceTimer: ReturnType<typeof setTimeout> | undefined;
+const currentRateLabel = computed(() => {
+  const quote = resolveCurrentQuote();
+  if (!quote) {
+    return t('exchange.quoteUnavailable');
+  }
 
-watch([selectedSellCurrency, selectedBuyCurrency, amountSell], ([currencySell, currencyBuy, sellAmount]) => {
-  clearTimeout(quoteDebounceTimer);
-  if (!sellAmount || sellAmount <= 0) {
+  return quote.rateText
+    || `1 ${quote.currencySell} = ${formatReadableNumber(quote.rate, locale.value)} ${quote.currencyBuy}`;
+});
+
+const preliminaryValidation = computed(() => validatePreliminaryOrderDraft({
+  pairs: exchangeStore.screen?.pairs ?? [],
+  cities: exchangeStore.cities,
+  currencySell: selectedSellCurrency.value,
+  currencyBuy: selectedBuyCurrency.value,
+  amountSell: amountSell.value,
+  selectedCountry: selectedCountry.value,
+  selectedMethod: selectedMethod.value,
+  selectedCityId: selectedCityId.value,
+}));
+
+const canSubmit = computed(() => {
+  const hasAmounts = Boolean(amountSell.value && amountSell.value > 0 && amountBuy.value && amountBuy.value > 0);
+  const hasBaseFields = Boolean(selectedSellCurrency.value && selectedBuyCurrency.value);
+  const hasMethodFields = selectedMethod.value !== 'cash' || Boolean(selectedCityId.value);
+  return hasAmounts
+    && hasBaseFields
+    && hasMethodFields
+    && preliminaryValidation.value.valid;
+});
+
+watch(selectedSellCurrency, () => {
+  const nextBuyCurrency = buyOptions.value[0]?.value ?? selectedBuyCurrency.value;
+  if (!buyOptions.value.some((option) => option.value === selectedBuyCurrency.value)) {
+    selectedBuyCurrency.value = nextBuyCurrency;
+  }
+
+  if (!amountSellTouched.value || !amountSell.value) {
+    syncingState.value = true;
+    amountSell.value = getDefaultAmountSell(selectedSellCurrency.value);
+    syncingState.value = false;
+  }
+  void refreshQuoteForCurrentState();
+});
+
+watch(selectedBuyCurrency, (currencyBuy) => {
+  selectedCountry.value = getCountryByCurrency(exchangeStore.screen?.pairs ?? [], currencyBuy);
+  void refreshQuoteForCurrentState();
+});
+
+watch(selectedMethod, (method) => {
+  selectedCityId.value = resetCityForMethod(method, selectedCityId.value);
+});
+
+watch(selectedCountry, () => {
+  const nextCurrency = getCurrencyByCountry(exchangeStore.screen?.pairs ?? [], selectedCountry.value ?? '');
+  if (nextCurrency && nextCurrency !== selectedBuyCurrency.value) {
+    selectedBuyCurrency.value = nextCurrency;
     return;
   }
 
-  quoteDebounceTimer = setTimeout(() => {
-    void exchangeStore.refreshQuote({ currencySell, currencyBuy, amountSell: sellAmount });
-  }, 300);
+  if (selectedMethod.value !== 'cash') {
+    return;
+  }
+  selectedCityId.value = cityOptions.value[0]?.value ?? null;
 });
 
-onBeforeUnmount(() => {
-  clearTimeout(quoteDebounceTimer);
+watch(cityOptions, (options) => {
+  if (!options.length) {
+    if (selectedMethod.value === 'cash') {
+      selectedMethod.value = 'qrcode';
+    }
+    selectedCityId.value = null;
+    return;
+  }
+  if (selectedMethod.value !== 'cash') {
+    return;
+  }
+  if (!options.some((option) => option.value === selectedCityId.value)) {
+    selectedCityId.value = options[0].value;
+  }
+});
+
+watch(
+  () => currentQuoteMethods.value,
+  (availableMethods) => {
+    if (availableMethods?.includes(selectedMethod.value)) {
+      return;
+    }
+
+    selectedMethod.value = getPreferredReceiveMethod(availableMethods, selectedCityId.value);
+  },
+);
+
+watch(amountSell, (value, previousValue) => {
+  if (syncingState.value || value === previousValue) {
+    return;
+  }
+
+  amountSellTouched.value = true;
+  void refreshQuoteForCurrentState();
 });
 
 function selectPair(pair: MiniappRateCard) {
-  selectedSellCurrency.value = pair.fromCurrency;
-  selectedBuyCurrency.value = pair.toCurrency;
-  amountSell.value = pair.amountSellExample;
-  uiStore.openOrderSheet({
-    currencySell: pair.fromCurrency,
-    currencyBuy: pair.toCurrency,
-    amountSell: pair.amountSellExample,
-    amountBuy: pair.amountBuyExample,
-    rate: pair.rate,
-  });
+  const [currencySell, currencyBuy] = pair.id.split('-').map((part) => part.toUpperCase());
+  selectedSellCurrency.value = currencySell;
+  selectedBuyCurrency.value = currencyBuy;
+  selectedCountry.value = pair.country;
+  if (!amountSellTouched.value || !amountSell.value) {
+    syncingState.value = true;
+    amountSell.value = pair.amountSellExample;
+    syncingState.value = false;
+  }
+  void refreshQuoteForCurrentState();
 }
 
-/**
- * Открывает форму заявки по текущему рассчитанному quote.
- */
-function openSheetFromQuote() {
-  if (!canSubmitQuote.value || !exchangeStore.quote) {
+function refreshQuoteForCurrentState() {
+  if (!amountSell.value || amountSell.value <= 0) {
+    amountBuy.value = null;
     return;
   }
 
-  uiStore.openOrderSheet({
-    currencySell: exchangeStore.quote.currencySell,
-    currencyBuy: exchangeStore.quote.currencyBuy,
-    amountSell: exchangeStore.quote.amountSell,
-    amountBuy: exchangeStore.quote.amountBuy,
-    rate: exchangeStore.quote.rate,
+  const quote = exchangeStore.recalculateQuote({
+    currencySell: selectedSellCurrency.value,
+    currencyBuy: selectedBuyCurrency.value,
+    amountSell: Math.round(amountSell.value),
   });
+
+  if (!quote) {
+    amountBuy.value = null;
+    return;
+  }
+
+  syncingState.value = true;
+  selectedSellCurrency.value = quote.currencySell;
+  selectedBuyCurrency.value = quote.currencyBuy;
+  amountSell.value = quote.amountSell;
+  amountBuy.value = quote.amountBuy;
+  syncingState.value = false;
 }
 
-function formatUpdatedAt(value: string) {
-  return formatMiniappDateTime(value, locale.value);
+function getDefaultAmountSell(currencySell: string) {
+  return currencySell === 'USDT' ? 100 : 5000;
+}
+
+function resolveCurrentQuote() {
+  const quote = exchangeStore.quote;
+  if (
+    !quote
+    || quote.currencySell !== selectedSellCurrency.value
+    || quote.currencyBuy !== selectedBuyCurrency.value
+  ) {
+    return null;
+  }
+
+  return quote;
+}
+
+async function submitOrder() {
+  const quote = resolveCurrentQuote();
+  if (!amountSell.value || !amountBuy.value || !quote) {
+    return;
+  }
+
+  const validation = preliminaryValidation.value;
+  if (!validation.valid) {
+    Notify.create({ type: 'negative', message: t(validation.messageKey, validation.params) });
+    return;
+  }
+
+  if (!canSubmit.value || !selectedCountry.value) {
+    return;
+  }
+
+  try {
+    const order = await exchangeStore.submitOrder({
+      country: selectedCountry.value,
+      cityId: selectedMethod.value === 'cash' ? selectedCityId.value : null,
+      currencySell: selectedSellCurrency.value,
+      currencyBuy: selectedBuyCurrency.value,
+      amountSell: Math.round(amountSell.value),
+      amountBuy: amountBuy.value,
+      rate: quote.rate,
+      methodGet: selectedMethod.value,
+    });
+
+    ordersStore.prepend(order);
+    syncingState.value = true;
+    amountSell.value = exchangeStore.screen?.calculator.amountSell ?? getDefaultAmountSell(selectedSellCurrency.value);
+    amountBuy.value = exchangeStore.screen?.quote.amountBuy ?? null;
+    amountSellTouched.value = false;
+    syncingState.value = false;
+    selectedMethod.value = 'qrcode';
+    selectedCityId.value = null;
+    await router.push({ name: 'history' });
+  } catch (error: unknown) {
+    const code = (error as { response?: { data?: { code?: string } } })?.response?.data?.code;
+    const status = (error as { response?: { status?: number } })?.response?.status;
+    const messageKey = status === 401 ? 'errors.auth' : getMiniappErrorMessageKey(code);
+    Notify.create({ type: 'negative', message: t(messageKey) });
+  }
 }
 </script>

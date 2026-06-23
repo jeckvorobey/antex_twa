@@ -1,4 +1,4 @@
-import { boot } from 'quasar/wrappers';
+import { defineBoot } from '#q-app/wrappers';
 
 export interface TelegramMainButton {
   show(): void;
@@ -16,6 +16,7 @@ export interface TelegramWebApp {
       first_name?: string;
       last_name?: string;
       language_code?: string;
+      photo_url?: string;
       is_premium?: boolean;
     };
   };
@@ -33,7 +34,7 @@ declare global {
 
 export const tg = window.Telegram?.WebApp;
 
-export default boot(() => {
+export default defineBoot(() => {
   if (!tg) {
     return;
   }

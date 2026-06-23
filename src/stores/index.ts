@@ -1,7 +1,7 @@
-import { store } from 'quasar/wrappers';
+import { defineStore } from '#q-app/wrappers';
 import { createPinia } from 'pinia';
 
-export default store(function () {
+export default defineStore(function () {
   const pinia = createPinia();
   return pinia;
 });

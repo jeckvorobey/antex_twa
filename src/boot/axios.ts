@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { boot } from 'quasar/wrappers';
+import { defineBoot } from '#q-app/wrappers';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL as string,
@@ -24,7 +24,7 @@ api.interceptors.response.use(
   },
 );
 
-export default boot(({ app }) => {
+export default defineBoot(({ app }) => {
   app.config.globalProperties.$api = api;
 });
 

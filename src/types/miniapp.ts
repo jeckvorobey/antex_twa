@@ -1,18 +1,37 @@
+export type MiniappUserRole = 2 | 9;
+
 export interface MiniappUser {
   id: number;
   username: string | null;
+  phone: string | null;
   first_name: string | null;
   last_name: string | null;
   language_code: string | null;
+  photo_url: string | null;
   is_bot: boolean;
   is_premium: boolean;
-  role: number;
+  role: MiniappUserRole;
+  trusted_contact: string | null;
+  trusted_contact_source: string | null;
+  trusted_contact_ready: boolean;
+}
+
+export interface MiniappCity {
+  id: number;
+  name: string;
+  country: string;
+  countryRuName: string;
+  countryCode: string;
+  countryFlag: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface MiniappProfileSummary {
   id: number;
   displayName: string;
   username: string | null;
+  photoUrl: string | null;
   isPremium: boolean;
   languageCode: string;
 }
@@ -29,20 +48,34 @@ export interface MiniappQuickAction {
 export interface MiniappRateCard {
   id: string;
   label: string;
+  country: string;
+  countryLabel: string;
+  countryFlag?: string;
   fromCurrency: string;
   toCurrency: string;
   rate: number;
+  calculationRate: number;
+  rateDisplay: string;
   rateText: string;
   amountSellExample: number;
   amountBuyExample: number;
   updatedAt: string;
+  availableMethods: string[];
+}
+
+export interface MiniappCountryFilterItem {
+  id: string;
+  label: string;
+  currency: string;
+  code: string;
+  flag: string;
 }
 
 export interface MiniappRatesSection {
   featured: MiniappRateCard[];
   chips: string[];
-  updatedAt: string;
-  allowance: number;
+  previewLimit: number;
+  updatedAt: string | null;
 }
 
 export interface MiniappServiceItem {
@@ -55,6 +88,9 @@ export interface MiniappServiceItem {
 export interface MiniappLocationItem {
   id: string;
   city: string;
+  country: string;
+  countryLabel: string;
+  countryFlag: string;
   hours: string;
   accent: string;
 }
@@ -67,6 +103,7 @@ export interface MiniappBanner {
 export interface MiniappHomeResponse {
   profile: MiniappProfileSummary;
   quickActions: MiniappQuickAction[];
+  countries: MiniappCountryFilterItem[];
   rates: MiniappRatesSection;
   banner: MiniappBanner;
   services: MiniappServiceItem[];
@@ -79,6 +116,7 @@ export interface MiniappQuoteResponse {
   amountSell: number;
   amountBuy: number;
   rate: number;
+  rateDisplay: string;
   rateText: string;
   updatedAt: string;
   availableMethods: string[];
@@ -105,28 +143,53 @@ export interface MiniappBankSummary {
 
 export interface MiniappOrderItem {
   id: number;
+  publicNumber: string;
+  cityId: number | null;
+  country: string;
   currencySell: string;
   amountSell: number;
   currencyBuy: string;
-  amountBuy: number;
-  rate: number;
+  amountBuy: number | null;
+  rate: number | null;
   status: number;
-  methodGet: string | null;
+  methodGet: string;
   contactTelegram: string | null;
   createdAt: string;
-  bank: MiniappBankSummary;
+  updatedAt: string;
+  city: MiniappCity | null;
 }
 
 export interface MiniappOrdersResponse {
   items: MiniappOrderItem[];
+  limit: number;
+  offset: number;
+  total: number;
+  hasMore: boolean;
 }
 
+export type MiniappReceiveMethod = 'qrcode' | 'cash' | 'bank_account' | 'pay_services';
+
 export interface MiniappOrderCreate {
+  country: string;
+  cityId?: number | null;
   currencySell: string;
   currencyBuy: string;
   amountSell: number;
-  contactTelegram?: string | null;
-  methodGet?: string | null;
+  amountBuy: number;
+  rate: number;
+  methodGet: MiniappReceiveMethod;
+}
+
+export interface MiniappCitiesResponse {
+  items: MiniappCity[];
+}
+
+export interface TrustedContactState {
+  ready: boolean;
+  contact: string | null;
+  source: 'username' | 'phone' | null;
+  phone: string | null;
+  username: string | null;
 }
 
 export interface MiniappMenuItem {
