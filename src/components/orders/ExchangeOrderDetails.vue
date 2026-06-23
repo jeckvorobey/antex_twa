@@ -24,6 +24,8 @@
               dense
               inputmode="decimal"
               input-class="text-right"
+              :error="amountSellError"
+              :error-message="amountSellErrorMessage"
               @update:model-value="handleAmountSellInput"
             />
           </div>
@@ -118,7 +120,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 import AppFlagOptionButton from '@components/ui/AppFlagOptionButton.vue';
@@ -214,6 +216,43 @@ const formattedAmountSell = computed(() => formatReadableNumber(props.amountSell
 const formattedAmountBuy = computed(() => formatReadableNumber(props.amountBuy, locale.value));
 
 const minAmount = computed(() => getMinAmount(props.selectedMethod, props.selectedSellCurrency));
+
+const amountSellError = computed(() => {
+  if (!props.amountSell || props.amountSell <= 0) {
+    return false;
+  }
+  return minAmount.value > 0 && props.amountSell < minAmount.value;
+});
+
+const amountSellErrorMessage = computed(() => {
+  if (!amountSellError.value) {
+    return '';
+  }
+  return t('errors.exchange_min_amount', {
+    amount: formatReadableNumber(minAmount.value, locale.value),
+    currency: props.selectedSellCurrency,
+  });
+});
+
+watch(
+  () => props.selectedMethod,
+  (method) => {
+    const min = getMinAmount(method, props.selectedSellCurrency);
+    if (min > 0 && (!props.amountSell || props.amountSell < min)) {
+      emit('update:amountSell', min);
+    }
+  },
+);
+
+watch(
+  () => props.selectedSellCurrency,
+  (currency) => {
+    const min = getMinAmount(props.selectedMethod, currency);
+    if (min > 0 && (!props.amountSell || props.amountSell < min)) {
+      emit('update:amountSell', min);
+    }
+  },
+);
 
 function handleAmountSellInput(value: string | number | null) {
   emit('update:amountSell', parseReadableNumber(value));
