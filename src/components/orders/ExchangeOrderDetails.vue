@@ -25,6 +25,7 @@
               inputmode="decimal"
               input-class="text-right"
               bottom-slots
+              hide-bottom-space
               :error="amountSellError"
               :error-message="amountSellErrorMessage"
               @update:model-value="handleAmountSellInput"
