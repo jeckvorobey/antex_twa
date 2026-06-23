@@ -24,15 +24,9 @@
               dense
               inputmode="decimal"
               input-class="text-right"
-              :rules="amountSellRules"
-              reactive-rules
               @update:model-value="handleAmountSellInput"
               @blur="handleAmountSellBlur"
             />
-          </div>
-          <div v-if="amountSellError" class="app-exchange-calculator__error">
-            <q-icon name="warning" size="xs" class="q-mr-xs" />
-            {{ amountSellError }}
           </div>
         </div>
 
@@ -76,6 +70,11 @@
         }}
       </div>
     </AppSurface>
+
+    <div v-if="amountSellError" class="app-exchange-calculator__error">
+      <q-icon name="warning" size="xs" class="q-mr-xs" />
+      {{ amountSellError }}
+    </div>
 
     <div v-if="countryOptions.length" class="app-chip-row app-chip-row--exchange">
       <AppFlagOptionButton
@@ -239,26 +238,6 @@ const formattedAmountBuy = computed(() => formatReadableNumber(props.amountBuy, 
 
 /** Минимальная сумма для текущего метода и валюты. */
 const minAmount = computed(() => getMinAmount(props.selectedMethod, props.selectedSellCurrency));
-
-/** Правила валидации для поля суммы отправки. */
-const amountSellRules = computed(() => [
-  (val: string | number | null) => {
-    if (!val) {
-      return true;
-    }
-    const amount = parseReadableNumber(val);
-    if (amount <= 0) {
-      return true;
-    }
-    if (minAmount.value > 0 && amount < minAmount.value) {
-      return t('errors.exchange_min_amount', {
-        amount: formatReadableNumber(minAmount.value, locale.value),
-        currency: props.selectedSellCurrency,
-      });
-    }
-    return true;
-  },
-]);
 
 /** Автоподстановка минимальной суммы при смене метода получения. */
 watch(
