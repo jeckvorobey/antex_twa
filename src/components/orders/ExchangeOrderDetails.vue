@@ -28,6 +28,10 @@
               @blur="handleAmountSellBlur"
             />
           </div>
+          <div v-if="amountSellError" class="app-exchange-calculator__error">
+            <q-icon name="warning" size="xs" class="q-mr-xs" />
+            {{ amountSellError }}
+          </div>
         </div>
 
         <div class="app-exchange-calculator__field">
@@ -70,11 +74,6 @@
         }}
       </div>
     </AppSurface>
-
-    <div v-if="amountSellError" class="app-exchange-calculator__error">
-      <q-icon name="warning" size="xs" class="q-mr-xs" />
-      {{ amountSellError }}
-    </div>
 
     <div v-if="countryOptions.length" class="app-chip-row app-chip-row--exchange">
       <AppFlagOptionButton
