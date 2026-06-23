@@ -27,8 +27,9 @@
               bottom-slots
               hide-bottom-space
               :rules="amountSellRules"
-              lazy-rules
+              reactive-rules
               @update:model-value="handleAmountSellInput"
+              @blur="handleAmountSellBlur"
             />
           </div>
         </div>
@@ -280,6 +281,13 @@ watch(
 
 function handleAmountSellInput(value: string | number | null) {
   emit('update:amountSell', parseReadableNumber(value));
+}
+
+/** Автоподстановка минимальной суммы при уходе с поля ввода. */
+function handleAmountSellBlur() {
+  if (props.amountSell !== null && minAmount.value > 0 && props.amountSell < minAmount.value) {
+    emit('update:amountSell', minAmount.value);
+  }
 }
 
 function focusAmountSell() {

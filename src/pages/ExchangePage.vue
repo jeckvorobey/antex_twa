@@ -75,8 +75,6 @@ import AppSectionTitle from '@components/ui/AppSectionTitle.vue';
 import AppSurface from '@components/ui/AppSurface.vue';
 import AppWarningNotice from '@components/ui/AppWarningNotice.vue';
 import { getMinAmount } from '@constants/limits';
-import AppSurface from '@components/ui/AppSurface.vue';
-import AppWarningNotice from '@components/ui/AppWarningNotice.vue';
 import { useExchangeStore } from '@stores/exchange.store';
 import { useOrdersStore } from '@stores/orders.store';
 import type { MiniappRateCard, MiniappReceiveMethod } from '@types/miniapp';
