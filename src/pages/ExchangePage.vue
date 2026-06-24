@@ -195,15 +195,13 @@ watch(selectedSellCurrency, () => {
     selectedBuyCurrency.value = nextBuyCurrency;
   }
 
-  if (!amountSellTouched.value || !amountSell.value) {
-    syncingState.value = true;
-    amountSell.value = getDefaultAmountSell(selectedSellCurrency.value);
-    const min = getMinAmount(selectedMethod.value, selectedSellCurrency.value);
-    if (min > 0 && (!amountSell.value || amountSell.value < min)) {
-      amountSell.value = min;
-    }
-    syncingState.value = false;
+  syncingState.value = true;
+  amountSell.value = getDefaultAmountSell(selectedSellCurrency.value);
+  const min = getMinAmount(selectedMethod.value, selectedSellCurrency.value);
+  if (min > 0 && (!amountSell.value || amountSell.value < min)) {
+    amountSell.value = min;
   }
+  syncingState.value = false;
   void refreshQuoteForCurrentState();
 });
 
