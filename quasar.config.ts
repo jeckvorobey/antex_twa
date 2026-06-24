@@ -10,7 +10,7 @@ const pkg = JSON.parse(readFileSync(resolve(rootDir, 'package.json'), 'utf-8')) 
 
 export default defineConfig((ctx) => {
   return {
-    boot: ['telegram', 'i18n', 'axios', 'init'],
+    boot: ['telegram', 'i18n', 'axios', 'init', 'referral'],
     css: ['app.scss'],
     extras: ['roboto-font', 'fontawesome-v6', 'mdi-v7', 'material-icons'],
     build: {

@@ -2167,3 +2167,202 @@ body.body--light .q-page,
       0 0 20px rgba(212, 175, 55, 0.16);
   }
 }
+
+// ── AEX profile card ────────────────────────────────────────────────
+
+.app-profile-aex-card {
+  cursor: pointer;
+  transition:
+    box-shadow 0.2s ease,
+    filter 0.2s ease;
+}
+
+.app-profile-aex-card__label {
+  font-size: 13px;
+  color: var(--antex-text-muted);
+  margin-bottom: 4px;
+}
+
+.app-profile-aex-card__value {
+  font-family: 'Montserrat', 'Inter', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--antex-gold-light);
+}
+
+.app-profile-aex-card__currency {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--antex-text-secondary);
+  margin-left: 4px;
+}
+
+.app-profile-aex-card__chevron {
+  color: var(--antex-text-muted);
+}
+
+// ── Referral page ───────────────────────────────────────────────────
+
+.app-screen--referral {
+  gap: 16px;
+}
+
+.app-referral-balance {
+  text-align: center;
+  padding: 24px 16px;
+}
+
+.app-referral-balance__label {
+  font-size: 13px;
+  color: var(--antex-text-muted);
+  margin-bottom: 8px;
+}
+
+.app-referral-balance__value {
+  font-family: 'Montserrat', 'Inter', sans-serif;
+  font-size: 36px;
+  font-weight: 800;
+  color: var(--antex-gold-light);
+  line-height: 1.1;
+}
+
+.app-referral-balance__currency {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--antex-text-secondary);
+}
+
+.app-referral-code-card__title {
+  font-size: 13px;
+  color: var(--antex-text-muted);
+  margin-bottom: 8px;
+}
+
+.app-referral-code-card__code-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.app-referral-code-card__code {
+  flex: 1 1 auto;
+  font-family: 'Montserrat', 'Inter', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--antex-text-primary);
+  letter-spacing: 2px;
+  user-select: all;
+}
+
+// ── Referral instruction ──────────────────────────────────────────
+
+.app-referral-instruction__steps {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.app-referral-instruction__step {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  color: var(--antex-text-secondary);
+}
+
+.app-referral-tx-item__detail {
+  font-size: 12px;
+  color: var(--antex-text-muted);
+  margin-top: 2px;
+}
+
+.app-section-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--antex-text-secondary);
+}
+
+// ── Referral list ───────────────────────────────────────────────────
+
+.app-referral-list {
+  overflow: hidden;
+}
+
+.app-referral-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--antex-separator);
+}
+
+.app-referral-item:last-child {
+  border-bottom: 0;
+}
+
+.app-referral-item__name {
+  font-size: 15px;
+  color: var(--antex-text-primary);
+}
+
+.app-referral-item__date {
+  font-size: 12px;
+  color: var(--antex-text-muted);
+  margin-top: 2px;
+}
+
+.app-referral-item__earned {
+  font-family: 'Montserrat', 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--antex-gold-light);
+  white-space: nowrap;
+}
+
+// ── Transaction list ────────────────────────────────────────────────
+
+.app-referral-tx-scroll {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.app-referral-tx-list {
+  overflow: hidden;
+}
+
+.app-referral-tx-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--antex-separator);
+}
+
+.app-referral-tx-item:last-child {
+  border-bottom: 0;
+}
+
+.app-referral-tx-item__desc {
+  font-size: 14px;
+  color: var(--antex-text-primary);
+}
+
+.app-referral-tx-item__date {
+  font-size: 12px;
+  color: var(--antex-text-muted);
+  margin-top: 2px;
+}
+
+.app-referral-tx-item__amount {
+  font-family: 'Montserrat', 'Inter', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+@media (hover: hover) {
+  .app-profile-aex-card:hover {
+    box-shadow:
+      var(--antex-shadow-card),
+      0 0 20px rgba(212, 175, 55, 0.16);
+  }
+}

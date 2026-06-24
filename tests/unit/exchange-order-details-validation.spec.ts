@@ -7,20 +7,20 @@ const detailsPath = resolve(process.cwd(), 'src/components/orders/ExchangeOrderD
 const source = readFileSync(detailsPath, 'utf8');
 
 describe('ExchangeOrderDetails validation contract', () => {
-  it('uses rules prop for validation on amountSell input', () => {
-    expect(source).toContain(':rules="amountSellRules"');
-    expect(source).toContain('lazy-rules');
+  it('displays custom error message below amountSell input on validation failure', () => {
+    expect(source).toContain('amountSellError');
+    expect(source).toContain('v-if="amountSellError"');
   });
 
-  it('enables bottom-slots with hide-bottom-space for compact error display', () => {
-    expect(source).toContain('bottom-slots');
-    expect(source).toContain('hide-bottom-space');
+  it('validates amountSell against minAmount via custom validateAmountSell function', () => {
+    expect(source).toContain('function validateAmountSell()');
+    expect(source).toContain('if (minAmount.value > 0 && val < minAmount.value)');
+    expect(source).toContain("t('errors.exchange_min_amount', {");
   });
 
-  it('computes amountSellRules with minAmount validation', () => {
-    expect(source).toContain('const amountSellRules = computed(() => [');
-    expect(source).toContain('if (minAmount.value > 0 && amount < minAmount.value)');
-    expect(source).toContain("return t('errors.exchange_min_amount', {");
+  it('re-validates amountSell when amountSell or minAmount changes', () => {
+    expect(source).toContain('watch(() => props.amountSell, validateAmountSell)');
+    expect(source).toContain('watch(minAmount, validateAmountSell)');
   });
 
   it('auto-sets minimum amount when method changes', () => {

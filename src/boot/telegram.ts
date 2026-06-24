@@ -19,6 +19,7 @@ export interface TelegramWebApp {
       photo_url?: string;
       is_premium?: boolean;
     };
+    start_param?: string;
   };
   ready(): void;
   expand(): void;

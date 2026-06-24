@@ -29,6 +29,12 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@pages/ProfilePage.vue'),
         meta: { title: 'profile.title' },
       },
+      {
+        path: 'referral',
+        name: 'referral',
+        component: () => import('@pages/ReferralPage.vue'),
+        meta: { title: 'referral.title' },
+      },
     ],
   },
   { path: '/:catchAll(.*)*', redirect: '/' },

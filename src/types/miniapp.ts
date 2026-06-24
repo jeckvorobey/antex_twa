@@ -205,9 +205,54 @@ export interface MiniappProfileResponse {
   user: MiniappProfileSummary;
   menu: MiniappMenuItem[];
   version: string;
+  aex?: AexProfileSection;
 }
 
 export interface GroupedOrders {
   label: string;
   items: MiniappOrderItem[];
+}
+
+// ── AEX referral & balance ──────────────────────────────────────────
+
+export interface AexBalance {
+  available: number;
+  totalEarned: number;
+  totalWithdrawn: number;
+}
+
+export interface AexReferralItem {
+  id: number;
+  displayName: string;
+  joinedAt: string;
+  earnedAex: number;
+}
+
+export interface AexReferralInfo {
+  referralCode: string;
+  referralLink: string;
+  referrals: AexReferralItem[];
+  totalReferrals: number;
+}
+
+export interface AexTransactionItem {
+  id: number;
+  type: 'referral_reward' | 'withdrawal' | 'bonus' | 'adjustment';
+  amount: number;
+  balanceAfter: number;
+  description: string;
+  createdAt: string;
+}
+
+export interface AexTransactionsResponse {
+  items: AexTransactionItem[];
+  limit: number;
+  offset: number;
+  total: number;
+  hasMore: boolean;
+}
+
+export interface AexProfileSection {
+  balance: AexBalance;
+  referralCode: string;
 }
