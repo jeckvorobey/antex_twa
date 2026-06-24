@@ -24,11 +24,11 @@
               dense
               inputmode="decimal"
               input-class="text-right"
-              bottom-slots
-              hide-bottom-space
-              :rules="amountSellRules"
               @update:model-value="handleAmountSellInput"
             />
+          </div>
+          <div v-if="amountSellError" class="app-exchange-calculator__error">
+            {{ amountSellError }}
           </div>
         </div>
 
@@ -262,25 +262,28 @@ function handleAmountSellInput(value: string | number | null) {
   emit('update:amountSell', parseReadableNumber(value));
 }
 
-/** Правила валидации для поля суммы отправки (Quasar native rules). */
-const amountSellRules = computed(() => [
-  (val: string | number | null) => {
-    if (!val) {
-      return true;
-    }
-    const amount = parseReadableNumber(val);
-    if (amount <= 0) {
-      return true;
-    }
-    if (minAmount.value > 0 && amount < minAmount.value) {
-      return t('errors.exchange_min_amount', {
-        amount: formatReadableNumber(minAmount.value, locale.value),
-        currency: props.selectedSellCurrency,
-      });
-    }
-    return true;
-  },
-]);
+/** Текст ошибки валидации суммы отправки (кастомный блок под инпутом). */
+const amountSellError = ref<string | null>(null);
+
+/** Валидация суммы при изменении значения или minAmount. */
+function validateAmountSell() {
+  const val = props.amountSell;
+  if (!val || val <= 0) {
+    amountSellError.value = null;
+    return;
+  }
+  if (minAmount.value > 0 && val < minAmount.value) {
+    amountSellError.value = t('errors.exchange_min_amount', {
+      amount: formatReadableNumber(minAmount.value, locale.value),
+      currency: props.selectedSellCurrency,
+    });
+  } else {
+    amountSellError.value = null;
+  }
+}
+
+watch(() => props.amountSell, validateAmountSell);
+watch(minAmount, validateAmountSell);
 
 function focusAmountSell() {
   amountSellInputRef.value?.focus();
