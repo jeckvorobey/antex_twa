@@ -9,7 +9,10 @@
         no-caps
         :icon="item.icon"
         :label="item.label"
-        :class="['app-bottom-nav__item', isActive(item.name) ? 'app-bottom-nav__item--active' : null]"
+        :class="[
+          'app-bottom-nav__item',
+          isActive(item.name) ? 'app-bottom-nav__item--active' : null,
+        ]"
         @click="handleClick(item)"
       />
     </div>

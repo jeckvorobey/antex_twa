@@ -89,13 +89,15 @@ body.body--dark .q-page {
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  padding:
-    calc(env(safe-area-inset-top) + var(--antex-space-xl))
-    var(--antex-space-lg)
+  padding: calc(env(safe-area-inset-top) + var(--antex-space-xl)) var(--antex-space-lg)
     calc(env(safe-area-inset-bottom) + var(--antex-space-xl));
   color: var(--antex-text-primary);
-  background:
-    radial-gradient(circle at 50% 42%, var(--antex-bg-card) 0%, var(--antex-bg-primary) 48%, var(--antex-bg-deep) 100%);
+  background: radial-gradient(
+    circle at 50% 42%,
+    var(--antex-bg-card) 0%,
+    var(--antex-bg-primary) 48%,
+    var(--antex-bg-deep) 100%
+  );
 }
 
 .app-page-loader::before {
@@ -317,7 +319,12 @@ body.body--dark .q-page {
   left: -42%;
   width: 42%;
   border-radius: inherit;
-  background: linear-gradient(90deg, var(--antex-gold-dark), var(--antex-gold-light), var(--antex-gold-base));
+  background: linear-gradient(
+    90deg,
+    var(--antex-gold-dark),
+    var(--antex-gold-light),
+    var(--antex-gold-base)
+  );
   animation: app-loader-progress 1.45s ease-in-out infinite;
 }
 
@@ -582,7 +589,9 @@ body.body--dark .q-page {
   border-radius: 14px;
   background: rgba(10, 31, 28, 0.92);
   border: 1px solid rgba(212, 175, 55, 0.12);
-  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+  transition:
+    border-color 0.25s ease,
+    box-shadow 0.25s ease;
 }
 
 .app-field.q-field--focused {
@@ -615,10 +624,7 @@ body.body--dark .q-page {
 .app-header-shell {
   position: relative;
   width: min(calc(100vw - (var(--antex-space-md) * 2)), 390px);
-  margin:
-    calc(env(safe-area-inset-top) + var(--antex-space-md))
-    auto
-    0;
+  margin: calc(env(safe-area-inset-top) + var(--antex-space-md)) auto 0;
   padding: 0;
   transform: none;
   z-index: 1;
@@ -636,8 +642,7 @@ body.body--dark .q-page {
   border: 1px solid rgba(242, 210, 122, 0.18);
   border-radius: 36px;
   background:
-    linear-gradient(180deg, rgba(28, 73, 65, 0.62), rgba(10, 31, 28, 0.48)),
-    rgba(18, 53, 48, 0.46);
+    linear-gradient(180deg, rgba(28, 73, 65, 0.62), rgba(10, 31, 28, 0.48)), rgba(18, 53, 48, 0.46);
   box-shadow:
     0 18px 42px rgba(0, 0, 0, 0.3),
     inset 0 1px 0 rgba(255, 255, 255, 0.08),
@@ -652,7 +657,10 @@ body.body--dark .q-page {
   padding: 8px 0;
   border-radius: 26px;
   color: var(--antex-text-muted);
-  transition: color 0.2s ease, background-color 0.2s ease, filter 0.2s ease;
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease,
+    filter 0.2s ease;
 }
 
 .app-bottom-nav__item--active {
@@ -772,7 +780,10 @@ body.body--dark .q-page {
   box-shadow: var(--antex-shadow-card);
   color: var(--antex-text-primary);
   text-align: left;
-  transition: box-shadow 0.25s ease, transform 0.25s ease, filter 0.25s ease;
+  transition:
+    box-shadow 0.25s ease,
+    transform 0.25s ease,
+    filter 0.25s ease;
 }
 
 .app-quick-card__icon,
@@ -822,7 +833,10 @@ body.body--dark .q-page {
   border-radius: 18px;
   background: rgba(10, 31, 28, 0.96);
   color: var(--antex-text-primary);
-  transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
+  transition:
+    border-color 0.25s ease,
+    box-shadow 0.25s ease,
+    transform 0.25s ease;
 }
 
 .app-home-rate-row__side {
@@ -1070,7 +1084,10 @@ body.body--dark .q-page {
   background: transparent;
   color: var(--antex-text-primary);
   text-align: left;
-  transition: background-color 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    box-shadow 0.2s ease,
+    filter 0.2s ease;
 }
 
 .app-info-row:last-child {
@@ -1233,7 +1250,9 @@ body.body--dark .q-page {
   border-radius: 14px;
   background: rgba(10, 31, 28, 0.7);
   color: var(--antex-text-primary);
-  transition: box-shadow 0.2s ease, filter 0.2s ease;
+  transition:
+    box-shadow 0.2s ease,
+    filter 0.2s ease;
 }
 
 .app-sheet-menu-item__left {
@@ -1244,7 +1263,9 @@ body.body--dark .q-page {
 
 .app-rate-swap-enter-active,
 .app-rate-swap-leave-active {
-  transition: opacity 0.3s ease, transform 0.3s ease;
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s ease;
 }
 
 .app-rate-swap-enter-from,
@@ -1804,7 +1825,6 @@ body.body--light .q-page,
   flex-direction: column;
   gap: 8px;
   padding: 12px;
-  overflow: hidden;
 }
 
 .app-exchange-calculator__label {
@@ -1903,6 +1923,19 @@ body.body--light .q-page,
   color: var(--antex-text-secondary);
   font-size: 11px;
   text-align: center;
+}
+
+.app-exchange-calculator__hint {
+  color: var(--antex-text-secondary);
+  font-size: 11px;
+  text-align: center;
+  opacity: 0.7;
+}
+
+.app-exchange-calculator__error {
+  color: var(--antex-error, #f44336);
+  font-size: 12px;
+  margin-top: 4px;
 }
 
 .app-chip-row--exchange,

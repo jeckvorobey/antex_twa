@@ -98,12 +98,14 @@ export default {
   },
   order: {
     title: 'Оставить заявку',
-    rateNotice: 'Курс может меняться в зависимости от суммы. Мы покажем ориентир сейчас, а менеджер подтвердит точный курс перед обменом.',
+    rateNotice:
+      'Курс может меняться в зависимости от суммы. Мы покажем ориентир сейчас, а менеджер подтвердит точный курс перед обменом.',
     amount: 'Сумма',
     currency: 'Получаю',
     contact: 'Telegram для связи',
     contactPlaceholder: '@telegram',
     success: 'Заявка создана',
+    minAmountHint: 'Мин. {amount} {currency}',
   },
   status: {
     new: 'Создана',
@@ -125,6 +127,7 @@ export default {
     trusted_contact_not_ready: 'Добавьте телефон для связи перед отправкой заявки.',
     city_required: 'Для выдачи наличными нужно выбрать город.',
     city_country_mismatch: 'Выбранный город не соответствует выбранной стране.',
+    min_amount: 'Минимальная сумма для обмена — {amount} {currency}',
   },
   more: {
     title: 'Еще',

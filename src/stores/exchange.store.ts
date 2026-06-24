@@ -1,11 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 
-import {
-  createOrder,
-  fetchCities,
-  fetchExchangeScreen,
-} from '@services/api/miniapp.service';
+import { createOrder, fetchCities, fetchExchangeScreen } from '@services/api/miniapp.service';
 import type {
   MiniappCity,
   MiniappExchangeScreenResponse,

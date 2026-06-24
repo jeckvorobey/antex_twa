@@ -53,12 +53,7 @@
         </div>
 
         <div class="q-pt-md app-exchange-submit">
-          <AppButton
-            block
-            type="submit"
-            :loading="exchangeStore.submitting"
-            :disable="!canSubmit"
-          >
+          <AppButton block type="submit" :loading="exchangeStore.submitting" :disable="!canSubmit">
             {{ t('common.submit') }}
           </AppButton>
         </div>
@@ -79,6 +74,7 @@ import AppRateValue from '@components/ui/AppRateValue.vue';
 import AppSectionTitle from '@components/ui/AppSectionTitle.vue';
 import AppSurface from '@components/ui/AppSurface.vue';
 import AppWarningNotice from '@components/ui/AppWarningNotice.vue';
+import { getMinAmount } from '@constants/limits';
 import { useExchangeStore } from '@stores/exchange.store';
 import { useOrdersStore } from '@stores/orders.store';
 import type { MiniappRateCard, MiniappReceiveMethod } from '@types/miniapp';
@@ -111,7 +107,11 @@ const amountSellTouched = ref(false);
 const syncingState = ref(false);
 
 const sellOptions = computed(() =>
-  [...new Set((exchangeStore.screen?.pairs ?? []).map((pair) => pair.id.split('-')[0]?.toUpperCase()))].map((currency) => ({
+  [
+    ...new Set(
+      (exchangeStore.screen?.pairs ?? []).map((pair) => pair.id.split('-')[0]?.toUpperCase()),
+    ),
+  ].map((currency) => ({
     label: currency,
     value: currency,
   })),
@@ -125,9 +125,7 @@ const countryOptions = computed(() =>
   buildCountryOptions(exchangeStore.screen?.pairs ?? [], selectedSellCurrency.value),
 );
 
-const cityOptions = computed(() =>
-  buildCityOptions(exchangeStore.cities, selectedCountry.value),
-);
+const cityOptions = computed(() => buildCityOptions(exchangeStore.cities, selectedCountry.value));
 
 const currentQuoteMethods = computed(() => resolveCurrentQuote()?.availableMethods ?? null);
 
@@ -141,7 +139,14 @@ onMounted(async () => {
   syncingState.value = true;
   selectedSellCurrency.value = exchangeStore.screen?.calculator.fromCurrency ?? 'RUB';
   selectedBuyCurrency.value = exchangeStore.screen?.calculator.toCurrency ?? 'THB';
-  amountSell.value = exchangeStore.screen?.calculator.amountSell ?? getDefaultAmountSell(selectedSellCurrency.value);
+  amountSell.value =
+    exchangeStore.screen?.calculator.amountSell ?? getDefaultAmountSell(selectedSellCurrency.value);
+
+  const min = getMinAmount(selectedMethod.value, selectedSellCurrency.value);
+  if (min > 0 && (!amountSell.value || amountSell.value < min)) {
+    amountSell.value = min;
+  }
+
   selectedCountry.value = getCountryByCurrency(
     exchangeStore.screen?.pairs ?? [],
     selectedBuyCurrency.value,
@@ -156,29 +161,32 @@ const currentRateLabel = computed(() => {
     return t('exchange.quoteUnavailable');
   }
 
-  return quote.rateText
-    || `1 ${quote.currencySell} = ${formatReadableNumber(quote.rate, locale.value)} ${quote.currencyBuy}`;
+  return (
+    quote.rateText ||
+    `1 ${quote.currencySell} = ${formatReadableNumber(quote.rate, locale.value)} ${quote.currencyBuy}`
+  );
 });
 
-const preliminaryValidation = computed(() => validatePreliminaryOrderDraft({
-  pairs: exchangeStore.screen?.pairs ?? [],
-  cities: exchangeStore.cities,
-  currencySell: selectedSellCurrency.value,
-  currencyBuy: selectedBuyCurrency.value,
-  amountSell: amountSell.value,
-  selectedCountry: selectedCountry.value,
-  selectedMethod: selectedMethod.value,
-  selectedCityId: selectedCityId.value,
-}));
+const preliminaryValidation = computed(() =>
+  validatePreliminaryOrderDraft({
+    pairs: exchangeStore.screen?.pairs ?? [],
+    cities: exchangeStore.cities,
+    currencySell: selectedSellCurrency.value,
+    currencyBuy: selectedBuyCurrency.value,
+    amountSell: amountSell.value,
+    selectedCountry: selectedCountry.value,
+    selectedMethod: selectedMethod.value,
+    selectedCityId: selectedCityId.value,
+  }),
+);
 
 const canSubmit = computed(() => {
-  const hasAmounts = Boolean(amountSell.value && amountSell.value > 0 && amountBuy.value && amountBuy.value > 0);
+  const hasAmounts = Boolean(
+    amountSell.value && amountSell.value > 0 && amountBuy.value && amountBuy.value > 0,
+  );
   const hasBaseFields = Boolean(selectedSellCurrency.value && selectedBuyCurrency.value);
   const hasMethodFields = selectedMethod.value !== 'cash' || Boolean(selectedCityId.value);
-  return hasAmounts
-    && hasBaseFields
-    && hasMethodFields
-    && preliminaryValidation.value.valid;
+  return hasAmounts && hasBaseFields && hasMethodFields && preliminaryValidation.value.valid;
 });
 
 watch(selectedSellCurrency, () => {
@@ -187,11 +195,13 @@ watch(selectedSellCurrency, () => {
     selectedBuyCurrency.value = nextBuyCurrency;
   }
 
-  if (!amountSellTouched.value || !amountSell.value) {
-    syncingState.value = true;
-    amountSell.value = getDefaultAmountSell(selectedSellCurrency.value);
-    syncingState.value = false;
+  syncingState.value = true;
+  amountSell.value = getDefaultAmountSell(selectedSellCurrency.value);
+  const min = getMinAmount(selectedMethod.value, selectedSellCurrency.value);
+  if (min > 0 && (!amountSell.value || amountSell.value < min)) {
+    amountSell.value = min;
   }
+  syncingState.value = false;
   void refreshQuoteForCurrentState();
 });
 
@@ -205,7 +215,10 @@ watch(selectedMethod, (method) => {
 });
 
 watch(selectedCountry, () => {
-  const nextCurrency = getCurrencyByCountry(exchangeStore.screen?.pairs ?? [], selectedCountry.value ?? '');
+  const nextCurrency = getCurrencyByCountry(
+    exchangeStore.screen?.pairs ?? [],
+    selectedCountry.value ?? '',
+  );
   if (nextCurrency && nextCurrency !== selectedBuyCurrency.value) {
     selectedBuyCurrency.value = nextCurrency;
     return;
@@ -298,9 +311,9 @@ function getDefaultAmountSell(currencySell: string) {
 function resolveCurrentQuote() {
   const quote = exchangeStore.quote;
   if (
-    !quote
-    || quote.currencySell !== selectedSellCurrency.value
-    || quote.currencyBuy !== selectedBuyCurrency.value
+    !quote ||
+    quote.currencySell !== selectedSellCurrency.value ||
+    quote.currencyBuy !== selectedBuyCurrency.value
   ) {
     return null;
   }
@@ -338,7 +351,9 @@ async function submitOrder() {
 
     ordersStore.prepend(order);
     syncingState.value = true;
-    amountSell.value = exchangeStore.screen?.calculator.amountSell ?? getDefaultAmountSell(selectedSellCurrency.value);
+    amountSell.value =
+      exchangeStore.screen?.calculator.amountSell ??
+      getDefaultAmountSell(selectedSellCurrency.value);
     amountBuy.value = exchangeStore.screen?.quote.amountBuy ?? null;
     amountSellTouched.value = false;
     syncingState.value = false;

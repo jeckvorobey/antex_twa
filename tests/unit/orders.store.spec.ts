@@ -30,7 +30,10 @@ function makeOrder(id: number): MiniappOrderItem {
   };
 }
 
-function makeResponse(ids: number[], params: Partial<MiniappOrdersResponse> = {}): MiniappOrdersResponse {
+function makeResponse(
+  ids: number[],
+  params: Partial<MiniappOrdersResponse> = {},
+): MiniappOrdersResponse {
   return {
     items: ids.map(makeOrder),
     limit: params.limit ?? 10,

@@ -15,7 +15,9 @@ const props = withDefaults(
 );
 
 const { locale } = useI18n();
-const displayValue = computed(() => formatReadableNumber(props.value, locale.value) || String(props.value));
+const displayValue = computed(
+  () => formatReadableNumber(props.value, locale.value) || String(props.value),
+);
 const displayKey = computed(() => displayValue.value);
 </script>
 

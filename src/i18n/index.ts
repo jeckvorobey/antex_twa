@@ -9,7 +9,9 @@ export type AppLocale = (typeof SUPPORTED_LOCALES)[number];
 
 function normalizeLocale(locale?: string | null): AppLocale {
   const normalized = locale?.split('-', 1)[0]?.toLowerCase();
-  return SUPPORTED_LOCALES.includes(normalized as AppLocale) ? (normalized as AppLocale) : DEFAULT_LOCALE;
+  return SUPPORTED_LOCALES.includes(normalized as AppLocale)
+    ? (normalized as AppLocale)
+    : DEFAULT_LOCALE;
 }
 
 export const i18n = createI18n({

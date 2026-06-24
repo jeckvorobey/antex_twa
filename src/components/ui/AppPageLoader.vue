@@ -1,12 +1,6 @@
 <template>
   <Transition name="app-page-loader">
-    <div
-      v-if="showing"
-      class="app-page-loader"
-      role="status"
-      aria-live="polite"
-      aria-busy="true"
-    >
+    <div v-if="showing" class="app-page-loader" role="status" aria-live="polite" aria-busy="true">
       <div class="app-page-loader__glow app-page-loader__glow--top" />
       <div class="app-page-loader__glow app-page-loader__glow--bottom" />
       <div class="app-page-loader__particle app-page-loader__particle--one" />

@@ -6,6 +6,7 @@ const MINIAPP_ERROR_KEYS: Record<string, string> = {
   CITY_MANAGER_NOT_CONFIGURED: 'errors.city_manager_missing',
   TRUSTED_CONTACT_NOT_READY: 'errors.trusted_contact_not_ready',
   CITY_REQUIRED_FOR_CASH: 'errors.city_required',
+  MIN_AMOUNT: 'errors.min_amount',
 };
 
 /**

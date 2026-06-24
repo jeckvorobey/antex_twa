@@ -89,11 +89,7 @@
         <AppSectionTitle>{{ t('home.social.title') }}</AppSectionTitle>
 
         <div class="app-home-social-grid">
-          <AppSurface
-            v-for="link in socialLinks"
-            :key="link.id"
-            class="app-home-social-card"
-          >
+          <AppSurface v-for="link in socialLinks" :key="link.id" class="app-home-social-card">
             <a
               class="app-home-social-card__link"
               :href="link.href"
@@ -122,7 +118,11 @@
         <div class="app-home-bonus-card__copy">
           {{ homeStore.data?.banner.title ?? t('home.bonus') }}
         </div>
-        <AppButton variant="secondary" class="app-home-bonus-card__button" @click="uiStore.openMoreSheet()">
+        <AppButton
+          variant="secondary"
+          class="app-home-bonus-card__button"
+          @click="uiStore.openMoreSheet()"
+        >
           {{ homeStore.data?.banner.actionLabel ?? t('home.bonusAction') }}
         </AppButton>
       </AppSurface>
@@ -246,43 +246,51 @@ const socialLinks = [
 const featuredRates = computed(() => homeStore.data?.rates.featured ?? []);
 const previewLimit = computed(() => homeStore.data?.rates.previewLimit ?? 3);
 const locations = computed(() => homeStore.data?.locations ?? []);
-const visibleLocations = computed(() => buildHomeVisibleLocations(
-  locations.value,
-  selectedCountry.value,
-));
-const filterChips = computed(() => buildHomeRateFilterChips({
-  backendChips: homeStore.data?.rates.chips ?? [],
-  allLabel: t('home.all'),
-  rates: featuredRates.value,
-  selectedCountry: selectedCountry.value,
-}));
-const rateView = computed(() => buildHomeRateView({
-  rates: featuredRates.value,
-  filterKey: selectedRateChip.value,
-  previewLimit: previewLimit.value,
-  expanded: ratesExpanded.value,
-  selectedCountry: selectedCountry.value,
-}));
-const visibleRates = computed(() => rateView.value.visibleRates);
-const visibleRateCards = computed(() => visibleRates.value.map((card) => ({
-  card,
-  presentation: buildHomeRateCardPresentation({
-    card,
-    selectedCityId: selectedCityId.value,
+const visibleLocations = computed(() =>
+  buildHomeVisibleLocations(locations.value, selectedCountry.value),
+);
+const filterChips = computed(() =>
+  buildHomeRateFilterChips({
+    backendChips: homeStore.data?.rates.chips ?? [],
+    allLabel: t('home.all'),
+    rates: featuredRates.value,
+    selectedCountry: selectedCountry.value,
   }),
-})));
+);
+const rateView = computed(() =>
+  buildHomeRateView({
+    rates: featuredRates.value,
+    filterKey: selectedRateChip.value,
+    previewLimit: previewLimit.value,
+    expanded: ratesExpanded.value,
+    selectedCountry: selectedCountry.value,
+  }),
+);
+const visibleRates = computed(() => rateView.value.visibleRates);
+const visibleRateCards = computed(() =>
+  visibleRates.value.map((card) => ({
+    card,
+    presentation: buildHomeRateCardPresentation({
+      card,
+      selectedCityId: selectedCityId.value,
+    }),
+  })),
+);
 const canExpand = computed(() => rateView.value.canExpand);
-const defaultExchangeCard = computed(() => (
-  featuredRates.value.find((card) => card.id === 'rub-thb')
-  ?? featuredRates.value[0]
-));
+const defaultExchangeCard = computed(
+  () => featuredRates.value.find((card) => card.id === 'rub-thb') ?? featuredRates.value[0],
+);
 const managerTelegramHref = computed(() => {
-  const supportHref = profileStore.data?.menu.find((item) => item.id === 'support' && item.action === 'link')?.href?.trim();
+  const supportHref = profileStore.data?.menu
+    .find((item) => item.id === 'support' && item.action === 'link')
+    ?.href?.trim();
   if (supportHref) {
     return supportHref;
   }
 
-  const fallbackUsername = (import.meta.env.VITE_TG_BOT_USERNAME as string | undefined)?.trim().replace(/^@/, '');
+  const fallbackUsername = (import.meta.env.VITE_TG_BOT_USERNAME as string | undefined)
+    ?.trim()
+    .replace(/^@/, '');
   return fallbackUsername ? `https://t.me/${fallbackUsername}` : null;
 });
 

@@ -10,8 +10,8 @@ describe('HistoryPage pagination and repeat contract', () => {
   it('uses Quasar infinite scroll with dots loader and manual refresh button', () => {
     expect(historySource).toContain('<q-infinite-scroll');
     expect(historySource).toContain('<q-spinner-dots');
-    expect(historySource).toContain("icon=\"refresh\"");
-    expect(historySource).toContain(":aria-label=\"t('history.refresh')\"");
+    expect(historySource).toContain('icon="refresh"');
+    expect(historySource).toContain(':aria-label="t(\'history.refresh\')"');
     expect(historySource).toContain(':scroll-target="historyScrollRef"');
     expect(historySource).toContain('ref="historyScrollRef"');
     expect(historySource).toContain('app-page--history');
@@ -20,10 +20,10 @@ describe('HistoryPage pagination and repeat contract', () => {
   it('keeps cancelled filter and repeat action in the page source', () => {
     expect(historySource).toContain("value: 'cancelled'");
     expect(historySource).toContain("t('history.cancelled')");
-    expect(historySource).toContain("icon=\"autorenew\"");
-    expect(historySource).toContain(":label=\"t('history.repeat')\"");
-    expect(historySource).not.toContain(":aria-label=\"t('history.repeat')\"");
-    expect(historySource).not.toContain("{{ item.currencySell }} → {{ item.currencyBuy }}");
+    expect(historySource).toContain('icon="autorenew"');
+    expect(historySource).toContain(':label="t(\'history.repeat\')"');
+    expect(historySource).not.toContain(':aria-label="t(\'history.repeat\')"');
+    expect(historySource).not.toContain('{{ item.currencySell }} → {{ item.currencyBuy }}');
   });
 
   it('opens order sheet with selected order draft without stale quote fields', () => {

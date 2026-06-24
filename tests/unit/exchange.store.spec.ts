@@ -2,7 +2,11 @@ import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useExchangeStore } from '@stores/exchange.store';
-import type { MiniappCity, MiniappExchangeScreenResponse, MiniappQuoteResponse } from '@types/miniapp';
+import type {
+  MiniappCity,
+  MiniappExchangeScreenResponse,
+  MiniappQuoteResponse,
+} from '@types/miniapp';
 
 vi.mock('@services/api/miniapp.service', () => ({
   createOrder: vi.fn(),

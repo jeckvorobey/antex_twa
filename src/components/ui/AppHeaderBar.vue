@@ -52,11 +52,16 @@ const userPhotoUrl = computed(() => authStore.user?.photo_url ?? null);
 
 const userInitials = computed(() => {
   const user = authStore.user;
-  const nameParts = [user?.first_name, user?.last_name]
-    .filter((part): part is string => Boolean(part?.trim()));
+  const nameParts = [user?.first_name, user?.last_name].filter((part): part is string =>
+    Boolean(part?.trim()),
+  );
 
   if (nameParts.length) {
-    return nameParts.map((part) => part.trim()[0]).join('').slice(0, 2).toUpperCase();
+    return nameParts
+      .map((part) => part.trim()[0])
+      .join('')
+      .slice(0, 2)
+      .toUpperCase();
   }
 
   const username = user?.username?.trim();

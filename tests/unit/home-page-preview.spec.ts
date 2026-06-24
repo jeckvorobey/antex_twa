@@ -131,6 +131,6 @@ describe('HomePage preview rates', () => {
     expect(source).toContain('.app-home-rates-card__chips');
     expect(source).toContain('padding: 2px 2px 4px 2px;');
     expect(source).toContain('z-index: 1;');
-    expect(pageSource).toContain("class=\"app-home-country-chips app-home-rates-card__chips\"");
+    expect(pageSource).toContain('class="app-home-country-chips app-home-rates-card__chips"');
   });
 });
