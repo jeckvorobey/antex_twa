@@ -39,6 +39,15 @@
 
       <AppSurface class="app-profile-card">
         <AppInfoRow
+          icon="group_add"
+          :title="t('profile.referralProgram')"
+          clickable
+          @click="goToReferral"
+        />
+      </AppSurface>
+
+      <AppSurface class="app-profile-card">
+        <AppInfoRow
           v-for="item in profileStore.data?.menu ?? []"
           :key="item.id"
           :icon="item.icon"

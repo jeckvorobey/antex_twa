@@ -8,6 +8,12 @@
           {{ formattedBalance }}
           <span class="app-referral-balance__currency">AEX</span>
         </div>
+        <div v-if="reservedBalance > 0" class="app-referral-balance__reserved">
+          {{ t('referral.reserved') }}: {{ formatAexAmount(reservedBalance) }} AEX
+        </div>
+        <div class="app-referral-balance__referrals q-mt-xs">
+          {{ t('referral.directReferrals', { count: aexStore.totalReferrals }) }}
+        </div>
         <div class="q-mt-sm">
           <AppButton
             color="warning"
@@ -38,12 +44,36 @@
           />
         </div>
 
-        <div class="q-mt-md row q-gutter-sm">
+        <div class="q-mt-md">
+          <div class="app-referral-code-card__link-label text-caption text-grey-7 q-mb-xs">
+            {{ t('referral.referralLinkLabel') }}
+          </div>
+          <q-input
+            :model-value="referralLink"
+            readonly
+            dense
+            outlined
+            color="warning"
+            class="app-referral-code-card__link-input"
+          >
+            <template #append>
+              <q-btn
+                round
+                flat
+                dense
+                icon="content_copy"
+                color="warning"
+                size="sm"
+                :aria-label="t('referral.copyLink')"
+                @click="copyLink"
+              />
+            </template>
+          </q-input>
+        </div>
+
+        <div class="q-mt-md">
           <AppButton block color="warning" icon="share" @click="shareLink">
             {{ t('referral.share') }}
-          </AppButton>
-          <AppButton block variant="secondary" icon="content_copy" @click="copyLink">
-            {{ t('referral.copyLink') }}
           </AppButton>
         </div>
       </AppSurface>
@@ -185,6 +215,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { Notify } from 'quasar';
 
 import AppButton from '@components/ui/AppButton.vue';
 import AppSurface from '@components/ui/AppSurface.vue';
@@ -207,6 +238,12 @@ const referralCode = computed(() => aexStore.referralInfo?.referralCode ?? '...'
 const referrals = computed(() => aexStore.referralInfo?.referrals ?? []);
 
 const availableBalance = computed(() => aexStore.balance?.available ?? 0);
+
+const reservedBalance = computed(() => {
+  const b = aexStore.balance;
+  if (!b) return 0;
+  return Math.max(0, b.totalEarned - b.totalWithdrawn - b.available);
+});
 
 const formattedBalance = computed(() => {
   return formatAexAmount(availableBalance.value);
@@ -264,6 +301,7 @@ function copyCode() {
 function copyLink() {
   if (referralLink.value) {
     void navigator.clipboard.writeText(referralLink.value);
+    Notify.create({ type: 'positive', message: t('referral.linkCopied') });
   }
 }
 

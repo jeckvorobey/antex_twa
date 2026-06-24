@@ -96,6 +96,7 @@ export default {
     title: 'Профиль',
     version: 'Версия {version}',
     aexBalance: 'Баланс AEX',
+    referralProgram: 'Реферальная программа',
   },
   referral: {
     title: 'Реферальная программа',
@@ -121,6 +122,10 @@ export default {
       bonus: 'Бонус',
       adjustment: 'Корректировка',
     },
+    reserved: 'Зарезервировано',
+    directReferrals: 'Прямых рефералов: {count}',
+    linkCopied: 'Ссылка скопирована!',
+    referralLinkLabel: 'Ваша реферальная ссылка',
     sell: 'Продать AEX',
     sellTitle: 'Продажа AEX',
     sellSelectOrder: 'Выберите заявку',
