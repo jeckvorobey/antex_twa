@@ -50,6 +50,7 @@ import { useHomeStore } from '@stores/home.store';
 import { useOrdersStore } from '@stores/orders.store';
 import { useUiStore } from '@stores/ui.store';
 import type { MiniappReceiveMethod } from '@types/miniapp';
+import { getMinAmount } from '@constants/limits';
 import { getMiniappErrorMessageKey } from '@utils/api-errors';
 import {
   buildCityOptions,
@@ -214,11 +215,13 @@ watch(selectedSellCurrency, () => {
     currencyBuy.value = nextBuyCurrency;
   }
 
-  if (!amountSellTouched.value || !amountSell.value) {
-    syncingState.value = true;
-    amountSell.value = getDefaultAmountSell(selectedSellCurrency.value);
-    syncingState.value = false;
+  syncingState.value = true;
+  amountSell.value = getDefaultAmountSell(selectedSellCurrency.value);
+  const min = getMinAmount(selectedMethod.value, selectedSellCurrency.value);
+  if (min > 0 && (!amountSell.value || amountSell.value < min)) {
+    amountSell.value = min;
   }
+  syncingState.value = false;
   void refreshQuoteForCurrentState();
 });
 
