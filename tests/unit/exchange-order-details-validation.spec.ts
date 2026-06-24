@@ -7,9 +7,10 @@ const detailsPath = resolve(process.cwd(), 'src/components/orders/ExchangeOrderD
 const source = readFileSync(detailsPath, 'utf8');
 
 describe('ExchangeOrderDetails validation contract', () => {
-  it('displays custom error message below amountSell input on validation failure', () => {
+  it('displays error via q-input native :error/:error-message props on validation failure', () => {
     expect(source).toContain('amountSellError');
-    expect(source).toContain('v-if="amountSellError"');
+    expect(source).toContain(':error="!!amountSellError"');
+    expect(source).toContain(':error-message="amountSellError ?? undefined"');
   });
 
   it('validates amountSell against minAmount via custom validateAmountSell function', () => {

@@ -17,10 +17,13 @@
           map-options
           outlined
           dense
+          bottom-slots
           :loading="ordersLoading"
           :placeholder="t('referral.sellSelectOrderPlaceholder')"
           bg-color="transparent"
-          :rules="[(val: number | null) => !!val || t('referral.sellOrderRequired')]"
+          :error="!!errors.order"
+          :error-message="errors.order"
+          @blur="validateOrder"
         />
       </div>
 
@@ -37,14 +40,14 @@
           type="number"
           outlined
           dense
+          bottom-slots
           :min="0.01"
           :max="availableBalance"
           step="0.01"
           bg-color="transparent"
-          :rules="[
-            (val: number) => val > 0 || t('referral.sellAmountPositive'),
-            (val: number) => val <= availableBalance || t('referral.sellAmountExceeds'),
-          ]"
+          :error="!!errors.amount"
+          :error-message="errors.amount"
+          @blur="validateAmount"
         />
       </div>
 
@@ -67,7 +70,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 import AppButton from '@components/ui/AppButton.vue';
@@ -92,6 +95,15 @@ const selectedOrder = ref<number | null>(null);
 const amount = ref<number | null>(null);
 const orders = ref<MiniappOrderItem[]>([]);
 const ordersLoading = ref(false);
+
+/** Тouched state per field — prevents showing errors before user interaction. */
+const touched = reactive({ order: false, amount: false });
+
+/** Error messages per field. Null = no error. */
+const errors = reactive<{ order: string | null; amount: string | null }>({
+  order: null,
+  amount: null,
+});
 
 const availableBalance = computed(() => aexStore.balance?.available ?? 0);
 
@@ -120,7 +132,37 @@ onMounted(async () => {
   }
 });
 
+/* ---- Validation helpers ---- */
+
+function validateOrder() {
+  touched.order = true;
+  errors.order = selectedOrder.value === null ? t('referral.sellOrderRequired') : null;
+}
+
+function validateAmount() {
+  touched.amount = true;
+  if (amount.value === null || amount.value <= 0) {
+    errors.amount = t('referral.sellAmountPositive');
+  } else if (amount.value > availableBalance.value) {
+    errors.amount = t('referral.sellAmountExceeds');
+  } else {
+    errors.amount = null;
+  }
+}
+
+/** Validate all fields before submit. Returns true if form is valid. */
+function validateAll(): boolean {
+  validateOrder();
+  validateAmount();
+  return !errors.order && !errors.amount;
+}
+
+/* ---- Submit ---- */
+
 async function handleSell() {
+  if (!validateAll()) {
+    return;
+  }
   if (!selectedOrder.value || !amount.value || !isValid.value) {
     return;
   }

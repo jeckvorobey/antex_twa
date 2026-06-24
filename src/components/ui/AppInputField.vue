@@ -9,10 +9,16 @@
       class="app-field"
       borderless
       dense
-      hide-bottom-space
+      bottom-slots
+      :error="!!error"
+      :error-message="error"
       v-bind="$attrs"
       @update:model-value="onInputUpdate"
-    />
+    >
+      <template v-if="hint && !error" #hint>
+        {{ hint }}
+      </template>
+    </q-input>
 
     <q-select
       v-else
@@ -23,15 +29,18 @@
       dense
       emit-value
       map-options
-      hide-bottom-space
+      bottom-slots
+      :error="!!error"
+      :error-message="error"
       options-dense
       behavior="menu"
       v-bind="$attrs"
       @update:model-value="$emit('update:modelValue', $event)"
-    />
-
-    <div v-if="error" class="text-negative text-caption">{{ error }}</div>
-    <div v-else-if="hint" class="app-muted text-caption">{{ hint }}</div>
+    >
+      <template v-if="hint && !error" #hint>
+        {{ hint }}
+      </template>
+    </q-select>
   </div>
 </template>
 
