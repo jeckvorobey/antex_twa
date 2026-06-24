@@ -24,13 +24,12 @@
               dense
               inputmode="decimal"
               input-class="text-right"
+              bottom-slots
+              hide-bottom-space
+              :rules="amountSellRules"
               @update:model-value="handleAmountSellInput"
               @blur="handleAmountSellBlur"
             />
-          </div>
-          <div v-if="amountSellError" class="app-exchange-calculator__error">
-            <q-icon name="warning" size="xs" class="q-mr-xs" />
-            {{ amountSellError }}
           </div>
         </div>
 
@@ -172,8 +171,6 @@ const emit = defineEmits<{
 const { locale, t } = useI18n();
 const amountSellInputRef = ref<{ focus: () => void } | null>(null);
 
-/** Текущее сообщение ошибки валидации суммы (отображается под инпутом). */
-const amountSellError = ref('');
 
 const selectedSellCurrencyModel = computed({
   get: () => props.selectedSellCurrency,
@@ -273,28 +270,25 @@ function handleAmountSellBlur() {
   }
 }
 
-/** Валидация суммы и обновление сообщения об ошибке. */
-function validateAmountSell() {
-  const val = props.amountSell;
-  if (!val || val <= 0) {
-    amountSellError.value = '';
-    return;
-  }
-  if (minAmount.value > 0 && val < minAmount.value) {
-    amountSellError.value = t('errors.exchange_min_amount', {
-      amount: formatReadableNumber(minAmount.value, locale.value),
-      currency: props.selectedSellCurrency,
-    });
-    return;
-  }
-  amountSellError.value = '';
-}
-
-watch(
-  [() => props.amountSell, minAmount, () => props.selectedSellCurrency],
-  () => validateAmountSell(),
-  { immediate: true },
-);
+/** Правила валидации для поля суммы отправки (Quasar native rules). */
+const amountSellRules = computed(() => [
+  (val: string | number | null) => {
+    if (!val) {
+      return true;
+    }
+    const amount = parseReadableNumber(val);
+    if (amount <= 0) {
+      return true;
+    }
+    if (minAmount.value > 0 && amount < minAmount.value) {
+      return t('errors.exchange_min_amount', {
+        amount: formatReadableNumber(minAmount.value, locale.value),
+        currency: props.selectedSellCurrency,
+      });
+    }
+    return true;
+  },
+]);
 
 function focusAmountSell() {
   amountSellInputRef.value?.focus();
