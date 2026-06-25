@@ -2,7 +2,7 @@
   <q-page class="app-page">
     <div class="app-screen app-screen--referral">
       <!-- Balance hero -->
-      <AexBalanceCard :balance="availableBalance" />
+      <AexBalanceCard class="app-referral-balance-card" :balance="availableBalance" />
 
       <div v-if="reservedBalance > 0" class="app-referral-reserved">
         {{ t('referral.reserved') }}: {{ formatAexAmount(reservedBalance) }} AEX
