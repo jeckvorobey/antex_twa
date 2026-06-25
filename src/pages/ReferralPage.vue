@@ -2,30 +2,25 @@
   <q-page class="app-page">
     <div class="app-screen app-screen--referral">
       <!-- Balance hero -->
-      <AppSurface padded class="app-referral-balance">
-        <div class="app-referral-balance__label">{{ t('referral.balanceLabel') }}</div>
-        <div class="app-referral-balance__value">
-          {{ formattedBalance }}
-          <span class="app-referral-balance__currency">AEX</span>
-        </div>
-        <div v-if="reservedBalance > 0" class="app-referral-balance__reserved">
-          {{ t('referral.reserved') }}: {{ formatAexAmount(reservedBalance) }} AEX
-        </div>
-        <div class="app-referral-balance__referrals q-mt-xs">
+      <AexBalanceCard :balance="availableBalance" />
+
+      <div v-if="reservedBalance > 0" class="app-referral-reserved">
+        {{ t('referral.reserved') }}: {{ formatAexAmount(reservedBalance) }} AEX
+      </div>
+      <div class="app-referral-meta">
+        <div class="app-referral-meta__referrals">
           {{ t('referral.directReferrals', { count: aexStore.totalReferrals }) }}
         </div>
-        <div class="q-mt-sm">
-          <AppButton
-            color="warning"
-            size="sm"
-            icon="sell"
-            :disable="availableBalance <= 0"
-            @click="showSellDialog = true"
-          >
-            {{ t('referral.sell') }}
-          </AppButton>
-        </div>
-      </AppSurface>
+        <AppButton
+          color="warning"
+          size="sm"
+          icon="sell"
+          :disable="availableBalance <= 0"
+          @click="showSellDialog = true"
+        >
+          {{ t('referral.sell') }}
+        </AppButton>
+      </div>
 
       <!-- Referral code card -->
       <AppSurface padded class="app-referral-code-card">
@@ -217,6 +212,7 @@ import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { Notify } from 'quasar';
 
+import AexBalanceCard from '@components/ui/AexBalanceCard.vue';
 import AppButton from '@components/ui/AppButton.vue';
 import AppSurface from '@components/ui/AppSurface.vue';
 import AexSellDialog from '@components/aex/AexSellDialog.vue';
@@ -243,10 +239,6 @@ const reservedBalance = computed(() => {
   const b = aexStore.balance;
   if (!b) return 0;
   return Math.max(0, b.totalEarned - b.totalWithdrawn - b.available);
-});
-
-const formattedBalance = computed(() => {
-  return formatAexAmount(availableBalance.value);
 });
 
 const referralLink = computed(() => {
