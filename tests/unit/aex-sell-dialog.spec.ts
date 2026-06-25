@@ -52,4 +52,3 @@ describe('AexSellDialog component (source)', () => {
     expect(dialogSource).toContain('q-dialog');
   });
 });
-
