@@ -7,10 +7,10 @@ const referralPagePath = resolve(process.cwd(), 'src/pages/ReferralPage.vue');
 const referralSource = readFileSync(referralPagePath, 'utf8');
 
 describe('ReferralPage structure', () => {
-  it('renders balance hero with AEX currency label', () => {
-    expect(referralSource).toContain('app-referral-balance');
-    expect(referralSource).toContain("t('referral.balanceLabel')");
-    expect(referralSource).toContain('AEX');
+  it('renders shared balance hero with AEX currency label', () => {
+    expect(referralSource).toContain('<AexBalanceCard');
+    expect(referralSource).toContain(':balance="availableBalance"');
+    expect(referralSource).toContain(":label=\"t('referral.balanceLabel')\"");
   });
 
   it('shows referral code with copy button', () => {

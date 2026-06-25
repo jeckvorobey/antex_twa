@@ -1,7 +1,12 @@
 <template>
-  <AppSurface class="app-aex-balance-card" :class="{ 'app-aex-balance-card--clickable': clickable }" @click="handleClick">
+  <AppSurface
+    padded
+    class="app-aex-balance-card"
+    :class="{ 'app-aex-balance-card--clickable': clickable }"
+    @click="handleClick"
+  >
     <div class="row items-center no-wrap justify-between">
-      <div class="app-aex-balance-card__label">{{ t('profile.aexBalance') }}</div>
+      <div class="app-aex-balance-card__label">{{ displayLabel }}</div>
       <div class="row items-center no-wrap">
         <div class="app-aex-balance-card__value">
           {{ formattedBalance }}
@@ -22,6 +27,7 @@ import AppSurface from '@components/ui/AppSurface.vue';
 const props = withDefaults(
   defineProps<{
     balance: number | null;
+    label?: string;
     clickable?: boolean;
   }>(),
   {
@@ -34,6 +40,8 @@ const emit = defineEmits<{
 }>();
 
 const { t, locale } = useI18n();
+
+const displayLabel = computed(() => props.label ?? t('profile.aexBalance'));
 
 const formattedBalance = computed(() => {
   if (props.balance === null) return '0';

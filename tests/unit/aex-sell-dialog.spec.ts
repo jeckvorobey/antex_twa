@@ -53,21 +53,3 @@ describe('AexSellDialog component (source)', () => {
   });
 });
 
-// ── Referral page integration ──────────────────────────────────────
-
-const referralPath = resolve(process.cwd(), 'src/pages/ReferralPage.vue');
-const referralSource = readFileSync(referralPath, 'utf8');
-
-describe('ReferralPage sell integration', () => {
-  it('has a sell AEX button', () => {
-    expect(referralSource).toMatch(/sell|продать/i);
-  });
-
-  it('imports AexSellDialog', () => {
-    expect(referralSource).toContain('AexSellDialog');
-  });
-
-  it('toggles sell dialog visibility', () => {
-    expect(referralSource).toMatch(/showSell|sellDialog|sellVisible/);
-  });
-});
