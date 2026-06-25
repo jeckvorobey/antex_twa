@@ -2170,6 +2170,10 @@ body.body--light .q-page,
 
 // ── AEX profile card ────────────────────────────────────────────────
 
+.app-aex-balance-card {
+  padding: 16px;
+}
+
 .app-aex-balance-card--clickable {
   cursor: pointer;
   transition:
@@ -2205,6 +2209,10 @@ body.body--light .q-page,
 
 .app-screen--referral {
   gap: 16px;
+}
+
+.app-referral-balance-card {
+  margin-top: 8px;
 }
 
 .app-referral-reserved {
