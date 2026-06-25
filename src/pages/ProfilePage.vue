@@ -24,18 +24,12 @@
         </div>
       </div>
 
-      <AppSurface v-if="aexBalance !== null" class="app-profile-aex-card" @click="goToReferral">
-        <div class="row items-center no-wrap">
-          <div class="col">
-            <div class="app-profile-aex-card__label">{{ t('profile.aexBalance') }}</div>
-            <div class="app-profile-aex-card__value">
-              {{ formatAex(aexBalance) }}
-              <span class="app-profile-aex-card__currency">AEX</span>
-            </div>
-          </div>
-          <q-icon name="chevron_right" size="20px" class="app-profile-aex-card__chevron" />
-        </div>
-      </AppSurface>
+      <AexBalanceCard
+        v-if="aexBalance !== null"
+        :balance="aexBalance"
+        clickable
+        @click="goToReferral"
+      />
 
       <AppSurface class="app-profile-card">
         <AppInfoRow
@@ -69,6 +63,7 @@ import { computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 
+import AexBalanceCard from '@components/ui/AexBalanceCard.vue';
 import AppInfoRow from '@components/ui/AppInfoRow.vue';
 import AppSurface from '@components/ui/AppSurface.vue';
 import { useAexStore } from '@stores/aex.store';
@@ -80,7 +75,7 @@ const router = useRouter();
 const uiStore = useUiStore();
 const profileStore = useProfileStore();
 const aexStore = useAexStore();
-const { t, locale } = useI18n();
+const { t } = useI18n();
 
 const profilePhotoUrl = computed(() => profileStore.data?.user.photoUrl ?? null);
 
@@ -116,15 +111,5 @@ function handleMenu(item: MiniappMenuItem) {
 
 function goToReferral() {
   void router.push({ name: 'referral' });
-}
-
-function formatAex(value: number): string {
-  if (Number.isInteger(value)) {
-    return value.toLocaleString(locale.value);
-  }
-  return value.toLocaleString(locale.value, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
 }
 </script>

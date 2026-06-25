@@ -2170,34 +2170,34 @@ body.body--light .q-page,
 
 // ── AEX profile card ────────────────────────────────────────────────
 
-.app-profile-aex-card {
+.app-aex-balance-card--clickable {
   cursor: pointer;
   transition:
     box-shadow 0.2s ease,
     filter 0.2s ease;
 }
 
-.app-profile-aex-card__label {
+.app-aex-balance-card__label {
   font-size: 13px;
   color: var(--antex-text-muted);
   margin-bottom: 4px;
 }
 
-.app-profile-aex-card__value {
+.app-aex-balance-card__value {
   font-family: 'Montserrat', 'Inter', sans-serif;
   font-size: 22px;
   font-weight: 700;
   color: var(--antex-gold-light);
 }
 
-.app-profile-aex-card__currency {
+.app-aex-balance-card__currency {
   font-size: 14px;
   font-weight: 600;
   color: var(--antex-text-secondary);
   margin-left: 4px;
 }
 
-.app-profile-aex-card__chevron {
+.app-aex-balance-card__chevron {
   color: var(--antex-text-muted);
 }
 
@@ -2207,28 +2207,21 @@ body.body--light .q-page,
   gap: 16px;
 }
 
-.app-referral-balance {
-  text-align: center;
-  padding: 24px 16px;
-}
-
-.app-referral-balance__label {
+.app-referral-reserved {
   font-size: 13px;
   color: var(--antex-text-muted);
-  margin-bottom: 8px;
+  text-align: center;
 }
 
-.app-referral-balance__value {
-  font-family: 'Montserrat', 'Inter', sans-serif;
-  font-size: 36px;
-  font-weight: 800;
-  color: var(--antex-gold-light);
-  line-height: 1.1;
+.app-referral-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 
-.app-referral-balance__currency {
-  font-size: 18px;
-  font-weight: 600;
+.app-referral-meta__referrals {
+  font-size: 13px;
   color: var(--antex-text-secondary);
 }
 
@@ -2360,7 +2353,7 @@ body.body--light .q-page,
 }
 
 @media (hover: hover) {
-  .app-profile-aex-card:hover {
+  .app-aex-balance-card--clickable:hover {
     box-shadow:
       var(--antex-shadow-card),
       0 0 20px rgba(212, 175, 55, 0.16);
