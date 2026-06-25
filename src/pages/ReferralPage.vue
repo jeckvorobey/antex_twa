@@ -12,49 +12,32 @@
         {{ t('referral.reserved') }}: {{ formatAexAmount(reservedBalance) }} AEX
       </div>
 
-      <!-- Referral code card -->
-      <AppSurface padded class="app-referral-code-card">
-        <div class="app-referral-code-card__title">{{ t('referral.yourCode') }}</div>
-        <div class="app-referral-code-card__code-row">
-          <div class="app-referral-code-card__code">{{ referralCode }}</div>
-          <q-btn
-            round
-            flat
-            dense
-            icon="content_copy"
-            color="warning"
-            size="sm"
-            :aria-label="t('referral.copyCode')"
-            @click="copyCode"
-          />
+      <!-- Referral link card -->
+      <AppSurface padded class="app-referral-link-card">
+        <div class="app-referral-link-card__link-label text-caption text-grey-7 q-mb-xs">
+          {{ t('referral.referralLinkLabel') }}
         </div>
-
-        <div class="q-mt-md">
-          <div class="app-referral-code-card__link-label text-caption text-grey-7 q-mb-xs">
-            {{ t('referral.referralLinkLabel') }}
-          </div>
-          <q-input
-            :model-value="referralLink"
-            readonly
-            dense
-            outlined
-            color="warning"
-            class="app-referral-code-card__link-input"
-          >
-            <template #append>
-              <q-btn
-                round
-                flat
-                dense
-                icon="content_copy"
-                color="warning"
-                size="sm"
-                :aria-label="t('referral.copyLink')"
-                @click="copyLink"
-              />
-            </template>
-          </q-input>
-        </div>
+        <q-input
+          :model-value="referralLink"
+          readonly
+          dense
+          outlined
+          color="warning"
+          class="app-referral-link-card__link-input"
+        >
+          <template #append>
+            <q-btn
+              round
+              flat
+              dense
+              icon="content_copy"
+              color="warning"
+              size="sm"
+              :aria-label="t('referral.copyLink')"
+              @click="copyLink"
+            />
+          </template>
+        </q-input>
 
         <div class="q-mt-md">
           <AppButton block color="warning" icon="share" @click="shareLink">
@@ -264,10 +247,6 @@ async function loadMore(_: number, done: (stop?: boolean) => void) {
 async function refreshTx() {
   await aexStore.refreshTransactions();
   infiniteScrollRef.value?.resume();
-}
-
-function copyCode() {
-  void navigator.clipboard.writeText(referralCode.value);
 }
 
 function copyLink() {

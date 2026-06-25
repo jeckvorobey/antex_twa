@@ -2222,28 +2222,6 @@ body.body--light .q-page,
   text-align: center;
 }
 
-.app-referral-code-card__title {
-  font-size: 13px;
-  color: var(--antex-text-muted);
-  margin-bottom: 8px;
-}
-
-.app-referral-code-card__code-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.app-referral-code-card__code {
-  flex: 1 1 auto;
-  font-family: 'Montserrat', 'Inter', sans-serif;
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--antex-text-primary);
-  letter-spacing: 2px;
-  user-select: all;
-}
-
 // ── Referral instruction ──────────────────────────────────────────
 
 .app-referral-instruction__steps {
