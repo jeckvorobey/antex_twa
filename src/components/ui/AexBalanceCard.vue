@@ -1,14 +1,14 @@
 <template>
   <AppSurface class="app-aex-balance-card" :class="{ 'app-aex-balance-card--clickable': clickable }" @click="handleClick">
-    <div class="row items-center no-wrap">
-      <div class="col">
-        <div class="app-aex-balance-card__label">{{ t('profile.aexBalance') }}</div>
+    <div class="row items-center no-wrap justify-between">
+      <div class="app-aex-balance-card__label">{{ t('profile.aexBalance') }}</div>
+      <div class="row items-center no-wrap">
         <div class="app-aex-balance-card__value">
           {{ formattedBalance }}
           <span class="app-aex-balance-card__currency">AEX</span>
         </div>
+        <q-icon v-if="clickable" name="chevron_right" size="20px" class="app-aex-balance-card__chevron" />
       </div>
-      <q-icon v-if="clickable" name="chevron_right" size="20px" class="app-aex-balance-card__chevron" />
     </div>
   </AppSurface>
 </template>
