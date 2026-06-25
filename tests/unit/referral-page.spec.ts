@@ -13,16 +13,18 @@ describe('ReferralPage structure', () => {
     expect(referralSource).toContain(":label=\"t('referral.balanceLabel')\"");
   });
 
-  it('shows referral code with copy button', () => {
-    expect(referralSource).toContain("t('referral.yourCode')");
-    expect(referralSource).toContain('referralCode');
-    expect(referralSource).toContain('content_copy');
-    expect(referralSource).toContain('copyCode');
+  it('does not render a standalone referral code field', () => {
+    expect(referralSource).not.toContain("t('referral.yourCode')");
+    expect(referralSource).not.toContain('app-referral-code-card__code-row');
+    expect(referralSource).not.toContain('app-referral-code-card__code');
+    expect(referralSource).not.toContain('copyCode');
   });
 
-  it('has share and copy link buttons', () => {
+  it('keeps only referral link controls and the share button in the referral card', () => {
+    expect(referralSource).toContain('referralLink');
     expect(referralSource).toContain('shareLink');
     expect(referralSource).toContain('copyLink');
+    expect(referralSource).toContain("t('referral.referralLinkLabel')");
     expect(referralSource).toContain("t('referral.share')");
     expect(referralSource).toContain("t('referral.copyLink')");
   });
