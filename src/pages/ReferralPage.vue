@@ -7,20 +7,6 @@
       <div v-if="reservedBalance > 0" class="app-referral-reserved">
         {{ t('referral.reserved') }}: {{ formatAexAmount(reservedBalance) }} AEX
       </div>
-      <div class="app-referral-meta">
-        <div class="app-referral-meta__referrals">
-          {{ t('referral.directReferrals', { count: aexStore.totalReferrals }) }}
-        </div>
-        <AppButton
-          color="warning"
-          size="sm"
-          icon="sell"
-          :disable="availableBalance <= 0"
-          @click="showSellDialog = true"
-        >
-          {{ t('referral.sell') }}
-        </AppButton>
-      </div>
 
       <!-- Referral code card -->
       <AppSurface padded class="app-referral-code-card">
@@ -201,9 +187,6 @@
         </div>
       </div>
     </div>
-
-    <!-- Sell dialog -->
-    <AexSellDialog v-model="showSellDialog" @sold="onSold" />
   </q-page>
 </template>
 
@@ -215,7 +198,6 @@ import { Notify } from 'quasar';
 import AexBalanceCard from '@components/ui/AexBalanceCard.vue';
 import AppButton from '@components/ui/AppButton.vue';
 import AppSurface from '@components/ui/AppSurface.vue';
-import AexSellDialog from '@components/aex/AexSellDialog.vue';
 import { useAexStore } from '@stores/aex.store';
 import { useProfileStore } from '@stores/profile.store';
 import { formatMiniappTime } from '@utils/formatters';
@@ -226,7 +208,6 @@ const profileStore = useProfileStore();
 
 const infiniteScrollRef = ref<{ resume: () => void; stop: () => void } | null>(null);
 const txScrollRef = ref<HTMLElement | null>(null);
-const showSellDialog = ref(false);
 
 const BOT_USERNAME = import.meta.env.VITE_TELEGRAM_BOT_USERNAME as string;
 
@@ -279,11 +260,6 @@ async function loadMore(_: number, done: (stop?: boolean) => void) {
 async function refreshTx() {
   await aexStore.refreshTransactions();
   infiniteScrollRef.value?.resume();
-}
-
-function onSold() {
-  // Refresh transactions after a successful sell
-  void aexStore.refreshTransactions();
 }
 
 function copyCode() {

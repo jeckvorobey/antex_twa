@@ -2180,7 +2180,7 @@ body.body--light .q-page,
 .app-aex-balance-card__label {
   font-size: 13px;
   color: var(--antex-text-muted);
-  margin-bottom: 4px;
+  flex-shrink: 0;
 }
 
 .app-aex-balance-card__value {
@@ -2211,18 +2211,6 @@ body.body--light .q-page,
   font-size: 13px;
   color: var(--antex-text-muted);
   text-align: center;
-}
-
-.app-referral-meta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.app-referral-meta__referrals {
-  font-size: 13px;
-  color: var(--antex-text-secondary);
 }
 
 .app-referral-code-card__title {
