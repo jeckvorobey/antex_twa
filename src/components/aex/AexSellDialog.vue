@@ -125,8 +125,21 @@ const isValid = computed(
 onMounted(async () => {
   ordersLoading.value = true;
   try {
-    const response = await fetchOrders({ limit: 50, offset: 0 });
-    orders.value = response.items;
+    const allOrders: MiniappOrderItem[] = [];
+    let offset = 0;
+    let hasMore = true;
+
+    while (hasMore) {
+      const response = await fetchOrders({ limit: 50, offset });
+      allOrders.push(...response.items);
+      offset += response.items.length;
+      hasMore = response.hasMore;
+      if (response.items.length === 0) {
+        break;
+      }
+    }
+
+    orders.value = allOrders;
   } finally {
     ordersLoading.value = false;
   }
