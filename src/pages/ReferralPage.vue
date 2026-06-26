@@ -196,9 +196,6 @@ const profileStore = useProfileStore();
 const infiniteScrollRef = ref<{ resume: () => void; stop: () => void } | null>(null);
 const txScrollRef = ref<HTMLElement | null>(null);
 
-const BOT_USERNAME = import.meta.env.VITE_TELEGRAM_BOT_USERNAME as string;
-
-const referralCode = computed(() => aexStore.referralInfo?.referralCode ?? '...');
 const referrals = computed(() => aexStore.referralInfo?.referrals ?? []);
 
 const availableBalance = computed(() => aexStore.balance?.available ?? 0);
@@ -209,12 +206,7 @@ const reservedBalance = computed(() => {
   return Math.max(0, b.totalEarned - b.totalWithdrawn - b.available);
 });
 
-const referralLink = computed(() => {
-  if (!BOT_USERNAME || !referralCode.value || referralCode.value === '...') {
-    return '';
-  }
-  return `https://t.me/${BOT_USERNAME}?startapp=ref_${referralCode.value}`;
-});
+const referralLink = computed(() => aexStore.referralInfo?.referralLink ?? '');
 
 onMounted(async () => {
   const tasks: Promise<void>[] = [];

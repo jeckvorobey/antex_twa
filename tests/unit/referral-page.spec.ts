@@ -29,9 +29,10 @@ describe('ReferralPage structure', () => {
     expect(referralSource).toContain("t('referral.copyLink')");
   });
 
-  it('builds correct Telegram deep-link URL', () => {
-    expect(referralSource).toContain('startapp=ref_');
-    expect(referralSource).toContain('VITE_TELEGRAM_BOT_USERNAME');
+  it('uses the ready referral link returned by backend', () => {
+    expect(referralSource).toContain('const referralLink = computed(() => aexStore.referralInfo?.referralLink ?? \'\')');
+    expect(referralSource).not.toContain('startapp=ref_');
+    expect(referralSource).not.toContain('VITE_TELEGRAM_BOT_USERNAME');
   });
 
   it('renders instruction section with 3 steps', () => {
