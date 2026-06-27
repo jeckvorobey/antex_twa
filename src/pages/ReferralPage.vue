@@ -46,6 +46,27 @@
         </div>
       </AppSurface>
 
+      <!-- Referrals info block (moved above instruction) -->
+      <AppSurface padded class="app-referral-info-card">
+        <div class="app-referral-info-card__header">
+          <div class="app-referral-info-card__header-left">
+            <q-icon name="group_add" color="warning" size="22px" class="q-mr-sm" />
+            <span class="app-referral-info-card__title">{{ t('referral.invitedLabel') }}</span>
+          </div>
+          <span class="app-referral-info-card__count">{{ aexStore.totalReferrals }}</span>
+        </div>
+
+        <AppSurface v-if="aexStore.referralLoading" class="q-pa-md q-mt-sm">
+          <div class="row justify-center">
+            <q-spinner-dots color="warning" size="24px" />
+          </div>
+        </AppSurface>
+
+        <div v-else-if="aexStore.referralLoaded && aexStore.totalReferrals === 0" class="app-referral-info-card__empty q-mt-sm">
+          {{ t('referral.noReferrals') }}
+        </div>
+      </AppSurface>
+
       <!-- How it works instruction -->
       <AppSurface padded class="app-referral-instruction">
         <div class="text-weight-bold text-subtitle2 q-mb-sm">{{ t('referral.howItWorks') }}</div>
@@ -64,31 +85,6 @@
           </div>
         </div>
         <div class="text-caption text-grey-6 q-mt-sm">{{ t('referral.instructionReward') }}</div>
-      </AppSurface>
-
-      <!-- Referrals info block -->
-      <AppSurface padded class="app-referral-info-card">
-        <div class="app-referral-info-card__header">
-          <q-icon name="group_add" color="warning" size="22px" class="q-mr-sm" />
-          <span class="app-referral-info-card__title">{{ t('referral.invited', { count: aexStore.totalReferrals }) }}</span>
-        </div>
-
-        <AppSurface v-if="aexStore.referralLoading" class="q-pa-md q-mt-sm">
-          <div class="row justify-center">
-            <q-spinner-dots color="warning" size="24px" />
-          </div>
-        </AppSurface>
-
-        <div v-else-if="aexStore.totalReferrals > 0" class="app-referral-info-card__stats q-mt-sm">
-          <div class="app-referral-info-card__stat">
-            <div class="app-referral-info-card__stat-value">{{ aexStore.totalReferrals }}</div>
-            <div class="app-referral-info-card__stat-label">{{ t('referral.referralsCount') }}</div>
-          </div>
-        </div>
-
-        <div v-else-if="aexStore.referralLoaded" class="app-referral-info-card__empty q-mt-sm">
-          {{ t('referral.noReferrals') }}
-        </div>
       </AppSurface>
 
       <!-- Transaction history -->
@@ -116,10 +112,10 @@
             :disable="!aexStore.txHasMore || aexStore.txLoading || aexStore.txRefreshing"
             @load="loadMore"
           >
-            <template v-if="transactions.length">
+            <template v-if="aexStore.transactions.length">
               <AppSurface class="app-referral-tx-list">
                 <div
-                  v-for="tx in transactions"
+                  v-for="tx in aexStore.transactions"
                   :key="tx.id"
                   class="app-referral-tx-item"
                 >
