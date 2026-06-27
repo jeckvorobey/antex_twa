@@ -66,22 +66,30 @@
         <div class="text-caption text-grey-6 q-mt-sm">{{ t('referral.instructionReward') }}</div>
       </AppSurface>
 
-      <!-- Referrals summary -->
-      <div>
-        <div class="app-section-label q-mb-sm">
-          {{ t('referral.invited', { count: aexStore.totalReferrals }) }}
+      <!-- Referrals info block -->
+      <AppSurface padded class="app-referral-info-card">
+        <div class="app-referral-info-card__header">
+          <q-icon name="group_add" color="warning" size="22px" class="q-mr-sm" />
+          <span class="app-referral-info-card__title">{{ t('referral.invited', { count: aexStore.totalReferrals }) }}</span>
         </div>
 
-        <AppSurface v-if="aexStore.referralLoading" class="q-pa-md">
+        <AppSurface v-if="aexStore.referralLoading" class="q-pa-md q-mt-sm">
           <div class="row justify-center">
-            <q-spinner-dots color="warning" size="32px" />
+            <q-spinner-dots color="warning" size="24px" />
           </div>
         </AppSurface>
 
-        <AppSurface v-else-if="aexStore.referralLoaded && aexStore.totalReferrals === 0" class="q-pa-md">
-          <div class="app-empty-state">{{ t('referral.noReferrals') }}</div>
-        </AppSurface>
-      </div>
+        <div v-else-if="aexStore.totalReferrals > 0" class="app-referral-info-card__stats q-mt-sm">
+          <div class="app-referral-info-card__stat">
+            <div class="app-referral-info-card__stat-value">{{ aexStore.totalReferrals }}</div>
+            <div class="app-referral-info-card__stat-label">{{ t('referral.referralsCount') }}</div>
+          </div>
+        </div>
+
+        <div v-else-if="aexStore.referralLoaded" class="app-referral-info-card__empty q-mt-sm">
+          {{ t('referral.noReferrals') }}
+        </div>
+      </AppSurface>
 
       <!-- Transaction history -->
       <div>
@@ -168,17 +176,20 @@ import AexBalanceCard from '@components/ui/AexBalanceCard.vue';
 import AppButton from '@components/ui/AppButton.vue';
 import AppSurface from '@components/ui/AppSurface.vue';
 import { useAexStore } from '@stores/aex.store';
-import { useProfileStore } from '@stores/profile.store';
 import { formatMiniappTime } from '@utils/formatters';
 
 const { locale, t } = useI18n();
 const aexStore = useAexStore();
-const profileStore = useProfileStore();
 
 const infiniteScrollRef = ref<{ resume: () => void; stop: () => void } | null>(null);
 const txScrollRef = ref<HTMLElement | null>(null);
 
-const availableBalance = computed(() => aexStore.balance?.available ?? 0);
+const availableBalance = computed(() => {
+  const b = aexStore.balance;
+  if (!b) return 0;
+  // Show total unpaid balance (available + reserved)
+  return b.totalEarned;
+});
 
 const reservedBalance = computed(() => {
   const b = aexStore.balance;
@@ -199,16 +210,10 @@ onMounted(async () => {
     tasks.push(aexStore.loadFirstPage());
   }
 
-  if (!profileStore.loaded || !profileStore.data) {
-    tasks.push(profileStore.load());
-  }
+  // Load wallet balance directly from AEX API
+  tasks.push(aexStore.loadWallet());
 
   await Promise.all(tasks);
-
-  // Sync balance from profile if available
-  if (profileStore.data?.aex?.balance) {
-    aexStore.setBalance(profileStore.data.aex.balance);
-  }
 });
 
 async function loadMore(_: number, done: (stop?: boolean) => void) {

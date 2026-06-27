@@ -124,6 +124,7 @@ export default {
     },
     reserved: 'Зарезервировано',
     directReferrals: 'Прямых рефералов: {count}',
+    referralsCount: 'Прямых рефералов',
     linkCopied: 'Ссылка скопирована!',
     referralLinkLabel: 'Ваша реферальная ссылка',
     sell: 'Продать AEX',

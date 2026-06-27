@@ -2,6 +2,7 @@ import { api } from '@boot/axios';
 import type {
   AexReferralInfo,
   AexTransactionsResponse,
+  AexWalletOut,
   MiniappCitiesResponse,
   MiniappExchangeScreenResponse,
   MiniappHomeResponse,
@@ -64,5 +65,10 @@ export async function applyReferralCode(code: string) {
 
 export async function transferAex(payload: { orderId: number; amount: number }) {
   const response = await api.post<{ success: boolean }>('/api/miniapp/aex/transfer', payload);
+  return response.data;
+}
+
+export async function fetchAexWallet() {
+  const response = await api.get<AexWalletOut>('/api/aex/wallet');
   return response.data;
 }
