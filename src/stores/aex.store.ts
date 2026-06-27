@@ -4,6 +4,7 @@ import { computed, ref } from 'vue';
 import {
   fetchAexReferralInfo,
   fetchAexTransactions,
+  fetchAexWallet,
   transferAex,
 } from '@services/api/miniapp.service';
 import type {
@@ -55,6 +56,28 @@ export const useAexStore = defineStore('aex', () => {
 
   function setBalance(aexBalance: AexBalance) {
     balance.value = aexBalance;
+  }
+
+  // ── Wallet balance loader ────────────────────────────────────────
+
+  const walletLoading = ref(false);
+
+  async function loadWallet() {
+    if (walletLoading.value) {
+      return;
+    }
+
+    walletLoading.value = true;
+    try {
+      const wallet = await fetchAexWallet();
+      balance.value = {
+        available: parseFloat(wallet.balance_available),
+        totalEarned: parseFloat(wallet.balance_total),
+        totalWithdrawn: 0,
+      };
+    } finally {
+      walletLoading.value = false;
+    }
   }
 
   // ── Sell / Transfer ──────────────────────────────────────────────
@@ -158,6 +181,8 @@ export const useAexStore = defineStore('aex', () => {
     // balance
     balance,
     setBalance,
+    loadWallet,
+    walletLoading,
     // sell
     sellLoading,
     sellAex,

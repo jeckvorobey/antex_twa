@@ -248,3 +248,13 @@ export interface AexProfileSection {
   balance: AexBalance;
   referralCode: string;
 }
+
+export interface AexWalletOut {
+  id: number;
+  user_id: number;
+  balance_available: string;
+  balance_reserved: string;
+  balance_total: string;
+  createdAt: string;
+  updatedAt: string;
+}
