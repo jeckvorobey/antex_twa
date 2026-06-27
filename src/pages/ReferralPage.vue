@@ -66,31 +66,6 @@
         <div class="text-caption text-grey-6 q-mt-sm">{{ t('referral.instructionReward') }}</div>
       </AppSurface>
 
-      <!-- Referrals info block -->
-      <AppSurface padded class="app-referral-info-card">
-        <div class="app-referral-info-card__header">
-          <q-icon name="group_add" color="warning" size="22px" class="q-mr-sm" />
-          <span class="app-referral-info-card__title">{{ t('referral.invited', { count: aexStore.totalReferrals }) }}</span>
-        </div>
-
-        <AppSurface v-if="aexStore.referralLoading" class="q-pa-md q-mt-sm">
-          <div class="row justify-center">
-            <q-spinner-dots color="warning" size="24px" />
-          </div>
-        </AppSurface>
-
-        <div v-else-if="aexStore.totalReferrals > 0" class="app-referral-info-card__stats q-mt-sm">
-          <div class="app-referral-info-card__stat">
-            <div class="app-referral-info-card__stat-value">{{ aexStore.totalReferrals }}</div>
-            <div class="app-referral-info-card__stat-label">{{ t('referral.referralsCount') }}</div>
-          </div>
-        </div>
-
-        <div v-else-if="aexStore.referralLoaded" class="app-referral-info-card__empty q-mt-sm">
-          {{ t('referral.noReferrals') }}
-        </div>
-      </AppSurface>
-
       <!-- Transaction history -->
       <div>
         <div class="row items-center q-mb-sm">
@@ -163,6 +138,17 @@
           </q-infinite-scroll>
         </div>
       </div>
+
+      <!-- Referrals info block -->
+      <AppSurface padded class="app-referral-info-card">
+        <div class="row items-center justify-between">
+          <div class="row items-center">
+            <q-icon name="group_add" color="warning" size="22px" class="q-mr-sm" />
+            <span>{{ t('referral.invited', { count: aexStore.totalReferrals }) }}</span>
+          </div>
+          <span class="text-weight-bold">{{ aexStore.totalReferrals }}</span>
+        </div>
+      </AppSurface>
     </div>
   </q-page>
 </template>
