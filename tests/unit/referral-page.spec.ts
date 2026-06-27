@@ -44,11 +44,12 @@ describe('ReferralPage structure', () => {
     expect(referralSource).toContain('app-referral-instruction');
   });
 
-  it('shows referrals list with earned AEX', () => {
+  it('shows only total referrals summary without personal referral list', () => {
     expect(referralSource).toContain("t('referral.invited'");
-    expect(referralSource).toContain('referrals');
-    expect(referralSource).toContain('earnedAex');
-    expect(referralSource).toContain('displayName');
+    expect(referralSource).not.toContain('const referrals = computed');
+    expect(referralSource).not.toContain('earnedAex');
+    expect(referralSource).not.toContain('displayName');
+    expect(referralSource).not.toContain('joinedAt');
   });
 
   it('renders transaction history with infinite scroll', () => {

@@ -27,9 +27,6 @@ describe('AEX store', () => {
     const mockReferralInfo = {
       referralCode: 'ABC123',
       referralLink: 'https://t.me/bot?startapp=ref_ABC123',
-      referrals: [
-        { id: 1, displayName: 'User One', joinedAt: '2026-01-01T00:00:00Z', earnedAex: 10 },
-      ],
       totalReferrals: 1,
     };
     vi.mocked(fetchAexReferralInfo).mockResolvedValue(mockReferralInfo);

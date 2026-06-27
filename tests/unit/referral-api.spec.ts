@@ -37,19 +37,12 @@ describe('AEX types', () => {
     expect(typesSource).toContain('totalWithdrawn: number');
   });
 
-  it('defines AexReferralItem interface', () => {
-    expect(typesSource).toContain('interface AexReferralItem');
-    expect(typesSource).toContain('displayName: string');
-    expect(typesSource).toContain('joinedAt: string');
-    expect(typesSource).toContain('earnedAex: number');
-  });
-
   it('defines AexReferralInfo interface', () => {
     expect(typesSource).toContain('interface AexReferralInfo');
     expect(typesSource).toContain('referralCode: string');
     expect(typesSource).toContain('referralLink: string');
-    expect(typesSource).toContain('referrals: AexReferralItem[]');
     expect(typesSource).toContain('totalReferrals: number');
+    expect(typesSource).not.toContain('referrals: AexReferralItem[]');
   });
 
   it('defines AexTransactionItem with all operation types', () => {

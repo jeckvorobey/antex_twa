@@ -221,17 +221,9 @@ export interface AexBalance {
   totalWithdrawn: number;
 }
 
-export interface AexReferralItem {
-  id: number;
-  displayName: string;
-  joinedAt: string;
-  earnedAex: number;
-}
-
 export interface AexReferralInfo {
   referralCode: string;
   referralLink: string;
-  referrals: AexReferralItem[];
   totalReferrals: number;
 }
 
