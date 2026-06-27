@@ -66,7 +66,7 @@
         <div class="text-caption text-grey-6 q-mt-sm">{{ t('referral.instructionReward') }}</div>
       </AppSurface>
 
-      <!-- Referrals list -->
+      <!-- Referrals summary -->
       <div>
         <div class="app-section-label q-mb-sm">
           {{ t('referral.invited', { count: aexStore.totalReferrals }) }}
@@ -78,25 +78,7 @@
           </div>
         </AppSurface>
 
-        <template v-else-if="referrals.length">
-          <AppSurface class="app-referral-list">
-            <div
-              v-for="ref in referrals"
-              :key="ref.id"
-              class="app-referral-item"
-            >
-              <div class="app-referral-item__info">
-                <div class="app-referral-item__name">{{ ref.displayName }}</div>
-                <div class="app-referral-item__date">{{ formatDate(ref.joinedAt) }}</div>
-              </div>
-              <div class="app-referral-item__earned">
-                +{{ formatAexAmount(ref.earnedAex) }} AEX
-              </div>
-            </div>
-          </AppSurface>
-        </template>
-
-        <AppSurface v-else-if="aexStore.referralLoaded" class="q-pa-md">
+        <AppSurface v-else-if="aexStore.referralLoaded && aexStore.totalReferrals === 0" class="q-pa-md">
           <div class="app-empty-state">{{ t('referral.noReferrals') }}</div>
         </AppSurface>
       </div>
@@ -195,8 +177,6 @@ const profileStore = useProfileStore();
 
 const infiniteScrollRef = ref<{ resume: () => void; stop: () => void } | null>(null);
 const txScrollRef = ref<HTMLElement | null>(null);
-
-const referrals = computed(() => aexStore.referralInfo?.referrals ?? []);
 
 const availableBalance = computed(() => aexStore.balance?.available ?? 0);
 
