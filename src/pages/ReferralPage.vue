@@ -32,6 +32,31 @@
         <div class="text-caption text-grey-6 q-mt-sm">{{ t('referral.instructionReward') }}</div>
       </AppSurface>
 
+      <!-- Referrals info block -->
+      <AppSurface padded class="app-referral-info-card">
+        <div class="app-referral-info-card__header">
+          <q-icon name="group_add" color="warning" size="22px" class="q-mr-sm" />
+          <span class="app-referral-info-card__title">{{ t('referral.invited', { count: aexStore.totalReferrals }) }}</span>
+        </div>
+
+        <AppSurface v-if="aexStore.referralLoading" class="q-pa-md q-mt-sm">
+          <div class="row justify-center">
+            <q-spinner-dots color="warning" size="24px" />
+          </div>
+        </AppSurface>
+
+        <div v-else-if="aexStore.totalReferrals > 0" class="app-referral-info-card__stats q-mt-sm">
+          <div class="app-referral-info-card__stat">
+            <div class="app-referral-info-card__stat-value">{{ aexStore.totalReferrals }}</div>
+            <div class="app-referral-info-card__stat-label">{{ t('referral.referralsCount') }}</div>
+          </div>
+        </div>
+
+        <div v-else-if="aexStore.referralLoaded" class="app-referral-info-card__empty q-mt-sm">
+          {{ t('referral.noReferrals') }}
+        </div>
+      </AppSurface>
+
       <!-- Transaction history -->
       <div>
         <div class="row items-center q-mb-sm">
@@ -104,61 +129,6 @@
           </q-infinite-scroll>
         </div>
       </div>
-
-      <!-- Referral link card -->
-      <AppSurface padded class="app-referral-link-card">
-        <div class="app-referral-link-card__link-label text-caption text-grey-7 q-mb-xs">
-          {{ t('referral.referralLinkLabel') }}
-        </div>
-        <q-input
-          :model-value="referralLink"
-          readonly
-          dense
-          outlined
-          color="warning"
-          class="app-referral-link-card__link-input"
-        >
-          <template #append>
-            <q-btn
-              round
-              flat
-              dense
-              icon="content_copy"
-              color="warning"
-              size="sm"
-              :aria-label="t('referral.copyLink')"
-              @click="copyLink"
-            />
-          </template>
-        </q-input>
-
-        <div class="q-mt-md">
-          <AppButton block color="warning" icon="share" @click="shareLink">
-            {{ t('referral.share') }}
-          </AppButton>
-        </div>
-      </AppSurface>
-
-      <!-- Referrals info block -->
-      <AppSurface padded class="app-referral-info-card">
-        <div class="app-referral-info-card__header">
-          <div class="app-referral-info-card__header-left">
-            <q-icon name="group_add" color="warning" size="22px" class="q-mr-sm" />
-            <span class="app-referral-info-card__title">{{ t('referral.invitedLabel') }}</span>
-          </div>
-          <span class="app-referral-info-card__count">{{ aexStore.totalReferrals }}</span>
-        </div>
-
-        <AppSurface v-if="aexStore.referralLoading" class="q-pa-md q-mt-sm">
-          <div class="row justify-center">
-            <q-spinner-dots color="warning" size="24px" />
-          </div>
-        </AppSurface>
-
-        <div v-else-if="aexStore.referralLoaded && aexStore.totalReferrals === 0" class="app-referral-info-card__empty q-mt-sm">
-          {{ t('referral.noReferrals') }}
-        </div>
-      </AppSurface>
     </div>
   </q-page>
 </template>
