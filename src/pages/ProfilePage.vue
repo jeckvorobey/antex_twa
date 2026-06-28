@@ -24,13 +24,6 @@
         </div>
       </div>
 
-      <AexBalanceCard
-        v-if="aexBalance !== null"
-        :balance="aexBalance"
-        clickable
-        @click="goToReferral"
-      />
-
       <AppSurface class="app-profile-card">
         <AppInfoRow
           icon="group_add"
@@ -63,10 +56,8 @@ import { computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 
-import AexBalanceCard from '@components/ui/AexBalanceCard.vue';
 import AppInfoRow from '@components/ui/AppInfoRow.vue';
 import AppSurface from '@components/ui/AppSurface.vue';
-import { useAexStore } from '@stores/aex.store';
 import { useProfileStore } from '@stores/profile.store';
 import { useUiStore } from '@stores/ui.store';
 import type { MiniappMenuItem } from '@types/miniapp';
@@ -74,18 +65,9 @@ import type { MiniappMenuItem } from '@types/miniapp';
 const router = useRouter();
 const uiStore = useUiStore();
 const profileStore = useProfileStore();
-const aexStore = useAexStore();
 const { t } = useI18n();
 
 const profilePhotoUrl = computed(() => profileStore.data?.user.photoUrl ?? null);
-
-const aexBalance = computed(() => {
-  const fromStore = aexStore.balance?.available;
-  if (fromStore !== undefined && fromStore !== null) {
-    return fromStore;
-  }
-  return profileStore.data?.aex?.balance.available ?? null;
-});
 
 onMounted(async () => {
   if (!profileStore.loaded || !profileStore.data) {

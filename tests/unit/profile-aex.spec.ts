@@ -37,11 +37,13 @@ describe('AexBalanceCard shared component', () => {
 });
 
 describe('ProfilePage AEX integration', () => {
-  it('uses the shared AexBalanceCard instead of inline balance markup', () => {
-    expect(profileSource).toContain("import AexBalanceCard from '@components/ui/AexBalanceCard.vue'");
-    expect(profileSource).toContain('<AexBalanceCard');
-    expect(profileSource).toContain(':balance="aexBalance"');
+  it('does not render the AEX balance card on profile page anymore', () => {
+    expect(profileSource).not.toContain("import AexBalanceCard from '@components/ui/AexBalanceCard.vue'");
+    expect(profileSource).not.toContain('<AexBalanceCard');
+    expect(profileSource).not.toContain(':balance="aexBalance"');
     expect(profileSource).not.toContain('app-profile-aex-card');
+    expect(profileSource).not.toContain('useAexStore');
+    expect(profileSource).not.toContain('aexBalance');
   });
 
   it('navigates to referral page on card click', () => {
@@ -50,9 +52,10 @@ describe('ProfilePage AEX integration', () => {
     expect(profileSource).toContain("name: 'referral'");
   });
 
-  it('reads balance from both aexStore and profileStore', () => {
-    expect(profileSource).toContain('aexStore.balance');
-    expect(profileSource).toContain('profileStore.data?.aex?.balance');
+  it('keeps profile data and referral navigation only', () => {
+    expect(profileSource).toContain('profileStore.data?.user.displayName');
+    expect(profileSource).toContain('goToReferral');
+    expect(profileSource).not.toContain('profileStore.data?.aex?.balance');
   });
 });
 
