@@ -105,7 +105,7 @@ export default {
     copyCode: 'Копировать код',
     share: 'Поделиться',
     copyLink: 'Копировать ссылку',
-    invited: 'Приглашено: {count}',
+    invited: 'Приглашено пользователей:',
     noReferrals: 'Вы пока никого не пригласили.',
     history: 'История операций',
     refresh: 'Обновить',
