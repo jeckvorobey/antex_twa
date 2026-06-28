@@ -103,53 +103,6 @@
         </div>
       </AppSurface>
 
-      <AppSurface padded class="app-referral-earnings">
-        <div class="text-weight-bold text-subtitle2">{{ t('referral.earningsTitle') }}</div>
-        <div class="text-caption text-grey-6 q-mt-xs q-mb-sm">
-          {{ t('referral.earningsSubtitle') }}
-        </div>
-
-        <q-markup-table flat dense class="app-referral-earnings-table gt-xs">
-          <thead>
-            <tr>
-              <th class="text-left">{{ t('referral.earnings.exchangeCount') }}</th>
-              <th class="text-left">{{ t('referral.earnings.averageCheck') }}</th>
-              <th class="text-right">{{ t('referral.earnings.reward') }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="row in earningsRows" :key="row.exchangeCount">
-              <td>{{ row.exchangeCount }}</td>
-              <td>{{ formatCurrency(row.averageCheck) }}</td>
-              <td class="text-right text-warning text-weight-bold">
-                {{ formatAexAmount(row.reward) }} AEX
-              </td>
-            </tr>
-          </tbody>
-        </q-markup-table>
-
-        <div class="lt-sm q-gutter-sm">
-          <div
-            v-for="row in earningsRows"
-            :key="row.exchangeCount"
-            class="app-referral-earnings-card q-pa-sm"
-          >
-            <div class="row items-center justify-between">
-              <span class="text-caption text-grey-6">{{ t('referral.earnings.exchangeCount') }}</span>
-              <span class="text-weight-medium">{{ row.exchangeCount }}</span>
-            </div>
-            <div class="row items-center justify-between q-mt-xs">
-              <span class="text-caption text-grey-6">{{ t('referral.earnings.averageCheck') }}</span>
-              <span>{{ formatCurrency(row.averageCheck) }}</span>
-            </div>
-            <div class="row items-center justify-between q-mt-xs">
-              <span class="text-caption text-grey-6">{{ t('referral.earnings.reward') }}</span>
-              <span class="text-warning text-weight-bold">{{ formatAexAmount(row.reward) }} AEX</span>
-            </div>
-          </div>
-        </div>
-      </AppSurface>
-
       <!-- Transaction history -->
       <div>
         <div class="row items-center q-mb-sm">
@@ -168,52 +121,51 @@
         </div>
 
         <div ref="txScrollRef" class="app-referral-tx-scroll">
+          <AppSurface v-if="transactions.length" class="app-referral-tx-list">
+            <div
+              v-for="tx in transactions"
+              :key="tx.id"
+              class="app-referral-tx-item"
+            >
+              <div class="app-referral-tx-item__info">
+                <div class="app-referral-tx-item__desc">
+                  <q-icon
+                    :name="txTypeIcon(tx.type)"
+                    :color="txTypeColor(tx.type)"
+                    size="16px"
+                    class="q-mr-xs"
+                  />
+                  {{ txTypeLabel(tx.type) }}
+                </div>
+                <div v-if="tx.description" class="app-referral-tx-item__detail">{{ tx.description }}</div>
+                <div class="app-referral-tx-item__date">{{ formatDate(tx.createdAt) }}</div>
+              </div>
+              <div
+                :class="[
+                  'app-referral-tx-item__amount',
+                  tx.amount >= 0 ? 'text-positive' : 'text-negative',
+                ]"
+              >
+                {{ tx.amount >= 0 ? '+' : '' }}{{ formatAexAmount(tx.amount) }}
+              </div>
+            </div>
+          </AppSurface>
+
+          <AppSurface
+            v-else-if="!aexStore.txLoading && aexStore.txLoaded"
+            class="q-pa-md"
+          >
+            <div class="app-empty-state">{{ t('referral.noTransactions') }}</div>
+          </AppSurface>
+
           <q-infinite-scroll
+            v-if="aexStore.txHasMore"
             ref="infiniteScrollRef"
             :scroll-target="txScrollRef"
             :offset="120"
-            :disable="!aexStore.txHasMore || aexStore.txLoading || aexStore.txRefreshing"
+            :disable="aexStore.txLoading || aexStore.txRefreshing"
             @load="loadMore"
           >
-            <template v-if="transactions.length">
-              <AppSurface class="app-referral-tx-list">
-                <div
-                  v-for="tx in transactions"
-                  :key="tx.id"
-                  class="app-referral-tx-item"
-                >
-                  <div class="app-referral-tx-item__info">
-                    <div class="app-referral-tx-item__desc">
-                      <q-icon
-                        :name="txTypeIcon(tx.type)"
-                        :color="txTypeColor(tx.type)"
-                        size="16px"
-                        class="q-mr-xs"
-                      />
-                      {{ txTypeLabel(tx.type) }}
-                    </div>
-                    <div v-if="tx.description" class="app-referral-tx-item__detail">{{ tx.description }}</div>
-                    <div class="app-referral-tx-item__date">{{ formatDate(tx.createdAt) }}</div>
-                  </div>
-                  <div
-                    :class="[
-                      'app-referral-tx-item__amount',
-                      tx.amount >= 0 ? 'text-positive' : 'text-negative',
-                    ]"
-                  >
-                    {{ tx.amount >= 0 ? '+' : '' }}{{ formatAexAmount(tx.amount) }}
-                  </div>
-                </div>
-              </AppSurface>
-            </template>
-
-            <AppSurface
-              v-else-if="!aexStore.txLoading && aexStore.txLoaded"
-              class="q-pa-md"
-            >
-              <div class="app-empty-state">{{ t('referral.noTransactions') }}</div>
-            </AppSurface>
-
             <template #loading>
               <div class="row justify-center q-my-md">
                 <q-spinner-dots color="warning" size="32px" />
@@ -248,11 +200,6 @@ const fallbackProgramConfig = {
   referralMaxWithdraw: null,
   aexRate: '0',
 };
-const earningsExamples = [
-  { exchangeCount: 5, averageCheck: 10000 },
-  { exchangeCount: 15, averageCheck: 25000 },
-  { exchangeCount: 30, averageCheck: 50000 },
-];
 
 const availableBalance = computed(() => {
   const b = aexStore.balance;
@@ -317,10 +264,6 @@ const instructionSteps = computed(() => [
     description: t('referral.instructionStep5Description'),
   },
 ]);
-const earningsRows = computed(() => earningsExamples.map((row) => ({
-  ...row,
-  reward: (row.exchangeCount * row.averageCheck * referralPercentValue.value) / 100,
-})));
 
 onMounted(async () => {
   const tasks: Promise<void>[] = [];
@@ -392,10 +335,6 @@ function parseDecimal(value: string | null): number {
 
 function formatPercent(value: number): string {
   return `${formatAexAmount(value)}%`;
-}
-
-function formatCurrency(value: number): string {
-  return `${value.toLocaleString(locale.value)} RUB`;
 }
 
 function txTypeLabel(type: string): string {

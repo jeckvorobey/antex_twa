@@ -57,13 +57,10 @@ describe('ReferralPage structure', () => {
     expect(referralSource).toContain("t('referral.noLimit')");
   });
 
-  it('renders dynamic earnings examples without hardcoded rate copy', () => {
-    expect(referralSource).toContain("t('referral.earningsTitle')");
-    expect(referralSource).toContain('earningsRows');
-    expect(referralSource).toContain('gt-xs');
-    expect(referralSource).toContain('lt-sm');
-    expect(referralSource).toContain('referralPercentValue');
-    expect(referralSource).not.toContain('0.2%');
+  it('does not render redundant earnings examples block', () => {
+    expect(referralSource).not.toContain("t('referral.earningsTitle')");
+    expect(referralSource).not.toContain('earningsRows');
+    expect(referralSource).not.toContain('app-referral-earnings');
   });
 
   it('shows only total referrals summary without personal referral list', () => {
@@ -86,6 +83,16 @@ describe('ReferralPage structure', () => {
     expect(referralSource).toContain("t('referral.history')");
     expect(referralSource).toContain('loadMore');
     expect(referralSource).toContain('txHasMore');
+  });
+
+  it('renders transaction list outside disabled infinite scroll wrapper', () => {
+    const listIndex = referralSource.indexOf('v-if="transactions.length"');
+    const infiniteIndex = referralSource.indexOf('<q-infinite-scroll');
+
+    expect(listIndex).toBeGreaterThan(-1);
+    expect(infiniteIndex).toBeGreaterThan(-1);
+    expect(listIndex).toBeLessThan(infiniteIndex);
+    expect(referralSource).toContain('v-if="aexStore.txHasMore"');
   });
 
   it('displays transaction type icons and labels', () => {

@@ -132,13 +132,6 @@ export default {
     },
     noLimit: 'Без ограничений',
     aexRateValue: '1 AEX = {rate} USDT',
-    earningsTitle: 'Сколько можно заработать',
-    earningsSubtitle: 'Расчёт зависит от ставки программы и среднего чека приглашённых пользователей.',
-    earnings: {
-      exchangeCount: 'Обменов',
-      averageCheck: 'Средний чек',
-      reward: 'Доход',
-    },
     txType: {
       referral_reward: 'Реферальное вознаграждение',
       withdrawal: 'Вывод',

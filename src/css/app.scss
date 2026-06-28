@@ -2257,8 +2257,7 @@ body.body--light .q-page,
 // ── Referral instruction ──────────────────────────────────────────
 
 .app-referral-step-card,
-.app-referral-term,
-.app-referral-earnings-card {
+.app-referral-term {
   min-height: 100%;
   border: 1px solid var(--antex-separator);
   border-radius: 12px;
@@ -2275,16 +2274,6 @@ body.body--light .q-page,
   font-size: 16px;
   font-weight: 700;
   color: var(--antex-gold-light);
-}
-
-.app-referral-earnings-table {
-  color: var(--antex-text-primary);
-  background: transparent;
-}
-
-.app-referral-earnings-table th,
-.app-referral-earnings-table td {
-  border-color: var(--antex-separator);
 }
 
 .app-referral-tx-item__detail {
