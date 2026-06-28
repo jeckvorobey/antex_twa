@@ -215,6 +215,7 @@ const reservedBalance = computed(() => {
 });
 
 const referralLink = computed(() => aexStore.referralInfo?.referralLink ?? '');
+const transactions = computed(() => aexStore.transactions ?? []);
 const programConfig = computed(() => aexStore.referralInfo?.programConfig ?? fallbackProgramConfig);
 const referralPercentValue = computed(() => parseDecimal(programConfig.value.referralPercent));
 const programTerms = computed(() => [
@@ -272,7 +273,7 @@ onMounted(async () => {
     tasks.push(aexStore.loadReferral());
   }
 
-  if (!aexStore.txLoaded || !aexStore.transactions.length) {
+  if (!aexStore.txLoaded || !transactions.value.length) {
     tasks.push(aexStore.loadFirstPage());
   }
 

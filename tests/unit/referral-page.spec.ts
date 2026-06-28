@@ -95,6 +95,12 @@ describe('ReferralPage structure', () => {
     expect(referralSource).toContain('v-if="aexStore.txHasMore"');
   });
 
+  it('defines a safe transactions computed for template rendering', () => {
+    expect(referralSource).toContain(
+      'const transactions = computed(() => aexStore.transactions ?? [])',
+    );
+  });
+
   it('displays transaction type icons and labels', () => {
     expect(referralSource).toContain('txTypeIcon');
     expect(referralSource).toContain('txTypeColor');
@@ -112,7 +118,7 @@ describe('ReferralPage structure', () => {
     expect(referralSource).toContain('onMounted');
     expect(referralSource).toContain('loadReferral');
     expect(referralSource).toContain('loadFirstPage');
-    expect(referralSource).toContain('!aexStore.txLoaded || !aexStore.transactions.length');
+    expect(referralSource).toContain('!aexStore.txLoaded || !transactions.value.length');
     expect(referralSource).toContain('Promise.all');
   });
 });

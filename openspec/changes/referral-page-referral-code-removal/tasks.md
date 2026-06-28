@@ -5,6 +5,7 @@
 - [ ] 1.3 Adjust spacing/layout after field removal
 - [ ] 1.4 Remove redundant earnings examples block
 - [ ] 1.5 Render loaded AEX transaction history outside infinite-scroll gating
+- [ ] 1.6 Guard ReferralPage transaction list against undefined template binding
 
 ## 2. Verification
 
