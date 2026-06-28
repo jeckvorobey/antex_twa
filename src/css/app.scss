@@ -2330,10 +2330,14 @@ body.body--light .q-page,
 .app-referral-tx-scroll {
   max-height: 400px;
   overflow-y: auto;
+  border-radius: var(--antex-radius-card);
 }
 
-.app-referral-tx-list {
+.app-referral-tx-list,
+.app-referral-tx-empty {
+  border-radius: var(--antex-radius-card);
   overflow: hidden;
+  background: var(--antex-bg-card);
 }
 
 .app-referral-tx-item {

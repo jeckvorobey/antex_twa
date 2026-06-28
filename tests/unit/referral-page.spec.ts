@@ -47,6 +47,12 @@ describe('ReferralPage structure', () => {
     expect(referralSource).toContain('app-referral-instruction');
   });
 
+  it('renders instruction card icon and title in one row', () => {
+    expect(referralSource).toContain('class="row items-center no-wrap"');
+    expect(referralSource).toContain('class="q-mr-sm"');
+    expect(referralSource).not.toContain('class="q-mt-sm text-weight-medium"');
+  });
+
   it('renders program terms from backend config', () => {
     expect(referralSource).toContain('programConfig');
     expect(referralSource).toContain("t('referral.termsTitle')");
@@ -83,6 +89,16 @@ describe('ReferralPage structure', () => {
     expect(referralSource).toContain("t('referral.history')");
     expect(referralSource).toContain('loadMore');
     expect(referralSource).toContain('txHasMore');
+  });
+
+  it('uses full transaction date-time on history cards', () => {
+    expect(referralSource).toContain('formatMiniappDateTime');
+    expect(referralSource).toContain('return formatMiniappDateTime(value, locale.value)');
+    expect(referralSource).not.toContain('return formatMiniappTime(value, locale.value)');
+  });
+
+  it('marks empty transaction state with referral history card class', () => {
+    expect(referralSource).toContain('app-referral-tx-empty');
   });
 
   it('renders transaction list outside disabled infinite scroll wrapper', () => {

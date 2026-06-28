@@ -83,8 +83,10 @@
             class="col-12 col-sm"
           >
             <div class="app-referral-step-card q-pa-sm">
-              <q-icon :name="step.icon" color="warning" size="22px" />
-              <div class="q-mt-sm text-weight-medium">{{ step.title }}</div>
+              <div class="row items-center no-wrap">
+                <q-icon :name="step.icon" color="warning" size="22px" class="q-mr-sm" />
+                <div class="text-weight-medium">{{ step.title }}</div>
+              </div>
               <div class="text-caption text-grey-6 q-mt-xs">{{ step.description }}</div>
             </div>
           </div>
@@ -153,7 +155,7 @@
 
           <AppSurface
             v-else-if="!aexStore.txLoading && aexStore.txLoaded"
-            class="q-pa-md"
+            class="app-referral-tx-empty q-pa-md"
           >
             <div class="app-empty-state">{{ t('referral.noTransactions') }}</div>
           </AppSurface>
@@ -187,7 +189,7 @@ import AexBalanceCard from '@components/ui/AexBalanceCard.vue';
 import AppButton from '@components/ui/AppButton.vue';
 import AppSurface from '@components/ui/AppSurface.vue';
 import { useAexStore } from '@stores/aex.store';
-import { formatMiniappTime } from '@utils/formatters';
+import { formatMiniappDateTime } from '@utils/formatters';
 
 const { locale, t } = useI18n();
 const aexStore = useAexStore();
@@ -316,7 +318,7 @@ function shareLink() {
 }
 
 function formatDate(value: string) {
-  return formatMiniappTime(value, locale.value);
+  return formatMiniappDateTime(value, locale.value);
 }
 
 function formatAexAmount(value: number): string {
