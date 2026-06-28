@@ -106,6 +106,7 @@ export default {
     share: 'Поделиться',
     copyLink: 'Копировать ссылку',
     invited: 'Приглашено: {count}',
+    invitedLabel: 'Приглашено пользователей',
     noReferrals: 'Вы пока никого не пригласили.',
     history: 'История операций',
     refresh: 'Обновить',
