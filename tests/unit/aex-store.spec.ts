@@ -28,6 +28,12 @@ describe('AEX store', () => {
       referralCode: 'ABC123',
       referralLink: 'https://t.me/bot?startapp=ref_ABC123',
       totalReferrals: 1,
+      programConfig: {
+        referralPercent: '0.35',
+        referralMinWithdraw: '250',
+        referralMaxWithdraw: null,
+        aexRate: '1',
+      },
     };
     vi.mocked(fetchAexReferralInfo).mockResolvedValue(mockReferralInfo);
 
@@ -38,6 +44,7 @@ describe('AEX store', () => {
     expect(store.referralLoaded).toBe(true);
     expect(store.referralLoading).toBe(false);
     expect(store.totalReferrals).toBe(1);
+    expect(store.referralInfo?.programConfig.referralPercent).toBe('0.35');
   });
 
   it('prevents duplicate referral loading', async () => {

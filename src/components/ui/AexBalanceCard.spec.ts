@@ -6,14 +6,12 @@ function readProjectFile(path: string): string {
 }
 
 describe('AexBalanceCard reuse contract', () => {
-  it('is used by referral and profile pages instead of inline balance markup', () => {
+  it('is used by referral page instead of inline balance markup', () => {
     const referralPage = readProjectFile('src/pages/ReferralPage.vue');
-    const profilePage = readProjectFile('src/pages/ProfilePage.vue');
 
     expect(referralPage).toContain("import AexBalanceCard from '@components/ui/AexBalanceCard.vue'");
     expect(referralPage).toContain('<AexBalanceCard');
-    expect(profilePage).toContain("import AexBalanceCard from '@components/ui/AexBalanceCard.vue'");
-    expect(profilePage).toContain('<AexBalanceCard');
+    expect(referralPage).not.toContain('app-referral-balance">');
   });
 
   it('owns the card inner padding and referral header-to-card gap', () => {

@@ -2256,17 +2256,35 @@ body.body--light .q-page,
 
 // ── Referral instruction ──────────────────────────────────────────
 
-.app-referral-instruction__steps {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+.app-referral-step-card,
+.app-referral-term,
+.app-referral-earnings-card {
+  min-height: 100%;
+  border: 1px solid var(--antex-separator);
+  border-radius: 12px;
+  background: var(--antex-gold-soft);
 }
 
-.app-referral-instruction__step {
-  display: flex;
-  align-items: center;
-  font-size: 14px;
-  color: var(--antex-text-secondary);
+.app-referral-step-card {
+  font-size: 13px;
+  color: var(--antex-text-primary);
+}
+
+.app-referral-term__value {
+  font-family: 'Montserrat', 'Inter', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--antex-gold-light);
+}
+
+.app-referral-earnings-table {
+  color: var(--antex-text-primary);
+  background: transparent;
+}
+
+.app-referral-earnings-table th,
+.app-referral-earnings-table td {
+  border-color: var(--antex-separator);
 }
 
 .app-referral-tx-item__detail {

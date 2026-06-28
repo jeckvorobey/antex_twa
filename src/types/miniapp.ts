@@ -221,10 +221,18 @@ export interface AexBalance {
   totalWithdrawn: number;
 }
 
+export interface AexReferralProgramConfig {
+  referralPercent: string;
+  referralMinWithdraw: string;
+  referralMaxWithdraw: string | null;
+  aexRate: string;
+}
+
 export interface AexReferralInfo {
   referralCode: string;
   referralLink: string;
   totalReferrals: number;
+  programConfig: AexReferralProgramConfig;
 }
 
 export interface AexTransactionItem {

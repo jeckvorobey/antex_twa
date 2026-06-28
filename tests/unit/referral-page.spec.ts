@@ -35,13 +35,35 @@ describe('ReferralPage structure', () => {
     expect(referralSource).not.toContain('VITE_TELEGRAM_BOT_USERNAME');
   });
 
-  it('renders instruction section with 3 steps', () => {
+  it('renders instruction section with 5 step cards', () => {
     expect(referralSource).toContain("t('referral.howItWorks')");
     expect(referralSource).toContain("t('referral.instructionStep1')");
     expect(referralSource).toContain("t('referral.instructionStep2')");
     expect(referralSource).toContain("t('referral.instructionStep3')");
-    expect(referralSource).toContain("t('referral.instructionReward')");
+    expect(referralSource).toContain("t('referral.instructionStep4')");
+    expect(referralSource).toContain("t('referral.instructionStep5')");
+    expect(referralSource).toContain('instructionSteps');
+    expect(referralSource).toContain('app-referral-step-card');
     expect(referralSource).toContain('app-referral-instruction');
+  });
+
+  it('renders program terms from backend config', () => {
+    expect(referralSource).toContain('programConfig');
+    expect(referralSource).toContain("t('referral.termsTitle')");
+    expect(referralSource).toContain("t('referral.terms.referralPercent')");
+    expect(referralSource).toContain("t('referral.terms.referralMinWithdraw')");
+    expect(referralSource).toContain("t('referral.terms.referralMaxWithdraw')");
+    expect(referralSource).toContain("t('referral.terms.aexRate')");
+    expect(referralSource).toContain("t('referral.noLimit')");
+  });
+
+  it('renders dynamic earnings examples without hardcoded rate copy', () => {
+    expect(referralSource).toContain("t('referral.earningsTitle')");
+    expect(referralSource).toContain('earningsRows');
+    expect(referralSource).toContain('gt-xs');
+    expect(referralSource).toContain('lt-sm');
+    expect(referralSource).toContain('referralPercentValue');
+    expect(referralSource).not.toContain('0.2%');
   });
 
   it('shows only total referrals summary without personal referral list', () => {

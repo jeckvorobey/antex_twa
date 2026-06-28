@@ -42,6 +42,12 @@ describe('AEX types', () => {
     expect(typesSource).toContain('referralCode: string');
     expect(typesSource).toContain('referralLink: string');
     expect(typesSource).toContain('totalReferrals: number');
+    expect(typesSource).toContain('interface AexReferralProgramConfig');
+    expect(typesSource).toContain('programConfig: AexReferralProgramConfig');
+    expect(typesSource).toContain('referralPercent: string');
+    expect(typesSource).toContain('referralMinWithdraw: string');
+    expect(typesSource).toContain('referralMaxWithdraw: string | null');
+    expect(typesSource).toContain('aexRate: string');
     expect(typesSource).not.toContain('referrals: AexReferralItem[]');
   });
 

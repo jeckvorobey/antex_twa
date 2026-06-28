@@ -76,21 +76,78 @@
       <!-- How it works instruction -->
       <AppSurface padded class="app-referral-instruction">
         <div class="text-weight-bold text-subtitle2 q-mb-sm">{{ t('referral.howItWorks') }}</div>
-        <div class="app-referral-instruction__steps">
-          <div class="app-referral-instruction__step">
-            <q-icon name="share" color="warning" size="20px" class="q-mr-sm" />
-            <span>{{ t('referral.instructionStep1') }}</span>
-          </div>
-          <div class="app-referral-instruction__step">
-            <q-icon name="person_add" color="warning" size="20px" class="q-mr-sm" />
-            <span>{{ t('referral.instructionStep2') }}</span>
-          </div>
-          <div class="app-referral-instruction__step">
-            <q-icon name="emoji_events" color="warning" size="20px" class="q-mr-sm" />
-            <span>{{ t('referral.instructionStep3') }}</span>
+        <div class="row q-col-gutter-sm">
+          <div
+            v-for="step in instructionSteps"
+            :key="step.title"
+            class="col-12 col-sm"
+          >
+            <div class="app-referral-step-card q-pa-sm">
+              <q-icon :name="step.icon" color="warning" size="22px" />
+              <div class="q-mt-sm text-weight-medium">{{ step.title }}</div>
+              <div class="text-caption text-grey-6 q-mt-xs">{{ step.description }}</div>
+            </div>
           </div>
         </div>
-        <div class="text-caption text-grey-6 q-mt-sm">{{ t('referral.instructionReward') }}</div>
+      </AppSurface>
+
+      <AppSurface padded class="app-referral-terms">
+        <div class="text-weight-bold text-subtitle2 q-mb-sm">{{ t('referral.termsTitle') }}</div>
+        <div class="row q-col-gutter-sm">
+          <div v-for="term in programTerms" :key="term.label" class="col-6">
+            <div class="app-referral-term q-pa-sm">
+              <div class="text-caption text-grey-6">{{ term.label }}</div>
+              <div class="app-referral-term__value q-mt-xs">{{ term.value }}</div>
+            </div>
+          </div>
+        </div>
+      </AppSurface>
+
+      <AppSurface padded class="app-referral-earnings">
+        <div class="text-weight-bold text-subtitle2">{{ t('referral.earningsTitle') }}</div>
+        <div class="text-caption text-grey-6 q-mt-xs q-mb-sm">
+          {{ t('referral.earningsSubtitle') }}
+        </div>
+
+        <q-markup-table flat dense class="app-referral-earnings-table gt-xs">
+          <thead>
+            <tr>
+              <th class="text-left">{{ t('referral.earnings.exchangeCount') }}</th>
+              <th class="text-left">{{ t('referral.earnings.averageCheck') }}</th>
+              <th class="text-right">{{ t('referral.earnings.reward') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="row in earningsRows" :key="row.exchangeCount">
+              <td>{{ row.exchangeCount }}</td>
+              <td>{{ formatCurrency(row.averageCheck) }}</td>
+              <td class="text-right text-warning text-weight-bold">
+                {{ formatAexAmount(row.reward) }} AEX
+              </td>
+            </tr>
+          </tbody>
+        </q-markup-table>
+
+        <div class="lt-sm q-gutter-sm">
+          <div
+            v-for="row in earningsRows"
+            :key="row.exchangeCount"
+            class="app-referral-earnings-card q-pa-sm"
+          >
+            <div class="row items-center justify-between">
+              <span class="text-caption text-grey-6">{{ t('referral.earnings.exchangeCount') }}</span>
+              <span class="text-weight-medium">{{ row.exchangeCount }}</span>
+            </div>
+            <div class="row items-center justify-between q-mt-xs">
+              <span class="text-caption text-grey-6">{{ t('referral.earnings.averageCheck') }}</span>
+              <span>{{ formatCurrency(row.averageCheck) }}</span>
+            </div>
+            <div class="row items-center justify-between q-mt-xs">
+              <span class="text-caption text-grey-6">{{ t('referral.earnings.reward') }}</span>
+              <span class="text-warning text-weight-bold">{{ formatAexAmount(row.reward) }} AEX</span>
+            </div>
+          </div>
+        </div>
       </AppSurface>
 
       <!-- Transaction history -->
@@ -185,6 +242,17 @@ const aexStore = useAexStore();
 
 const infiniteScrollRef = ref<{ resume: () => void; stop: () => void } | null>(null);
 const txScrollRef = ref<HTMLElement | null>(null);
+const fallbackProgramConfig = {
+  referralPercent: '0',
+  referralMinWithdraw: '0',
+  referralMaxWithdraw: null,
+  aexRate: '0',
+};
+const earningsExamples = [
+  { exchangeCount: 5, averageCheck: 10000 },
+  { exchangeCount: 15, averageCheck: 25000 },
+  { exchangeCount: 30, averageCheck: 50000 },
+];
 
 const availableBalance = computed(() => {
   const b = aexStore.balance;
@@ -200,6 +268,59 @@ const reservedBalance = computed(() => {
 });
 
 const referralLink = computed(() => aexStore.referralInfo?.referralLink ?? '');
+const programConfig = computed(() => aexStore.referralInfo?.programConfig ?? fallbackProgramConfig);
+const referralPercentValue = computed(() => parseDecimal(programConfig.value.referralPercent));
+const programTerms = computed(() => [
+  {
+    label: t('referral.terms.referralPercent'),
+    value: formatPercent(referralPercentValue.value),
+  },
+  {
+    label: t('referral.terms.referralMinWithdraw'),
+    value: `${formatAexAmount(parseDecimal(programConfig.value.referralMinWithdraw))} AEX`,
+  },
+  {
+    label: t('referral.terms.referralMaxWithdraw'),
+    value: programConfig.value.referralMaxWithdraw === null
+      ? t('referral.noLimit')
+      : `${formatAexAmount(parseDecimal(programConfig.value.referralMaxWithdraw))} AEX`,
+  },
+  {
+    label: t('referral.terms.aexRate'),
+    value: t('referral.aexRateValue', { rate: formatAexAmount(parseDecimal(programConfig.value.aexRate)) }),
+  },
+]);
+const instructionSteps = computed(() => [
+  {
+    icon: 'share',
+    title: t('referral.instructionStep1'),
+    description: t('referral.instructionStep1Description'),
+  },
+  {
+    icon: 'person_add',
+    title: t('referral.instructionStep2'),
+    description: t('referral.instructionStep2Description'),
+  },
+  {
+    icon: 'currency_exchange',
+    title: t('referral.instructionStep3'),
+    description: t('referral.instructionStep3Description'),
+  },
+  {
+    icon: 'card_giftcard',
+    title: t('referral.instructionStep4'),
+    description: t('referral.instructionStep4Description'),
+  },
+  {
+    icon: 'account_balance_wallet',
+    title: t('referral.instructionStep5'),
+    description: t('referral.instructionStep5Description'),
+  },
+]);
+const earningsRows = computed(() => earningsExamples.map((row) => ({
+  ...row,
+  reward: (row.exchangeCount * row.averageCheck * referralPercentValue.value) / 100,
+})));
 
 onMounted(async () => {
   const tasks: Promise<void>[] = [];
@@ -259,6 +380,22 @@ function formatAexAmount(value: number): string {
     return value.toLocaleString(locale.value);
   }
   return value.toLocaleString(locale.value, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function parseDecimal(value: string | null): number {
+  if (value === null) {
+    return 0;
+  }
+  const parsed = Number.parseFloat(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function formatPercent(value: number): string {
+  return `${formatAexAmount(value)}%`;
+}
+
+function formatCurrency(value: number): string {
+  return `${value.toLocaleString(locale.value)} RUB`;
 }
 
 function txTypeLabel(type: string): string {
