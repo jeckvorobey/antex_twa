@@ -48,9 +48,15 @@
 
       <!-- Referrals info block -->
       <AppSurface padded class="app-referral-info-card justify-between">
-        <div class="app-referral-info-card__header">
-          <q-icon name="group_add" color="warning" size="22px" class="q-mr-sm" />
-          <span class="app-referral-info-card__title">{{ t('referral.invited') }}</span>
+        <div class="app-referral-info-card__header row items-center justify-between no-wrap">
+          <div class="row items-center no-wrap">
+            <q-icon name="group_add" color="warning" size="22px" class="q-mr-sm" />
+            <span class="app-referral-info-card__title">{{ t('referral.invited') }}</span>
+          </div>
+
+          <div v-if="aexStore.totalReferrals > 0" class="app-referral-info-card__header-count">
+            {{ aexStore.totalReferrals }}
+          </div>
         </div>
 
         <AppSurface v-if="aexStore.referralLoading" class="q-pa-md q-mt-sm">
@@ -58,12 +64,6 @@
             <q-spinner-dots color="warning" size="24px" />
           </div>
         </AppSurface>
-
-        <div v-else-if="aexStore.totalReferrals > 0" class="app-referral-info-card__stats q-mt-sm">
-          <div class="app-referral-info-card__stat">
-            <div class="app-referral-info-card__stat-value">{{ aexStore.totalReferrals }}</div>
-          </div>
-        </div>
 
         <div v-else-if="aexStore.referralLoaded" class="app-referral-info-card__empty q-mt-sm">
           {{ t('referral.noReferrals') }}

@@ -2231,6 +2231,7 @@ body.body--light .q-page,
 .app-referral-info-card__header {
   display: flex;
   align-items: center;
+  gap: 12px;
 }
 
 .app-referral-info-card__title {
@@ -2239,28 +2240,12 @@ body.body--light .q-page,
   color: var(--antex-text-primary);
 }
 
-.app-referral-info-card__stats {
-  display: flex;
-  gap: 16px;
-}
-
-.app-referral-info-card__stat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.app-referral-info-card__stat-value {
+.app-referral-info-card__header-count {
   font-family: 'Montserrat', 'Inter', sans-serif;
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 700;
   color: var(--antex-gold-light);
-}
-
-.app-referral-info-card__stat-label {
-  font-size: 12px;
-  color: var(--antex-text-muted);
-  margin-top: 2px;
+  line-height: 1;
 }
 
 .app-referral-info-card__empty {
