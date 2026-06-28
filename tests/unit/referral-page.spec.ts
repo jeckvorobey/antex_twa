@@ -52,6 +52,12 @@ describe('ReferralPage structure', () => {
     expect(referralSource).not.toContain('joinedAt');
   });
 
+  it('renders total referrals inline with the invited header', () => {
+    expect(referralSource).toContain('app-referral-info-card__header-count');
+    expect(referralSource).toContain('justify-between');
+    expect(referralSource).not.toContain('app-referral-info-card__stats q-mt-sm');
+  });
+
   it('renders transaction history with infinite scroll', () => {
     expect(referralSource).toContain('<q-infinite-scroll');
     expect(referralSource).toContain("t('referral.history')");
