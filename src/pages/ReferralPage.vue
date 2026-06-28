@@ -12,6 +12,40 @@
         {{ t('referral.reserved') }}: {{ formatAexAmount(reservedBalance) }} AEX
       </div>
 
+      <!-- Referral link card -->
+      <AppSurface padded class="app-referral-link-card">
+        <div class="app-referral-link-card__link-label text-caption text-grey-7 q-mb-xs">
+          {{ t('referral.referralLinkLabel') }}
+        </div>
+        <q-input
+          :model-value="referralLink"
+          readonly
+          dense
+          outlined
+          color="warning"
+          class="app-referral-link-card__link-input"
+        >
+          <template #append>
+            <q-btn
+              round
+              flat
+              dense
+              icon="content_copy"
+              color="warning"
+              size="sm"
+              :aria-label="t('referral.copyLink')"
+              @click="copyLink"
+            />
+          </template>
+        </q-input>
+
+        <div class="q-mt-md">
+          <AppButton block color="warning" icon="share" @click="shareLink">
+            {{ t('referral.share') }}
+          </AppButton>
+        </div>
+      </AppSurface>
+
       <!-- How it works instruction -->
       <AppSurface padded class="app-referral-instruction">
         <div class="text-weight-bold text-subtitle2 q-mb-sm">{{ t('referral.howItWorks') }}</div>
@@ -82,10 +116,10 @@
             :disable="!aexStore.txHasMore || aexStore.txLoading || aexStore.txRefreshing"
             @load="loadMore"
           >
-            <template v-if="aexStore.transactions.length">
+            <template v-if="transactions.length">
               <AppSurface class="app-referral-tx-list">
                 <div
-                  v-for="tx in aexStore.transactions"
+                  v-for="tx in transactions"
                   :key="tx.id"
                   class="app-referral-tx-item"
                 >
