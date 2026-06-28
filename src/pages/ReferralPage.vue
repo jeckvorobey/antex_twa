@@ -12,61 +12,6 @@
         {{ t('referral.reserved') }}: {{ formatAexAmount(reservedBalance) }} AEX
       </div>
 
-      <!-- Referral link card -->
-      <AppSurface padded class="app-referral-link-card">
-        <div class="app-referral-link-card__link-label text-caption text-grey-7 q-mb-xs">
-          {{ t('referral.referralLinkLabel') }}
-        </div>
-        <q-input
-          :model-value="referralLink"
-          readonly
-          dense
-          outlined
-          color="warning"
-          class="app-referral-link-card__link-input"
-        >
-          <template #append>
-            <q-btn
-              round
-              flat
-              dense
-              icon="content_copy"
-              color="warning"
-              size="sm"
-              :aria-label="t('referral.copyLink')"
-              @click="copyLink"
-            />
-          </template>
-        </q-input>
-
-        <div class="q-mt-md">
-          <AppButton block color="warning" icon="share" @click="shareLink">
-            {{ t('referral.share') }}
-          </AppButton>
-        </div>
-      </AppSurface>
-
-      <!-- Referrals info block (moved above instruction) -->
-      <AppSurface padded class="app-referral-info-card">
-        <div class="app-referral-info-card__header">
-          <div class="app-referral-info-card__header-left">
-            <q-icon name="group_add" color="warning" size="22px" class="q-mr-sm" />
-            <span class="app-referral-info-card__title">{{ t('referral.invitedLabel') }}</span>
-          </div>
-          <span class="app-referral-info-card__count">{{ aexStore.totalReferrals }}</span>
-        </div>
-
-        <AppSurface v-if="aexStore.referralLoading" class="q-pa-md q-mt-sm">
-          <div class="row justify-center">
-            <q-spinner-dots color="warning" size="24px" />
-          </div>
-        </AppSurface>
-
-        <div v-else-if="aexStore.referralLoaded && aexStore.totalReferrals === 0" class="app-referral-info-card__empty q-mt-sm">
-          {{ t('referral.noReferrals') }}
-        </div>
-      </AppSurface>
-
       <!-- How it works instruction -->
       <AppSurface padded class="app-referral-instruction">
         <div class="text-weight-bold text-subtitle2 q-mb-sm">{{ t('referral.howItWorks') }}</div>
@@ -159,6 +104,61 @@
           </q-infinite-scroll>
         </div>
       </div>
+
+      <!-- Referral link card -->
+      <AppSurface padded class="app-referral-link-card">
+        <div class="app-referral-link-card__link-label text-caption text-grey-7 q-mb-xs">
+          {{ t('referral.referralLinkLabel') }}
+        </div>
+        <q-input
+          :model-value="referralLink"
+          readonly
+          dense
+          outlined
+          color="warning"
+          class="app-referral-link-card__link-input"
+        >
+          <template #append>
+            <q-btn
+              round
+              flat
+              dense
+              icon="content_copy"
+              color="warning"
+              size="sm"
+              :aria-label="t('referral.copyLink')"
+              @click="copyLink"
+            />
+          </template>
+        </q-input>
+
+        <div class="q-mt-md">
+          <AppButton block color="warning" icon="share" @click="shareLink">
+            {{ t('referral.share') }}
+          </AppButton>
+        </div>
+      </AppSurface>
+
+      <!-- Referrals info block -->
+      <AppSurface padded class="app-referral-info-card">
+        <div class="app-referral-info-card__header">
+          <div class="app-referral-info-card__header-left">
+            <q-icon name="group_add" color="warning" size="22px" class="q-mr-sm" />
+            <span class="app-referral-info-card__title">{{ t('referral.invitedLabel') }}</span>
+          </div>
+          <span class="app-referral-info-card__count">{{ aexStore.totalReferrals }}</span>
+        </div>
+
+        <AppSurface v-if="aexStore.referralLoading" class="q-pa-md q-mt-sm">
+          <div class="row justify-center">
+            <q-spinner-dots color="warning" size="24px" />
+          </div>
+        </AppSurface>
+
+        <div v-else-if="aexStore.referralLoaded && aexStore.totalReferrals === 0" class="app-referral-info-card__empty q-mt-sm">
+          {{ t('referral.noReferrals') }}
+        </div>
+      </AppSurface>
     </div>
   </q-page>
 </template>
