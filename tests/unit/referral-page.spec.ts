@@ -56,6 +56,7 @@ describe('ReferralPage structure', () => {
     expect(referralSource).toContain('app-referral-info-card__header-count');
     expect(referralSource).toContain('justify-between');
     expect(referralSource).not.toContain('app-referral-info-card__stats q-mt-sm');
+    expect(referralSource).toContain('aexStore.totalReferrals === 0');
   });
 
   it('renders transaction history with infinite scroll', () => {
@@ -82,6 +83,7 @@ describe('ReferralPage structure', () => {
     expect(referralSource).toContain('onMounted');
     expect(referralSource).toContain('loadReferral');
     expect(referralSource).toContain('loadFirstPage');
+    expect(referralSource).toContain('!aexStore.txLoaded || !aexStore.transactions.length');
     expect(referralSource).toContain('Promise.all');
   });
 });

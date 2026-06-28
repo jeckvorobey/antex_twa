@@ -65,7 +65,10 @@
           </div>
         </AppSurface>
 
-        <div v-else-if="aexStore.referralLoaded" class="app-referral-info-card__empty q-mt-sm">
+        <div
+          v-else-if="aexStore.referralLoaded && aexStore.totalReferrals === 0"
+          class="app-referral-info-card__empty q-mt-sm"
+        >
           {{ t('referral.noReferrals') }}
         </div>
       </AppSurface>
@@ -205,7 +208,7 @@ onMounted(async () => {
     tasks.push(aexStore.loadReferral());
   }
 
-  if (!aexStore.txLoaded) {
+  if (!aexStore.txLoaded || !aexStore.transactions.length) {
     tasks.push(aexStore.loadFirstPage());
   }
 
