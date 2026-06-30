@@ -22,13 +22,13 @@
               type="text"
               borderless
               dense
-              bottom-slots
               inputmode="decimal"
               input-class="text-right"
-              :error="!!amountSellError"
-              :error-message="amountSellError ?? undefined"
               @update:model-value="handleAmountSellInput"
             />
+          </div>
+          <div v-if="amountSellError" class="app-exchange-calculator__error">
+            {{ amountSellError }}
           </div>
         </div>
 
