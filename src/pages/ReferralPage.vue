@@ -201,6 +201,7 @@ const fallbackProgramConfig = {
   referralMinWithdraw: '0',
   referralMaxWithdraw: null,
   aexRate: '0',
+  aexWithdrawLimit: '0',
 };
 
 const availableBalance = computed(() => {
@@ -238,6 +239,10 @@ const programTerms = computed(() => [
   {
     label: t('referral.terms.aexRate'),
     value: t('referral.aexRateValue', { rate: formatAexAmount(parseDecimal(programConfig.value.aexRate)) }),
+  },
+  {
+    label: t('referral.terms.aexWithdrawLimit'),
+    value: `${formatAexAmount(parseDecimal(programConfig.value.aexWithdrawLimit))} AEX`,
   },
 ]);
 const instructionSteps = computed(() => [

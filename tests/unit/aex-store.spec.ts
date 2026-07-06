@@ -11,6 +11,8 @@ vi.mock('@boot/axios', () => ({
 vi.mock('@services/api/miniapp.service', () => ({
   fetchAexReferralInfo: vi.fn(),
   fetchAexTransactions: vi.fn(),
+  fetchAexWallet: vi.fn(),
+  transferAex: vi.fn(),
   applyReferralCode: vi.fn(),
 }));
 
@@ -33,6 +35,7 @@ describe('AEX store', () => {
         referralMinWithdraw: '250',
         referralMaxWithdraw: null,
         aexRate: '1',
+        aexWithdrawLimit: '100',
       },
     };
     vi.mocked(fetchAexReferralInfo).mockResolvedValue(mockReferralInfo);
@@ -45,6 +48,32 @@ describe('AEX store', () => {
     expect(store.referralLoading).toBe(false);
     expect(store.totalReferrals).toBe(1);
     expect(store.referralInfo?.programConfig.referralPercent).toBe('0.35');
+    expect(store.referralInfo?.programConfig.aexWithdrawLimit).toBe('100');
+  });
+
+  it('opens AEX currency only when available balance reaches withdraw limit', () => {
+    const store = useAexStore();
+
+    store.referralInfo = {
+      referralCode: 'ABC123',
+      referralLink: 'https://t.me/bot?startapp=ref_ABC123',
+      totalReferrals: 1,
+      programConfig: {
+        referralPercent: '0.35',
+        referralMinWithdraw: '250',
+        referralMaxWithdraw: null,
+        aexRate: '1.2',
+        aexWithdrawLimit: '100',
+      },
+    };
+    store.setBalance({ available: 99, totalEarned: 150, totalWithdrawn: 0 });
+
+    expect(store.isAexCurrencyAvailable).toBe(false);
+
+    store.setBalance({ available: 100, totalEarned: 150, totalWithdrawn: 0 });
+
+    expect(store.isAexCurrencyAvailable).toBe(true);
+    expect(store.aexRate).toBe(1.2);
   });
 
   it('prevents duplicate referral loading', async () => {

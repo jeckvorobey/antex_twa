@@ -48,6 +48,7 @@ describe('AEX types', () => {
     expect(typesSource).toContain('referralMinWithdraw: string');
     expect(typesSource).toContain('referralMaxWithdraw: string | null');
     expect(typesSource).toContain('aexRate: string');
+    expect(typesSource).toContain('aexWithdrawLimit: string');
     expect(typesSource).not.toContain('referrals: AexReferralItem[]');
   });
 

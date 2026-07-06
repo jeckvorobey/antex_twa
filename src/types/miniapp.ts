@@ -226,6 +226,7 @@ export interface AexReferralProgramConfig {
   referralMinWithdraw: string;
   referralMaxWithdraw: string | null;
   aexRate: string;
+  aexWithdrawLimit: string;
 }
 
 export interface AexReferralInfo {

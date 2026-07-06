@@ -35,6 +35,13 @@ export const useAexStore = defineStore('aex', () => {
   const txTotal = ref(0);
 
   const totalReferrals = computed(() => referralInfo.value?.totalReferrals ?? 0);
+  const aexRate = computed(() => parsePositiveDecimal(referralInfo.value?.programConfig.aexRate));
+  const aexWithdrawLimit = computed(() =>
+    parsePositiveDecimal(referralInfo.value?.programConfig.aexWithdrawLimit),
+  );
+  const isAexCurrencyAvailable = computed(
+    () => (balance.value?.available ?? 0) >= aexWithdrawLimit.value,
+  );
 
   // ── Referral actions ──────────────────────────────────────────────
 
@@ -171,12 +178,21 @@ export const useAexStore = defineStore('aex', () => {
     }
   }
 
+  /** Преобразует decimal-строки backend config в число с безопасным fallback. */
+  function parsePositiveDecimal(value: string | null | undefined) {
+    const parsed = Number(value ?? 0);
+    return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
+  }
+
   return {
     // referral
     referralInfo,
     referralLoading,
     referralLoaded,
     totalReferrals,
+    aexRate,
+    aexWithdrawLimit,
+    isAexCurrencyAvailable,
     loadReferral,
     // balance
     balance,

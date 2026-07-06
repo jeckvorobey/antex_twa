@@ -75,9 +75,10 @@ import AppSectionTitle from '@components/ui/AppSectionTitle.vue';
 import AppSurface from '@components/ui/AppSurface.vue';
 import AppWarningNotice from '@components/ui/AppWarningNotice.vue';
 import { getMinAmount } from '@constants/limits';
+import { useAexStore } from '@stores/aex.store';
 import { useExchangeStore } from '@stores/exchange.store';
 import { useOrdersStore } from '@stores/orders.store';
-import type { MiniappRateCard, MiniappReceiveMethod } from '@types/miniapp';
+import type { MiniappQuoteResponse, MiniappRateCard, MiniappReceiveMethod } from '@types/miniapp';
 import { getMiniappErrorMessageKey } from '@utils/api-errors';
 import { formatMiniappDateTime, formatReadableNumber } from '@utils/formatters';
 import {
@@ -92,6 +93,7 @@ import {
 } from '@utils/exchange';
 
 const router = useRouter();
+const aexStore = useAexStore();
 const exchangeStore = useExchangeStore();
 const ordersStore = useOrdersStore();
 const { locale, t } = useI18n();
@@ -105,25 +107,40 @@ const selectedMethod = ref<MiniappReceiveMethod>('qrcode');
 const selectedCityId = ref<number | null>(null);
 const amountSellTouched = ref(false);
 const syncingState = ref(false);
+const aexQuote = ref<MiniappQuoteResponse | null>(null);
 
-const sellOptions = computed(() =>
-  [
+const sellOptions = computed(() => {
+  const options = [
     ...new Set(
       (exchangeStore.screen?.pairs ?? []).map((pair) => pair.id.split('-')[0]?.toUpperCase()),
     ),
   ].map((currency) => ({
     label: currency,
     value: currency,
-  })),
-);
+  }));
 
-const buyOptions = computed(() =>
-  buildBuyCurrencyOptions(exchangeStore.screen?.pairs ?? [], selectedSellCurrency.value),
-);
+  if (aexStore.isAexCurrencyAvailable && !options.some((option) => option.value === 'AEX')) {
+    options.push({ label: t('exchange.aexCurrency'), value: 'AEX' });
+  }
 
-const countryOptions = computed(() =>
-  buildCountryOptions(exchangeStore.screen?.pairs ?? [], selectedSellCurrency.value),
-);
+  return options;
+});
+
+const buyOptions = computed(() => {
+  if (selectedSellCurrency.value === 'AEX') {
+    return [{ label: 'USDT', value: 'USDT' }];
+  }
+
+  return buildBuyCurrencyOptions(exchangeStore.screen?.pairs ?? [], selectedSellCurrency.value);
+});
+
+const countryOptions = computed(() => {
+  if (selectedSellCurrency.value === 'AEX') {
+    return [];
+  }
+
+  return buildCountryOptions(exchangeStore.screen?.pairs ?? [], selectedSellCurrency.value);
+});
 
 const cityOptions = computed(() => buildCityOptions(exchangeStore.cities, selectedCountry.value));
 
@@ -135,6 +152,7 @@ onMounted(async () => {
   } else {
     void exchangeStore.refresh();
   }
+  void loadAexCurrencyState();
 
   syncingState.value = true;
   selectedSellCurrency.value = exchangeStore.screen?.calculator.fromCurrency ?? 'RUB';
@@ -154,6 +172,15 @@ onMounted(async () => {
   amountBuy.value = exchangeStore.quote?.amountBuy ?? null;
   syncingState.value = false;
 });
+
+/** Загружает AEX program config и баланс для решения о показе внутренней валюты. */
+async function loadAexCurrencyState() {
+  try {
+    await Promise.all([aexStore.loadReferral(), aexStore.loadWallet()]);
+  } catch {
+    // Основной RUB/USDT сценарий не должен ломаться из-за AEX-информера.
+  }
+}
 
 const currentRateLabel = computed(() => {
   const quote = resolveCurrentQuote();
@@ -190,6 +217,17 @@ const canSubmit = computed(() => {
 });
 
 watch(selectedSellCurrency, () => {
+  if (selectedSellCurrency.value === 'AEX') {
+    syncingState.value = true;
+    selectedBuyCurrency.value = 'USDT';
+    selectedCountry.value = null;
+    selectedCityId.value = null;
+    amountSell.value = getDefaultAmountSell(selectedSellCurrency.value);
+    syncingState.value = false;
+    refreshQuoteForCurrentState();
+    return;
+  }
+
   const nextBuyCurrency = buyOptions.value[0]?.value ?? selectedBuyCurrency.value;
   if (!buyOptions.value.some((option) => option.value === selectedBuyCurrency.value)) {
     selectedBuyCurrency.value = nextBuyCurrency;
@@ -206,6 +244,12 @@ watch(selectedSellCurrency, () => {
 });
 
 watch(selectedBuyCurrency, (currencyBuy) => {
+  if (selectedSellCurrency.value === 'AEX') {
+    selectedCountry.value = null;
+    refreshQuoteForCurrentState();
+    return;
+  }
+
   selectedCountry.value = getCountryByCurrency(exchangeStore.screen?.pairs ?? [], currencyBuy);
   void refreshQuoteForCurrentState();
 });
@@ -282,9 +326,18 @@ function selectPair(pair: MiniappRateCard) {
 function refreshQuoteForCurrentState() {
   if (!amountSell.value || amountSell.value <= 0) {
     amountBuy.value = null;
+    aexQuote.value = null;
     return;
   }
 
+  if (selectedSellCurrency.value === 'AEX') {
+    const quote = buildAexUsdtQuote(amountSell.value);
+    aexQuote.value = quote;
+    amountBuy.value = quote?.amountBuy ?? null;
+    return;
+  }
+
+  aexQuote.value = null;
   const quote = exchangeStore.recalculateQuote({
     currencySell: selectedSellCurrency.value,
     currencyBuy: selectedBuyCurrency.value,
@@ -305,10 +358,21 @@ function refreshQuoteForCurrentState() {
 }
 
 function getDefaultAmountSell(currencySell: string) {
+  if (currencySell === 'AEX') {
+    return Math.min(
+      aexStore.balance?.available ?? aexStore.aexWithdrawLimit,
+      aexStore.aexWithdrawLimit || 100,
+    );
+  }
+
   return currencySell === 'USDT' ? 100 : 5000;
 }
 
 function resolveCurrentQuote() {
+  if (selectedSellCurrency.value === 'AEX') {
+    return aexQuote.value;
+  }
+
   const quote = exchangeStore.quote;
   if (
     !quote ||
@@ -319,6 +383,28 @@ function resolveCurrentQuote() {
   }
 
   return quote;
+}
+
+/** Собирает локальный AEX -> USDT quote по курсу programConfig.aexRate. */
+function buildAexUsdtQuote(amount: number): MiniappQuoteResponse | null {
+  if (!aexStore.aexRate || amount <= 0) {
+    return null;
+  }
+
+  const rate = aexStore.aexRate;
+  return {
+    currencySell: 'AEX',
+    currencyBuy: 'USDT',
+    amountSell: amount,
+    amountBuy: Number((amount * rate).toFixed(2)),
+    rate,
+    rateDisplay: rate.toFixed(2),
+    rateText: t('exchange.aexRateText', {
+      rate: formatReadableNumber(rate, locale.value),
+    }),
+    updatedAt: new Date().toISOString(), // время локального расчёта, не серверного курса
+    availableMethods: [],
+  };
 }
 
 async function submitOrder() {

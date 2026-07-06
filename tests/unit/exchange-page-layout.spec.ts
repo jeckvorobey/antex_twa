@@ -60,6 +60,17 @@ describe('ExchangePage responsive layout contract', () => {
     expect(pageSource).not.toContain("{{ t('exchange.receiveCurrency') }}");
   });
 
+  it('adds AEX sell option from AEX store and calculates USDT equivalent locally', () => {
+    const pageSource = readFileSync(exchangePagePath, 'utf8');
+
+    expect(pageSource).toContain("import { useAexStore } from '@stores/aex.store'");
+    expect(pageSource).toContain('const aexStore = useAexStore()');
+    expect(pageSource).toContain('aexStore.isAexCurrencyAvailable');
+    expect(pageSource).toContain("label: t('exchange.aexCurrency')");
+    expect(pageSource).toContain('buildAexUsdtQuote');
+    expect(pageSource).toContain("selectedSellCurrency.value === 'AEX'");
+  });
+
   it('uses readable text inputs for grouped large amounts', () => {
     const pageSource = readFileSync(exchangePagePath, 'utf8');
     const detailsSource = readFileSync(exchangeOrderDetailsPath, 'utf8');
