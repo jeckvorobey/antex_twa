@@ -61,6 +61,9 @@ describe('ReferralPage structure', () => {
     expect(referralSource).toContain("t('referral.terms.referralMaxWithdraw')");
     expect(referralSource).toContain("t('referral.terms.aexRate')");
     expect(referralSource).toContain("t('referral.noLimit')");
+    expect(referralSource).toContain('parseDecimal(programConfig.value.aexWithdrawLimit)');
+    expect(referralSource).not.toContain("t('referral.terms.aexWithdrawLimit')");
+    expect(referralSource).not.toContain('parseDecimal(programConfig.value.referralMinWithdraw)');
   });
 
   it('does not render redundant earnings examples block', () => {

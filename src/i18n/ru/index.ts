@@ -131,7 +131,6 @@ export default {
       referralMinWithdraw: 'Минимальный вывод',
       referralMaxWithdraw: 'Максимальный вывод',
       aexRate: 'Курс AEX',
-      aexWithdrawLimit: 'Лимит вывода AEX',
     },
     noLimit: 'Без ограничений',
     aexRateValue: '1 AEX = {rate} USDT',

@@ -228,7 +228,7 @@ const programTerms = computed(() => [
   },
   {
     label: t('referral.terms.referralMinWithdraw'),
-    value: `${formatAexAmount(parseDecimal(programConfig.value.referralMinWithdraw))} AEX`,
+    value: `${formatAexAmount(parseDecimal(programConfig.value.aexWithdrawLimit))} AEX`,
   },
   {
     label: t('referral.terms.referralMaxWithdraw'),
@@ -239,10 +239,6 @@ const programTerms = computed(() => [
   {
     label: t('referral.terms.aexRate'),
     value: t('referral.aexRateValue', { rate: formatAexAmount(parseDecimal(programConfig.value.aexRate)) }),
-  },
-  {
-    label: t('referral.terms.aexWithdrawLimit'),
-    value: `${formatAexAmount(parseDecimal(programConfig.value.aexWithdrawLimit))} AEX`,
   },
 ]);
 const instructionSteps = computed(() => [
