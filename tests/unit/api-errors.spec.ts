@@ -10,6 +10,12 @@ describe('miniapp api errors', () => {
       'errors.city_manager_missing',
     );
     expect(getMiniappErrorMessageKey('ORDER_ALREADY_EXISTS')).toBe('errors.order_exists');
+    expect(getMiniappErrorMessageKey('AEX_INSUFFICIENT_BALANCE')).toBe(
+      'errors.aex_insufficient_balance',
+    );
+    expect(getMiniappErrorMessageKey('AEX_WITHDRAW_LIMIT_NOT_REACHED')).toBe(
+      'errors.aex_withdraw_limit_not_reached',
+    );
   });
 
   it('falls back to generic key for unknown or missing codes', () => {
