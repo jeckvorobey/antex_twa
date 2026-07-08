@@ -44,7 +44,7 @@ describe('transferAex API function (source)', () => {
 
 // ── Store-level checks ─────────────────────────────────────────────
 
-describe('AEX store transfer action', () => {
+describe('ATXG store transfer action', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     vi.clearAllMocks();

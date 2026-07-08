@@ -52,7 +52,12 @@ export type PreliminaryOrderValidationResult =
   | { valid: true }
   | { valid: false; messageKey: string; params?: Record<string, string | number> };
 
-const AEX_QUOTE_BASE_CURRENCY = 'USDT';
+export const TOKEN_CURRENCY = 'ATXG';
+const TOKEN_QUOTE_BASE_CURRENCY = 'USDT';
+
+export function isTokenCurrency(currency: string) {
+  return currency.toUpperCase() === TOKEN_CURRENCY;
+}
 
 /**
  * Возвращает canonical sell/buy из pair id `rub-thb`.
@@ -93,13 +98,13 @@ function normalizeCountryKey(value: unknown): string {
 export function buildBuyCurrencyOptions(pairs: ExchangePairLike[], currencySell: string) {
   const normalizedSellCurrency = currencySell.toUpperCase();
   const quoteBaseCurrency =
-    normalizedSellCurrency === 'AEX' ? AEX_QUOTE_BASE_CURRENCY : normalizedSellCurrency;
+    isTokenCurrency(normalizedSellCurrency) ? TOKEN_QUOTE_BASE_CURRENCY : normalizedSellCurrency;
 
   return pairs
     .map((pair) => parsePairId(pair.id))
     .filter((pair) => pair.currencySell === quoteBaseCurrency)
     .map((pair) => pair.currencyBuy)
-    .filter((buy) => normalizedSellCurrency !== 'AEX' || buy !== AEX_QUOTE_BASE_CURRENCY)
+    .filter((buy) => !isTokenCurrency(normalizedSellCurrency) || buy !== TOKEN_QUOTE_BASE_CURRENCY)
     .filter((buy, index, items) => items.indexOf(buy) === index)
     .map((currency) => ({ label: currency, value: currency }));
 }
@@ -207,7 +212,7 @@ export function calculateLocalQuote(params: LocalQuoteParams): MiniappQuoteRespo
   const normalizedSellCurrency = params.currencySell.toUpperCase();
   const normalizedBuyCurrency = params.currencyBuy.toUpperCase();
   const quoteBaseCurrency =
-    normalizedSellCurrency === 'AEX' ? AEX_QUOTE_BASE_CURRENCY : normalizedSellCurrency;
+    isTokenCurrency(normalizedSellCurrency) ? TOKEN_QUOTE_BASE_CURRENCY : normalizedSellCurrency;
 
   const pair = params.pairs.find((item) => {
     const parsed = parsePairId(item.id);

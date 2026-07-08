@@ -7,8 +7,8 @@ const MINIAPP_ERROR_KEYS: Record<string, string> = {
   TRUSTED_CONTACT_NOT_READY: 'errors.trusted_contact_not_ready',
   CITY_REQUIRED_FOR_CASH: 'errors.city_required',
   MIN_AMOUNT: 'errors.min_amount',
-  AEX_INSUFFICIENT_BALANCE: 'errors.aex_insufficient_balance',
-  AEX_WITHDRAW_LIMIT_NOT_REACHED: 'errors.aex_withdraw_limit_not_reached',
+  ATXG_INSUFFICIENT_BALANCE: 'errors.aex_insufficient_balance',
+  ATXG_WITHDRAW_LIMIT_NOT_REACHED: 'errors.aex_withdraw_limit_not_reached',
 };
 
 /**

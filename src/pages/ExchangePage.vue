@@ -89,7 +89,9 @@ import {
   getCountryByCurrency,
   getCurrencyByCountry,
   getPreferredReceiveMethod,
+  isTokenCurrency,
   resetCityForMethod,
+  TOKEN_CURRENCY,
   validatePreliminaryOrderDraft,
 } from '@utils/exchange';
 
@@ -120,8 +122,11 @@ const sellOptions = computed(() => {
     value: currency,
   }));
 
-  if (aexStore.isAexCurrencyAvailable && !options.some((option) => option.value === 'AEX')) {
-    options.push({ label: t('exchange.aexCurrency'), value: 'AEX' });
+  if (
+    aexStore.isAexCurrencyAvailable &&
+    !options.some((option) => option.value === TOKEN_CURRENCY)
+  ) {
+    options.push({ label: t('exchange.aexCurrency'), value: TOKEN_CURRENCY });
   }
 
   return options;
@@ -166,12 +171,12 @@ onMounted(async () => {
   syncingState.value = false;
 });
 
-/** Загружает AEX program config и баланс для решения о показе внутренней валюты. */
+/** Загружает program config и баланс для решения о показе внутреннего токена. */
 async function loadAexCurrencyState() {
   try {
     await Promise.all([aexStore.loadReferral(), aexStore.loadWallet()]);
   } catch {
-    // Основной RUB/USDT сценарий не должен ломаться из-за AEX-информера.
+    // Основной RUB/USDT сценарий не должен ломаться из-за token-информера.
   }
 }
 
@@ -306,7 +311,7 @@ function refreshQuoteForCurrentState() {
     return;
   }
 
-  if (selectedSellCurrency.value === 'AEX') {
+  if (isTokenCurrency(selectedSellCurrency.value)) {
     const quote = calculateLocalQuote({
       pairs: exchangeStore.screen?.pairs ?? [],
       currencySell: selectedSellCurrency.value,
@@ -339,7 +344,7 @@ function refreshQuoteForCurrentState() {
 }
 
 function getDefaultAmountSell(currencySell: string) {
-  if (currencySell === 'AEX') {
+  if (isTokenCurrency(currencySell)) {
     return aexStore.aexWithdrawLimit || 100;
   }
 
@@ -347,7 +352,7 @@ function getDefaultAmountSell(currencySell: string) {
 }
 
 function resolveCurrentQuote() {
-  if (selectedSellCurrency.value === 'AEX') {
+  if (isTokenCurrency(selectedSellCurrency.value)) {
     return aexQuote.value;
   }
 

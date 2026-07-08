@@ -39,8 +39,8 @@ describe('buildBuyCurrencyOptions', () => {
     ]);
   });
 
-  it('builds AEX buy options from USDT-based target pairs without exposing USDT', () => {
-    expect(buildBuyCurrencyOptions(pairs, 'AEX')).toEqual([
+  it('builds ATXG buy options from USDT-based target pairs without exposing USDT', () => {
+    expect(buildBuyCurrencyOptions(pairs, 'ATXG')).toEqual([
       { label: 'THB', value: 'THB' },
       { label: 'VND', value: 'VND' },
       { label: 'GEL', value: 'GEL' },
@@ -116,16 +116,16 @@ describe('calculateLocalQuote', () => {
     ).toBeNull();
   });
 
-  it('calculates AEX receive amount through the selected USDT-based target pair', () => {
+  it('calculates ATXG receive amount through the selected USDT-based target pair', () => {
     expect(
       calculateLocalQuote({
         pairs,
-        currencySell: 'AEX',
+        currencySell: 'ATXG',
         currencyBuy: 'THB',
         amountSell: 100,
       }),
     ).toMatchObject({
-      currencySell: 'AEX',
+      currencySell: 'ATXG',
       currencyBuy: 'THB',
       amountSell: 100,
       amountBuy: 3550,
@@ -389,14 +389,14 @@ describe('validatePreliminaryOrderDraft', () => {
     ).toEqual({ valid: true });
   });
 
-  it('accepts AEX drafts for local target currencies using the selected country rules', () => {
+  it('accepts ATXG drafts for local target currencies using the selected country rules', () => {
     expect(
       validatePreliminaryOrderDraft({
         pairs,
         cities,
-        currencySell: 'AEX',
+        currencySell: 'ATXG',
         currencyBuy: 'THB',
-        amountSell: 100,
+        amountSell: 400,
         selectedCountry: 'thailand',
         selectedMethod: 'qrcode',
         selectedCityId: null,

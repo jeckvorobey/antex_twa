@@ -1,6 +1,7 @@
 import { api } from '@boot/axios';
 import type {
   AexReferralInfo,
+  AexReferralsResponse,
   AexTransactionsResponse,
   AexWalletOut,
   MiniappCitiesResponse,
@@ -42,7 +43,7 @@ export async function fetchProfile() {
   return response.data;
 }
 
-// ── AEX referral & transactions ─────────────────────────────────────
+// ── ATXG referral & transactions ────────────────────────────────────
 
 export async function fetchAexReferralInfo() {
   const response = await api.get<AexReferralInfo>('/api/miniapp/aex/referral');
@@ -51,6 +52,13 @@ export async function fetchAexReferralInfo() {
 
 export async function fetchAexTransactions(params: { limit?: number; offset?: number } = {}) {
   const response = await api.get<AexTransactionsResponse>('/api/miniapp/aex/transactions', {
+    params,
+  });
+  return response.data;
+}
+
+export async function fetchAexReferrals(params: { limit?: number; offset?: number } = {}) {
+  const response = await api.get<AexReferralsResponse>('/api/miniapp/aex/referrals', {
     params,
   });
   return response.data;

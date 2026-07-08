@@ -1,7 +1,6 @@
 <template>
   <q-page class="app-page">
     <div class="app-screen app-screen--referral">
-      <!-- Balance hero -->
       <AexBalanceCard
         class="app-referral-balance-card"
         :balance="availableBalance"
@@ -9,10 +8,9 @@
       />
 
       <div v-if="reservedBalance > 0" class="app-referral-reserved">
-        {{ t('referral.reserved') }}: {{ formatAexAmount(reservedBalance) }} AEX
+        {{ t('referral.reserved') }}: {{ formatTokenAmount(reservedBalance) }} ATXG
       </div>
 
-      <!-- Referral link card -->
       <AppSurface padded class="app-referral-link-card">
         <div class="app-referral-link-card__link-label text-caption text-grey-7 q-mb-xs">
           {{ t('referral.referralLinkLabel') }}
@@ -46,7 +44,6 @@
         </div>
       </AppSurface>
 
-      <!-- Referrals info block -->
       <AppSurface padded class="app-referral-info-card justify-between">
         <div class="app-referral-info-card__header row items-center justify-between no-wrap">
           <div class="row items-center no-wrap">
@@ -73,21 +70,27 @@
         </div>
       </AppSurface>
 
-      <!-- How it works instruction -->
       <AppSurface padded class="app-referral-instruction">
         <div class="text-weight-bold text-subtitle2 q-mb-sm">{{ t('referral.howItWorks') }}</div>
         <div class="row q-col-gutter-sm">
-          <div
-            v-for="step in instructionSteps"
-            :key="step.title"
-            class="col-12 col-sm"
-          >
+          <div v-for="step in instructionSteps" :key="step.title" class="col-12 col-sm">
             <div class="app-referral-step-card q-pa-sm">
               <div class="row items-center no-wrap">
                 <q-icon :name="step.icon" color="warning" size="22px" class="q-mr-sm" />
                 <div class="text-weight-medium">{{ step.title }}</div>
               </div>
-              <div class="text-caption text-grey-6 q-mt-xs">{{ step.description }}</div>
+              <div class="text-caption text-grey-6 q-mt-xs">
+                <template v-if="step.exchangeLink">
+                  {{ t('referral.instructionStep5DescriptionPrefix') }}
+                  <router-link :to="{ name: 'exchange' }" class="text-warning">
+                    {{ t('referral.instructionStep5ExchangeLink') }}
+                  </router-link>
+                  {{ t('referral.instructionStep5DescriptionSuffix') }}
+                </template>
+                <template v-else>
+                  {{ step.description }}
+                </template>
+              </div>
             </div>
           </div>
         </div>
@@ -105,97 +108,40 @@
         </div>
       </AppSurface>
 
-      <!-- Transaction history -->
-      <div>
-        <div class="row items-center q-mb-sm">
-          <div class="app-section-label col">{{ t('referral.history') }}</div>
-          <q-btn
-            round
-            flat
-            dense
-            icon="refresh"
-            color="warning"
-            size="sm"
-            :aria-label="t('referral.refresh')"
-            :loading="aexStore.txRefreshing"
-            @click="refreshTx"
-          />
-        </div>
-
-        <div ref="txScrollRef" class="app-referral-tx-scroll">
-          <AppSurface v-if="transactions.length" class="app-referral-tx-list">
-            <div
-              v-for="tx in transactions"
-              :key="tx.id"
-              class="app-referral-tx-item"
-            >
-              <div class="app-referral-tx-item__info">
-                <div class="app-referral-tx-item__desc">
-                  <q-icon
-                    :name="txTypeIcon(tx.type)"
-                    :color="txTypeColor(tx.type)"
-                    size="16px"
-                    class="q-mr-xs"
-                  />
-                  {{ txTypeLabel(tx.type) }}
-                </div>
-                <div v-if="tx.description" class="app-referral-tx-item__detail">{{ tx.description }}</div>
-                <div class="app-referral-tx-item__date">{{ formatDate(tx.createdAt) }}</div>
-              </div>
-              <div
-                :class="[
-                  'app-referral-tx-item__amount',
-                  tx.amount >= 0 ? 'text-positive' : 'text-negative',
-                ]"
-              >
-                {{ tx.amount >= 0 ? '+' : '' }}{{ formatAexAmount(tx.amount) }}
-              </div>
-            </div>
-          </AppSurface>
-
-          <AppSurface
-            v-else-if="!aexStore.txLoading && aexStore.txLoaded"
-            class="app-referral-tx-empty q-pa-md"
-          >
-            <div class="app-empty-state">{{ t('referral.noTransactions') }}</div>
-          </AppSurface>
-
-          <q-infinite-scroll
-            v-if="aexStore.txHasMore"
-            ref="infiniteScrollRef"
-            :scroll-target="txScrollRef"
-            :offset="120"
-            :disable="aexStore.txLoading || aexStore.txRefreshing"
-            @load="loadMore"
-          >
-            <template #loading>
-              <div class="row justify-center q-my-md">
-                <q-spinner-dots color="warning" size="32px" />
-              </div>
-            </template>
-          </q-infinite-scroll>
-        </div>
-      </div>
+      <AppSurface class="app-profile-card">
+        <AppInfoRow
+          icon="groups"
+          :title="t('referral.myReferrals')"
+          clickable
+          @click="goToReferrals"
+        />
+        <AppInfoRow
+          icon="history"
+          :title="t('referral.history')"
+          clickable
+          @click="goToOperations"
+        />
+      </AppSurface>
     </div>
   </q-page>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useRouter } from 'vue-router';
 import { Notify } from 'quasar';
 
 import AexBalanceCard from '@components/ui/AexBalanceCard.vue';
 import AppButton from '@components/ui/AppButton.vue';
+import AppInfoRow from '@components/ui/AppInfoRow.vue';
 import AppSurface from '@components/ui/AppSurface.vue';
 import { useAexStore } from '@stores/aex.store';
-import { formatMiniappDateTime } from '@utils/formatters';
 
 const { locale, t } = useI18n();
+const router = useRouter();
 const aexStore = useAexStore();
 
-const infiniteScrollRef = ref<{ resume: () => void; stop: () => void } | null>(null);
-const txScrollRef = ref<HTMLElement | null>(null);
 const fallbackProgramConfig = {
   referralPercent: '0',
   referralMinWithdraw: '0',
@@ -217,7 +163,6 @@ const reservedBalance = computed(() => {
 });
 
 const referralLink = computed(() => aexStore.referralInfo?.referralLink ?? '');
-const transactions = computed(() => aexStore.transactions ?? []);
 const programConfig = computed(() => aexStore.referralInfo?.programConfig ?? fallbackProgramConfig);
 const referralPercentValue = computed(() => parseDecimal(programConfig.value.referralPercent));
 const programTerms = computed(() => [
@@ -227,17 +172,20 @@ const programTerms = computed(() => [
   },
   {
     label: t('referral.terms.referralMinWithdraw'),
-    value: `${formatAexAmount(parseDecimal(programConfig.value.aexWithdrawLimit))} AEX`,
+    value: `${formatTokenAmount(parseDecimal(programConfig.value.aexWithdrawLimit))} ATXG`,
   },
   {
     label: t('referral.terms.referralMaxWithdraw'),
-    value: programConfig.value.referralMaxWithdraw === null
-      ? t('referral.noLimit')
-      : `${formatAexAmount(parseDecimal(programConfig.value.referralMaxWithdraw))} AEX`,
+    value:
+      programConfig.value.referralMaxWithdraw === null
+        ? t('referral.noLimit')
+        : `${formatTokenAmount(parseDecimal(programConfig.value.referralMaxWithdraw))} ATXG`,
   },
   {
     label: t('referral.terms.aexRate'),
-    value: t('referral.aexRateValue', { rate: formatAexAmount(parseDecimal(programConfig.value.aexRate)) }),
+    value: t('referral.aexRateValue', {
+      rate: formatTokenAmount(parseDecimal(programConfig.value.aexRate)),
+    }),
   },
 ]);
 const instructionSteps = computed(() => [
@@ -265,6 +213,7 @@ const instructionSteps = computed(() => [
     icon: 'account_balance_wallet',
     title: t('referral.instructionStep5'),
     description: t('referral.instructionStep5Description'),
+    exchangeLink: true,
   },
 ]);
 
@@ -275,25 +224,10 @@ onMounted(async () => {
     tasks.push(aexStore.loadReferral());
   }
 
-  if (!aexStore.txLoaded || !transactions.value.length) {
-    tasks.push(aexStore.loadFirstPage());
-  }
-
-  // Load wallet balance directly from AEX API
   tasks.push(aexStore.loadWallet());
 
   await Promise.all(tasks);
 });
-
-async function loadMore(_: number, done: (stop?: boolean) => void) {
-  await aexStore.loadNextPage();
-  done(!aexStore.txHasMore);
-}
-
-async function refreshTx() {
-  await aexStore.refreshTransactions();
-  infiniteScrollRef.value?.resume();
-}
 
 function copyLink() {
   if (referralLink.value) {
@@ -309,7 +243,6 @@ function shareLink() {
 
   const tg = window.Telegram?.WebApp;
   if (tg) {
-    // Use Telegram's built-in share
     const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(referralLink.value)}&text=${encodeURIComponent(t('referral.shareText'))}`;
     window.open(shareUrl, '_blank');
   } else {
@@ -317,11 +250,15 @@ function shareLink() {
   }
 }
 
-function formatDate(value: string) {
-  return formatMiniappDateTime(value, locale.value);
+function goToReferrals() {
+  void router.push({ name: 'referralReferrals' });
 }
 
-function formatAexAmount(value: number): string {
+function goToOperations() {
+  void router.push({ name: 'referralOperations' });
+}
+
+function formatTokenAmount(value: number): string {
   if (Number.isInteger(value)) {
     return value.toLocaleString(locale.value);
   }
@@ -337,38 +274,6 @@ function parseDecimal(value: string | null): number {
 }
 
 function formatPercent(value: number): string {
-  return `${formatAexAmount(value)}%`;
-}
-
-function txTypeLabel(type: string): string {
-  const key = `referral.txType.${type}`;
-  const translated = t(key);
-  return translated !== key ? translated : type;
-}
-
-function txTypeIcon(type: string): string {
-  const icons: Record<string, string> = {
-    referral_reward: 'card_giftcard',
-    withdrawal: 'arrow_downward',
-    bonus: 'star',
-    adjustment: 'tune',
-    reserved: 'lock',
-    debited: 'remove_circle',
-    refund: 'undo',
-  };
-  return icons[type] ?? 'swap_horiz';
-}
-
-function txTypeColor(type: string): string {
-  const colors: Record<string, string> = {
-    referral_reward: 'positive',
-    withdrawal: 'negative',
-    bonus: 'warning',
-    adjustment: 'info',
-    reserved: 'warning',
-    debited: 'negative',
-    refund: 'info',
-  };
-  return colors[type] ?? 'grey';
+  return `${formatTokenAmount(value)}%`;
 }
 </script>

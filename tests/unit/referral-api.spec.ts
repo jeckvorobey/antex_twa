@@ -9,7 +9,7 @@ const serviceSource = readFileSync(servicePath, 'utf8');
 const typesPath = resolve(process.cwd(), 'src/types/miniapp.ts');
 const typesSource = readFileSync(typesPath, 'utf8');
 
-describe('AEX API service', () => {
+describe('ATXG API service', () => {
   it('exports fetchAexReferralInfo function', () => {
     expect(serviceSource).toContain('export async function fetchAexReferralInfo');
     expect(serviceSource).toContain('/api/miniapp/aex/referral');
@@ -22,6 +22,13 @@ describe('AEX API service', () => {
     expect(serviceSource).toContain('offset');
   });
 
+  it('exports fetchAexReferrals with pagination params', () => {
+    expect(serviceSource).toContain('export async function fetchAexReferrals');
+    expect(serviceSource).toContain('/api/miniapp/aex/referrals');
+    expect(serviceSource).toContain('limit');
+    expect(serviceSource).toContain('offset');
+  });
+
   it('exports applyReferralCode function', () => {
     expect(serviceSource).toContain('export async function applyReferralCode');
     expect(serviceSource).toContain('/api/miniapp/aex/referral/apply');
@@ -29,7 +36,7 @@ describe('AEX API service', () => {
   });
 });
 
-describe('AEX types', () => {
+describe('ATXG types', () => {
   it('defines AexBalance interface', () => {
     expect(typesSource).toContain('interface AexBalance');
     expect(typesSource).toContain('available: number');
@@ -70,6 +77,18 @@ describe('AEX types', () => {
     expect(typesSource).toContain('items: AexTransactionItem[]');
     expect(typesSource).toContain('total: number');
     expect(typesSource).toContain('hasMore: boolean');
+  });
+
+  it('defines AexReferralsResponse without per-user earnings', () => {
+    expect(typesSource).toContain('interface AexReferralUserItem');
+    expect(typesSource).toContain('displayName: string');
+    expect(typesSource).toContain('joinedAt: string');
+    expect(typesSource).toContain('rewardPercent: string');
+    expect(typesSource).toContain('interface AexReferralsResponse');
+    expect(typesSource).toContain('totalAccrued: string');
+    expect(typesSource).toContain('items: AexReferralUserItem[]');
+    expect(typesSource).not.toContain('earnedAex:');
+    expect(typesSource).not.toContain('telegramId:');
   });
 
   it('defines AexProfileSection for profile page', () => {

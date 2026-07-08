@@ -10,7 +10,7 @@
       <div class="row items-center no-wrap">
         <div class="app-aex-balance-card__value">
           {{ formattedBalance }}
-          <span class="app-aex-balance-card__currency">AEX</span>
+          <span class="app-aex-balance-card__currency">ATXG</span>
         </div>
         <q-icon v-if="clickable" name="chevron_right" size="20px" class="app-aex-balance-card__chevron" />
       </div>

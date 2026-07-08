@@ -10,6 +10,7 @@ vi.mock('@boot/axios', () => ({
 
 vi.mock('@services/api/miniapp.service', () => ({
   fetchAexReferralInfo: vi.fn(),
+  fetchAexReferrals: vi.fn(),
   fetchAexTransactions: vi.fn(),
   fetchAexWallet: vi.fn(),
   transferAex: vi.fn(),
@@ -18,12 +19,13 @@ vi.mock('@services/api/miniapp.service', () => ({
 
 import {
   fetchAexReferralInfo,
+  fetchAexReferrals,
   fetchAexTransactions,
   fetchAexWallet,
 } from '@services/api/miniapp.service';
 import { useAexStore } from '@stores/aex.store';
 
-describe('AEX store', () => {
+describe('ATXG store', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     vi.clearAllMocks();
@@ -55,7 +57,7 @@ describe('AEX store', () => {
     expect(store.referralInfo?.programConfig.aexWithdrawLimit).toBe('100');
   });
 
-  it('stores AEX availability from backend wallet response', async () => {
+  it('stores ATXG availability from backend wallet response', async () => {
     vi.mocked(fetchAexWallet).mockResolvedValue({
       id: 1,
       user_id: 10,
@@ -84,6 +86,92 @@ describe('AEX store', () => {
     await store.loadReferral();
 
     expect(fetchAexReferralInfo).not.toHaveBeenCalled();
+  });
+
+  it('loads first page of referral users', async () => {
+    vi.mocked(fetchAexReferrals).mockResolvedValue({
+      items: [
+        {
+          id: 11,
+          displayName: 'First Referral',
+          username: 'first_ref',
+          photoUrl: null,
+          joinedAt: '2026-01-01T00:00:00Z',
+          rewardPercent: '1.5',
+        },
+      ],
+      limit: 20,
+      offset: 0,
+      total: 1,
+      hasMore: false,
+      totalAccrued: '14.75',
+      rewardPercent: '1.5',
+    });
+
+    const store = useAexStore();
+    await store.loadReferralsFirstPage();
+
+    expect(store.referrals).toHaveLength(1);
+    expect(store.referralsLoaded).toBe(true);
+    expect(store.referralsHasMore).toBe(false);
+    expect(store.referralsTotal).toBe(1);
+    expect(store.referralsSummary?.totalAccrued).toBe('14.75');
+    expect(fetchAexReferrals).toHaveBeenCalledWith({ limit: 20, offset: 0 });
+  });
+
+  it('loads next referral page and deduplicates users', async () => {
+    vi.mocked(fetchAexReferrals)
+      .mockResolvedValueOnce({
+        items: [
+          {
+            id: 11,
+            displayName: 'First Referral',
+            username: 'first_ref',
+            photoUrl: null,
+            joinedAt: '2026-01-01T00:00:00Z',
+            rewardPercent: '1.5',
+          },
+        ],
+        limit: 20,
+        offset: 0,
+        total: 2,
+        hasMore: true,
+        totalAccrued: '14.75',
+        rewardPercent: '1.5',
+      })
+      .mockResolvedValueOnce({
+        items: [
+          {
+            id: 11,
+            displayName: 'First Referral',
+            username: 'first_ref',
+            photoUrl: null,
+            joinedAt: '2026-01-01T00:00:00Z',
+            rewardPercent: '1.5',
+          },
+          {
+            id: 12,
+            displayName: 'Second',
+            username: null,
+            photoUrl: null,
+            joinedAt: '2026-01-02T00:00:00Z',
+            rewardPercent: '1.5',
+          },
+        ],
+        limit: 20,
+        offset: 1,
+        total: 2,
+        hasMore: false,
+        totalAccrued: '14.75',
+        rewardPercent: '1.5',
+      });
+
+    const store = useAexStore();
+    await store.loadReferralsFirstPage();
+    await store.loadReferralsNextPage();
+
+    expect(store.referrals).toHaveLength(2);
+    expect(store.referralsHasMore).toBe(false);
   });
 
   it('loads first page of transactions', async () => {

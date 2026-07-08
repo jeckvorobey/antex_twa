@@ -7,7 +7,7 @@ const referralPagePath = resolve(process.cwd(), 'src/pages/ReferralPage.vue');
 const referralSource = readFileSync(referralPagePath, 'utf8');
 
 describe('ReferralPage structure', () => {
-  it('renders shared balance hero with AEX currency label', () => {
+  it('renders shared balance hero with token currency label', () => {
     expect(referralSource).toContain('<AexBalanceCard');
     expect(referralSource).toContain(':balance="availableBalance"');
     expect(referralSource).toContain(":label=\"t('referral.balanceLabel')\"");
@@ -94,63 +94,25 @@ describe('ReferralPage structure', () => {
     expect(referralSource).toContain('aexStore.totalReferrals === 0');
   });
 
-  it('renders transaction history with infinite scroll', () => {
-    expect(referralSource).toContain('<q-infinite-scroll');
+  it('renders referral detail menu instead of inline transaction history', () => {
+    expect(referralSource).toContain("t('referral.myReferrals')");
     expect(referralSource).toContain("t('referral.history')");
-    expect(referralSource).toContain('loadMore');
-    expect(referralSource).toContain('txHasMore');
+    expect(referralSource).toContain("name: 'referralReferrals'");
+    expect(referralSource).toContain("name: 'referralOperations'");
+    expect(referralSource).not.toContain('<q-infinite-scroll');
+    expect(referralSource).not.toContain('txHasMore');
   });
 
-  it('uses full transaction date-time on history cards', () => {
-    expect(referralSource).toContain('formatMiniappDateTime');
-    expect(referralSource).toContain('return formatMiniappDateTime(value, locale.value)');
-    expect(referralSource).not.toContain('return formatMiniappTime(value, locale.value)');
-  });
-
-  it('marks empty transaction state with referral history card class', () => {
-    expect(referralSource).toContain('app-referral-tx-empty');
-  });
-
-  it('renders transaction list outside disabled infinite scroll wrapper', () => {
-    const listIndex = referralSource.indexOf('v-if="transactions.length"');
-    const infiniteIndex = referralSource.indexOf('<q-infinite-scroll');
-
-    expect(listIndex).toBeGreaterThan(-1);
-    expect(infiniteIndex).toBeGreaterThan(-1);
-    expect(listIndex).toBeLessThan(infiniteIndex);
-    expect(referralSource).toContain('v-if="aexStore.txHasMore"');
-  });
-
-  it('defines a safe transactions computed for template rendering', () => {
-    expect(referralSource).toContain(
-      'const transactions = computed(() => aexStore.transactions ?? [])',
-    );
-  });
-
-  it('displays transaction type icons and labels', () => {
-    expect(referralSource).toContain('txTypeIcon');
-    expect(referralSource).toContain('txTypeColor');
-    expect(referralSource).toContain('txTypeLabel');
-    expect(referralSource).toContain("referral.txType.");
-    expect(referralSource).toContain("reserved: 'lock'");
-    expect(referralSource).toContain("debited: 'remove_circle'");
-    expect(referralSource).toContain("refund: 'undo'");
-    expect(referralSource).toContain("reserved: 'warning'");
-    expect(referralSource).toContain("debited: 'negative'");
-    expect(referralSource).toContain("refund: 'info'");
-  });
-
-  it('has refresh button for transactions', () => {
-    expect(referralSource).toContain('refreshTx');
-    expect(referralSource).toContain("t('referral.refresh')");
-    expect(referralSource).toContain('txRefreshing');
+  it('renders the fifth instruction with exchange route link', () => {
+    expect(referralSource).toContain("t('referral.instructionStep5DescriptionPrefix')");
+    expect(referralSource).toContain("t('referral.instructionStep5ExchangeLink')");
+    expect(referralSource).toContain("t('referral.instructionStep5DescriptionSuffix')");
+    expect(referralSource).toContain("name: 'exchange'");
   });
 
   it('loads data on mount with parallel requests', () => {
     expect(referralSource).toContain('onMounted');
     expect(referralSource).toContain('loadReferral');
-    expect(referralSource).toContain('loadFirstPage');
-    expect(referralSource).toContain('!aexStore.txLoaded || !transactions.value.length');
     expect(referralSource).toContain('Promise.all');
   });
 });

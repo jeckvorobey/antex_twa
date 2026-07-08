@@ -3,6 +3,7 @@ import { computed, ref } from 'vue';
 
 import {
   fetchAexReferralInfo,
+  fetchAexReferrals,
   fetchAexTransactions,
   fetchAexWallet,
   transferAex,
@@ -10,16 +11,32 @@ import {
 import type {
   AexBalance,
   AexReferralInfo,
+  AexReferralsResponse,
+  AexReferralUserItem,
   AexTransactionItem,
 } from '@types/miniapp';
 
 const TX_PAGE_LIMIT = 20;
+const REFERRALS_PAGE_LIMIT = 20;
 
 export const useAexStore = defineStore('aex', () => {
   // ── Referral ──────────────────────────────────────────────────────
   const referralInfo = ref<AexReferralInfo | null>(null);
   const referralLoading = ref(false);
   const referralLoaded = ref(false);
+
+  // ── Referral users ────────────────────────────────────────────────
+  const referrals = ref<AexReferralUserItem[]>([]);
+  const referralsSummary = ref<Pick<AexReferralsResponse, 'totalAccrued' | 'rewardPercent'> | null>(
+    null,
+  );
+  const referralsLoading = ref(false);
+  const referralsLoaded = ref(false);
+  const referralsLoadingMore = ref(false);
+  const referralsRefreshing = ref(false);
+  const referralsHasMore = ref(true);
+  const referralsOffset = ref(0);
+  const referralsTotal = ref(0);
 
   // ── Balance ───────────────────────────────────────────────────────
   const balance = ref<AexBalance | null>(null);
@@ -55,6 +72,67 @@ export const useAexStore = defineStore('aex', () => {
       referralLoaded.value = true;
       referralLoading.value = false;
     }
+  }
+
+  async function loadReferralsFirstPage() {
+    if (referralsLoading.value) {
+      return;
+    }
+
+    referralsLoading.value = true;
+    try {
+      const response = await fetchAexReferrals({ limit: REFERRALS_PAGE_LIMIT, offset: 0 });
+      applyReferralsResponse(response, true);
+    } finally {
+      referralsLoaded.value = true;
+      referralsLoading.value = false;
+    }
+  }
+
+  async function loadReferralsNextPage() {
+    if (referralsLoading.value || referralsLoadingMore.value || !referralsHasMore.value) {
+      return;
+    }
+
+    referralsLoadingMore.value = true;
+    try {
+      const response = await fetchAexReferrals({
+        limit: REFERRALS_PAGE_LIMIT,
+        offset: referralsOffset.value,
+      });
+      applyReferralsResponse(response, false);
+    } finally {
+      referralsLoadingMore.value = false;
+    }
+  }
+
+  async function refreshReferrals() {
+    if (referralsLoading.value || referralsRefreshing.value) {
+      return;
+    }
+
+    referralsRefreshing.value = true;
+    try {
+      const response = await fetchAexReferrals({ limit: REFERRALS_PAGE_LIMIT, offset: 0 });
+      applyReferralsResponse(response, true);
+    } finally {
+      referralsRefreshing.value = false;
+    }
+  }
+
+  function applyReferralsResponse(response: AexReferralsResponse, replace: boolean) {
+    const existingIds = new Set(referrals.value.map((existing) => existing.id));
+    const nextItems = replace
+      ? response.items
+      : response.items.filter((item) => !existingIds.has(item.id));
+    referrals.value = replace ? nextItems : [...referrals.value, ...nextItems];
+    referralsOffset.value = replace ? response.items.length : referralsOffset.value + response.items.length;
+    referralsTotal.value = response.total;
+    referralsHasMore.value = response.hasMore;
+    referralsSummary.value = {
+      totalAccrued: response.totalAccrued,
+      rewardPercent: response.rewardPercent,
+    };
   }
 
   // ── Balance setter (called from profile store) ────────────────────
@@ -182,11 +260,22 @@ export const useAexStore = defineStore('aex', () => {
     referralInfo,
     referralLoading,
     referralLoaded,
+    referrals,
+    referralsSummary,
+    referralsLoading,
+    referralsLoaded,
+    referralsLoadingMore,
+    referralsRefreshing,
+    referralsHasMore,
+    referralsTotal,
     totalReferrals,
     aexRate,
     aexWithdrawLimit,
     isAexCurrencyAvailable,
     loadReferral,
+    loadReferralsFirstPage,
+    loadReferralsNextPage,
+    refreshReferrals,
     // balance
     balance,
     setBalance,

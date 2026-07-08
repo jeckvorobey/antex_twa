@@ -19,14 +19,14 @@ const i18nPath = resolve(process.cwd(), 'src/i18n/ru/index.ts');
 const i18nSource = readFileSync(i18nPath, 'utf8');
 
 describe('AexBalanceCard shared component', () => {
-  it('owns the AEX balance card layout, label, amount formatting and currency mark', () => {
+  it('owns the ATXG balance card layout, label, amount formatting and currency mark', () => {
     expect(balanceCardSource).toContain('<AppSurface');
     expect(balanceCardSource).toContain('padded');
     expect(balanceCardSource).toContain('app-aex-balance-card');
     expect(balanceCardSource).toContain('displayLabel');
     expect(balanceCardSource).toContain('formattedBalance');
     expect(balanceCardSource).toContain('toLocaleString');
-    expect(balanceCardSource).toContain('AEX');
+    expect(balanceCardSource).toContain('ATXG');
   });
 
   it('keeps the card reusable with optional label and click behavior props', () => {
@@ -36,8 +36,8 @@ describe('AexBalanceCard shared component', () => {
   });
 });
 
-describe('ProfilePage AEX integration', () => {
-  it('does not render the AEX balance card on profile page anymore', () => {
+describe('ProfilePage ATXG integration', () => {
+  it('does not render the ATXG balance card on profile page anymore', () => {
     expect(profileSource).not.toContain("import AexBalanceCard from '@components/ui/AexBalanceCard.vue'");
     expect(profileSource).not.toContain('<AexBalanceCard');
     expect(profileSource).not.toContain(':balance="aexBalance"');
@@ -59,7 +59,7 @@ describe('ProfilePage AEX integration', () => {
   });
 });
 
-describe('ReferralPage AEX integration', () => {
+describe('ReferralPage ATXG integration', () => {
   it('uses the same shared AexBalanceCard with the referral balance label', () => {
     expect(referralSource).toContain("import AexBalanceCard from '@components/ui/AexBalanceCard.vue'");
     expect(referralSource).toContain('<AexBalanceCard');
@@ -104,7 +104,7 @@ describe('i18n referral keys', () => {
     expect(i18nSource).toContain("refund: 'Возврат'");
   });
 
-  it('has profile AEX balance key', () => {
-    expect(i18nSource).toContain("aexBalance: 'Баланс AEX'");
+  it('has profile token balance key', () => {
+    expect(i18nSource).toContain("aexBalance: 'Баланс ATXG'");
   });
 });

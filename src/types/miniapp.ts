@@ -213,7 +213,7 @@ export interface GroupedOrders {
   items: MiniappOrderItem[];
 }
 
-// ── AEX referral & balance ──────────────────────────────────────────
+// ── ATXG referral & balance ─────────────────────────────────────────
 
 export interface AexBalance {
   available: number;
@@ -259,6 +259,25 @@ export interface AexTransactionsResponse {
   offset: number;
   total: number;
   hasMore: boolean;
+}
+
+export interface AexReferralUserItem {
+  id: number;
+  displayName: string;
+  username: string | null;
+  photoUrl: string | null;
+  joinedAt: string;
+  rewardPercent: string;
+}
+
+export interface AexReferralsResponse {
+  items: AexReferralUserItem[];
+  limit: number;
+  offset: number;
+  total: number;
+  hasMore: boolean;
+  totalAccrued: string;
+  rewardPercent: string;
 }
 
 export interface AexProfileSection {
