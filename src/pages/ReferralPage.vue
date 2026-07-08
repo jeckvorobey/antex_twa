@@ -115,9 +115,6 @@
           clickable
           @click="goToReferrals"
         />
-      </AppSurface>
-
-      <AppSurface class="app-profile-card">
         <AppInfoRow
           icon="history"
           :title="t('referral.history')"
