@@ -191,6 +191,8 @@ export default {
     city_required: 'Для выдачи наличными нужно выбрать город.',
     city_country_mismatch: 'Выбранный город не соответствует выбранной стране.',
     min_amount: 'Минимальная сумма для обмена — {amount} {currency}',
+    aex_insufficient_balance: 'Недостаточно доступных AEX для вывода.',
+    aex_withdraw_limit_not_reached: 'Вывод AEX станет доступен после достижения минимального лимита.',
   },
   more: {
     title: 'Еще',

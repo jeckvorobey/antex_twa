@@ -85,6 +85,7 @@ import {
   buildCityOptions,
   buildCountryOptions,
   buildBuyCurrencyOptions,
+  calculateLocalQuote,
   getCountryByCurrency,
   getCurrencyByCountry,
   getPreferredReceiveMethod,
@@ -127,18 +128,10 @@ const sellOptions = computed(() => {
 });
 
 const buyOptions = computed(() => {
-  if (selectedSellCurrency.value === 'AEX') {
-    return [{ label: 'USDT', value: 'USDT' }];
-  }
-
   return buildBuyCurrencyOptions(exchangeStore.screen?.pairs ?? [], selectedSellCurrency.value);
 });
 
 const countryOptions = computed(() => {
-  if (selectedSellCurrency.value === 'AEX') {
-    return [];
-  }
-
   return buildCountryOptions(exchangeStore.screen?.pairs ?? [], selectedSellCurrency.value);
 });
 
@@ -217,17 +210,6 @@ const canSubmit = computed(() => {
 });
 
 watch(selectedSellCurrency, () => {
-  if (selectedSellCurrency.value === 'AEX') {
-    syncingState.value = true;
-    selectedBuyCurrency.value = 'USDT';
-    selectedCountry.value = null;
-    selectedCityId.value = null;
-    amountSell.value = getDefaultAmountSell(selectedSellCurrency.value);
-    syncingState.value = false;
-    refreshQuoteForCurrentState();
-    return;
-  }
-
   const nextBuyCurrency = buyOptions.value[0]?.value ?? selectedBuyCurrency.value;
   if (!buyOptions.value.some((option) => option.value === selectedBuyCurrency.value)) {
     selectedBuyCurrency.value = nextBuyCurrency;
@@ -244,12 +226,6 @@ watch(selectedSellCurrency, () => {
 });
 
 watch(selectedBuyCurrency, (currencyBuy) => {
-  if (selectedSellCurrency.value === 'AEX') {
-    selectedCountry.value = null;
-    refreshQuoteForCurrentState();
-    return;
-  }
-
   selectedCountry.value = getCountryByCurrency(exchangeStore.screen?.pairs ?? [], currencyBuy);
   void refreshQuoteForCurrentState();
 });
@@ -331,7 +307,12 @@ function refreshQuoteForCurrentState() {
   }
 
   if (selectedSellCurrency.value === 'AEX') {
-    const quote = buildAexUsdtQuote(amountSell.value);
+    const quote = calculateLocalQuote({
+      pairs: exchangeStore.screen?.pairs ?? [],
+      currencySell: selectedSellCurrency.value,
+      currencyBuy: selectedBuyCurrency.value,
+      amountSell: amountSell.value,
+    });
     aexQuote.value = quote;
     amountBuy.value = quote?.amountBuy ?? null;
     return;
@@ -380,28 +361,6 @@ function resolveCurrentQuote() {
   }
 
   return quote;
-}
-
-/** Собирает локальный AEX -> USDT quote по курсу programConfig.aexRate. */
-function buildAexUsdtQuote(amount: number): MiniappQuoteResponse | null {
-  if (!aexStore.aexRate || amount <= 0) {
-    return null;
-  }
-
-  const rate = aexStore.aexRate;
-  return {
-    currencySell: 'AEX',
-    currencyBuy: 'USDT',
-    amountSell: amount,
-    amountBuy: Number((amount * rate).toFixed(2)),
-    rate,
-    rateDisplay: rate.toFixed(2),
-    rateText: t('exchange.aexRateText', {
-      rate: formatReadableNumber(rate, locale.value),
-    }),
-    updatedAt: new Date().toISOString(), // время локального расчёта, не серверного курса
-    availableMethods: [],
-  };
 }
 
 async function submitOrder() {
