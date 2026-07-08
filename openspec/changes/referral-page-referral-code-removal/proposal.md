@@ -8,7 +8,7 @@
 - На экране остаются только реферальная ссылка и кнопка «Поделиться».
 - Вёрстка ReferralPage корректируется, чтобы после удаления поля не осталось пустых зазоров и визуального шума.
 - Лишний блок «Сколько можно заработать» удаляется.
-- История AEX-операций отображает уже загруженные начисления независимо от состояния infinite scroll.
+- История ATXG-операций отображает уже загруженные начисления независимо от состояния infinite scroll.
 
 ## Capabilities
 
@@ -23,4 +23,4 @@
 - ReferralPage layout and related UI components.
 - Tests/fixtures that still expect referral_code to be visible.
 - Styling around the referral section spacing.
-- AEX transaction history rendering on ReferralPage.
+- ATXG transaction history rendering on ReferralPage.
