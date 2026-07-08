@@ -99,6 +99,9 @@ describe('i18n referral keys', () => {
     expect(i18nSource).toContain("withdrawal: 'Вывод'");
     expect(i18nSource).toContain("bonus: 'Бонус'");
     expect(i18nSource).toContain("adjustment: 'Корректировка'");
+    expect(i18nSource).toContain("reserved: 'Зарезервировано'");
+    expect(i18nSource).toContain("debited: 'Списано'");
+    expect(i18nSource).toContain("refund: 'Возврат'");
   });
 
   it('has profile AEX balance key', () => {

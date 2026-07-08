@@ -39,9 +39,7 @@ export const useAexStore = defineStore('aex', () => {
   const aexWithdrawLimit = computed(() =>
     parsePositiveDecimal(referralInfo.value?.programConfig.aexWithdrawLimit),
   );
-  const isAexCurrencyAvailable = computed(
-    () => (balance.value?.available ?? 0) >= aexWithdrawLimit.value,
-  );
+  const isAexCurrencyAvailable = ref(false);
 
   // ── Referral actions ──────────────────────────────────────────────
 
@@ -79,9 +77,11 @@ export const useAexStore = defineStore('aex', () => {
       const wallet = await fetchAexWallet();
       balance.value = {
         available: parseFloat(wallet.balance_available),
+        reserved: parseFloat(wallet.balance_reserved),
         totalEarned: parseFloat(wallet.balance_total),
         totalWithdrawn: 0,
       };
+      isAexCurrencyAvailable.value = wallet.is_exchange_available;
     } finally {
       walletLoading.value = false;
     }
@@ -102,14 +102,7 @@ export const useAexStore = defineStore('aex', () => {
     sellLoading.value = true;
     try {
       await transferAex({ orderId, amount });
-
-      // Optimistically reduce available balance
-      if (balance.value) {
-        balance.value = {
-          ...balance.value,
-          available: Math.max(0, balance.value.available - amount),
-        };
-      }
+      await loadWallet();
 
       return { success: true };
     } catch {

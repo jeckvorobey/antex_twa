@@ -14,11 +14,12 @@ vi.mock('@boot/axios', () => ({
 vi.mock('@services/api/miniapp.service', () => ({
   fetchAexReferralInfo: vi.fn(),
   fetchAexTransactions: vi.fn(),
+  fetchAexWallet: vi.fn(),
   applyReferralCode: vi.fn(),
   transferAex: vi.fn(),
 }));
 
-import { transferAex } from '@services/api/miniapp.service';
+import { fetchAexWallet, transferAex } from '@services/api/miniapp.service';
 import { useAexStore } from '@stores/aex.store';
 
 // ── Source-level checks ─────────────────────────────────────────────
@@ -81,32 +82,54 @@ describe('AEX store transfer action', () => {
     expect(store.sellLoading).toBe(false);
   });
 
-  it('refreshes balance after successful transfer', async () => {
+  it('reloads balance from backend after successful transfer', async () => {
     vi.mocked(transferAex).mockResolvedValue({ success: true });
+    vi.mocked(fetchAexWallet).mockResolvedValue({
+      id: 1,
+      user_id: 10,
+      balance_available: '70',
+      balance_reserved: '30',
+      balance_total: '100',
+      is_exchange_available: false,
+      createdAt: '2026-01-01T00:00:00Z',
+      updatedAt: '2026-01-01T00:00:00Z',
+    });
 
     const store = useAexStore();
-    store.balance = { available: 100, totalEarned: 150, totalWithdrawn: 50 };
+    store.balance = { available: 100, reserved: 0, totalEarned: 150, totalWithdrawn: 50 };
     await store.sellAex(1, 30);
 
-    // Balance should be updated (available reduced)
+    expect(fetchAexWallet).toHaveBeenCalled();
     expect(store.balance?.available).toBe(70);
+    expect(store.balance?.reserved).toBe(30);
   });
 
-  it('does not reduce balance below zero', async () => {
+  it('uses backend wallet state instead of client-side clamping', async () => {
     vi.mocked(transferAex).mockResolvedValue({ success: true });
+    vi.mocked(fetchAexWallet).mockResolvedValue({
+      id: 1,
+      user_id: 10,
+      balance_available: '0',
+      balance_reserved: '10',
+      balance_total: '10',
+      is_exchange_available: false,
+      createdAt: '2026-01-01T00:00:00Z',
+      updatedAt: '2026-01-01T00:00:00Z',
+    });
 
     const store = useAexStore();
-    store.balance = { available: 10, totalEarned: 150, totalWithdrawn: 50 };
+    store.balance = { available: 10, reserved: 0, totalEarned: 150, totalWithdrawn: 50 };
     await store.sellAex(1, 30);
 
     expect(store.balance?.available).toBe(0);
+    expect(store.balance?.reserved).toBe(10);
   });
 
   it('returns error on failure without modifying balance', async () => {
     vi.mocked(transferAex).mockRejectedValue(new Error('insufficient'));
 
     const store = useAexStore();
-    store.balance = { available: 100, totalEarned: 150, totalWithdrawn: 50 };
+    store.balance = { available: 100, reserved: 0, totalEarned: 150, totalWithdrawn: 50 };
 
     const result = await store.sellAex(1, 30);
 

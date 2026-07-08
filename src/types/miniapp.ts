@@ -217,6 +217,7 @@ export interface GroupedOrders {
 
 export interface AexBalance {
   available: number;
+  reserved: number;
   totalEarned: number;
   totalWithdrawn: number;
 }
@@ -238,7 +239,14 @@ export interface AexReferralInfo {
 
 export interface AexTransactionItem {
   id: number;
-  type: 'referral_reward' | 'withdrawal' | 'bonus' | 'adjustment';
+  type:
+    | 'referral_reward'
+    | 'withdrawal'
+    | 'bonus'
+    | 'adjustment'
+    | 'reserved'
+    | 'debited'
+    | 'refund';
   amount: number;
   balanceAfter: number;
   description: string;
@@ -264,6 +272,7 @@ export interface AexWalletOut {
   balance_available: string;
   balance_reserved: string;
   balance_total: string;
+  is_exchange_available: boolean;
   createdAt: string;
   updatedAt: string;
 }

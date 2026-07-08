@@ -207,14 +207,13 @@ const fallbackProgramConfig = {
 const availableBalance = computed(() => {
   const b = aexStore.balance;
   if (!b) return 0;
-  // Show total unpaid balance (available + reserved)
-  return b.totalEarned;
+  return b.available;
 });
 
 const reservedBalance = computed(() => {
   const b = aexStore.balance;
   if (!b) return 0;
-  return Math.max(0, b.totalEarned - b.totalWithdrawn - b.available);
+  return b.reserved;
 });
 
 const referralLink = computed(() => aexStore.referralInfo?.referralLink ?? '');
@@ -353,6 +352,9 @@ function txTypeIcon(type: string): string {
     withdrawal: 'arrow_downward',
     bonus: 'star',
     adjustment: 'tune',
+    reserved: 'lock',
+    debited: 'remove_circle',
+    refund: 'undo',
   };
   return icons[type] ?? 'swap_horiz';
 }
@@ -363,6 +365,9 @@ function txTypeColor(type: string): string {
     withdrawal: 'negative',
     bonus: 'warning',
     adjustment: 'info',
+    reserved: 'warning',
+    debited: 'negative',
+    refund: 'info',
   };
   return colors[type] ?? 'grey';
 }

@@ -13,6 +13,13 @@ describe('ReferralPage structure', () => {
     expect(referralSource).toContain(":label=\"t('referral.balanceLabel')\"");
   });
 
+  it('shows available balance separately from reserved amount', () => {
+    expect(referralSource).toContain('return b.available;');
+    expect(referralSource).toContain('return b.reserved;');
+    expect(referralSource).not.toContain('return b.totalEarned;');
+    expect(referralSource).not.toContain('b.totalEarned - b.totalWithdrawn - b.available');
+  });
+
   it('does not render a standalone referral code field', () => {
     expect(referralSource).not.toContain("t('referral.yourCode')");
     expect(referralSource).not.toContain('app-referral-code-card__code-row');
@@ -125,6 +132,12 @@ describe('ReferralPage structure', () => {
     expect(referralSource).toContain('txTypeColor');
     expect(referralSource).toContain('txTypeLabel');
     expect(referralSource).toContain("referral.txType.");
+    expect(referralSource).toContain("reserved: 'lock'");
+    expect(referralSource).toContain("debited: 'remove_circle'");
+    expect(referralSource).toContain("refund: 'undo'");
+    expect(referralSource).toContain("reserved: 'warning'");
+    expect(referralSource).toContain("debited: 'negative'");
+    expect(referralSource).toContain("refund: 'info'");
   });
 
   it('has refresh button for transactions', () => {

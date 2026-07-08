@@ -359,10 +359,7 @@ function refreshQuoteForCurrentState() {
 
 function getDefaultAmountSell(currencySell: string) {
   if (currencySell === 'AEX') {
-    return Math.min(
-      aexStore.balance?.available ?? aexStore.aexWithdrawLimit,
-      aexStore.aexWithdrawLimit || 100,
-    );
+    return aexStore.aexWithdrawLimit || 100;
   }
 
   return currencySell === 'USDT' ? 100 : 5000;

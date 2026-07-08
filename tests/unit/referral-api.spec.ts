@@ -33,6 +33,7 @@ describe('AEX types', () => {
   it('defines AexBalance interface', () => {
     expect(typesSource).toContain('interface AexBalance');
     expect(typesSource).toContain('available: number');
+    expect(typesSource).toContain('reserved: number');
     expect(typesSource).toContain('totalEarned: number');
     expect(typesSource).toContain('totalWithdrawn: number');
   });
@@ -58,6 +59,9 @@ describe('AEX types', () => {
     expect(typesSource).toContain("'withdrawal'");
     expect(typesSource).toContain("'bonus'");
     expect(typesSource).toContain("'adjustment'");
+    expect(typesSource).toContain("'reserved'");
+    expect(typesSource).toContain("'debited'");
+    expect(typesSource).toContain("'refund'");
     expect(typesSource).toContain('balanceAfter: number');
   });
 

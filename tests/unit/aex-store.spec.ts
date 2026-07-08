@@ -16,7 +16,11 @@ vi.mock('@services/api/miniapp.service', () => ({
   applyReferralCode: vi.fn(),
 }));
 
-import { fetchAexReferralInfo, fetchAexTransactions } from '@services/api/miniapp.service';
+import {
+  fetchAexReferralInfo,
+  fetchAexTransactions,
+  fetchAexWallet,
+} from '@services/api/miniapp.service';
 import { useAexStore } from '@stores/aex.store';
 
 describe('AEX store', () => {
@@ -51,29 +55,22 @@ describe('AEX store', () => {
     expect(store.referralInfo?.programConfig.aexWithdrawLimit).toBe('100');
   });
 
-  it('opens AEX currency only when available balance reaches withdraw limit', () => {
+  it('stores AEX availability from backend wallet response', async () => {
+    vi.mocked(fetchAexWallet).mockResolvedValue({
+      id: 1,
+      user_id: 10,
+      balance_available: '100',
+      balance_reserved: '50',
+      balance_total: '150',
+      is_exchange_available: true,
+      createdAt: '2026-01-01T00:00:00Z',
+      updatedAt: '2026-01-01T00:00:00Z',
+    });
+
     const store = useAexStore();
-
-    store.referralInfo = {
-      referralCode: 'ABC123',
-      referralLink: 'https://t.me/bot?startapp=ref_ABC123',
-      totalReferrals: 1,
-      programConfig: {
-        referralPercent: '0.35',
-        referralMinWithdraw: '250',
-        referralMaxWithdraw: null,
-        aexRate: '1.2',
-        aexWithdrawLimit: '100',
-      },
-    };
-    store.setBalance({ available: 99, totalEarned: 150, totalWithdrawn: 0 });
-
-    expect(store.isAexCurrencyAvailable).toBe(false);
-
-    store.setBalance({ available: 100, totalEarned: 150, totalWithdrawn: 0 });
+    await store.loadWallet();
 
     expect(store.isAexCurrencyAvailable).toBe(true);
-    expect(store.aexRate).toBe(1.2);
   });
 
   it('prevents duplicate referral loading', async () => {
@@ -210,8 +207,37 @@ describe('AEX store', () => {
 
   it('sets balance correctly', () => {
     const store = useAexStore();
-    store.setBalance({ available: 100, totalEarned: 150, totalWithdrawn: 50 });
+    store.setBalance({ available: 100, reserved: 25, totalEarned: 150, totalWithdrawn: 50 });
 
-    expect(store.balance).toEqual({ available: 100, totalEarned: 150, totalWithdrawn: 50 });
+    expect(store.balance).toEqual({
+      available: 100,
+      reserved: 25,
+      totalEarned: 150,
+      totalWithdrawn: 50,
+    });
+  });
+
+  it('loads wallet and keeps reserved balance separately', async () => {
+    vi.mocked(fetchAexWallet).mockResolvedValue({
+      id: 1,
+      user_id: 10,
+      balance_available: '80',
+      balance_reserved: '20',
+      balance_total: '100',
+      is_exchange_available: false,
+      createdAt: '2026-01-01T00:00:00Z',
+      updatedAt: '2026-01-01T00:00:00Z',
+    });
+
+    const store = useAexStore();
+    await store.loadWallet();
+
+    expect(store.balance).toEqual({
+      available: 80,
+      reserved: 20,
+      totalEarned: 100,
+      totalWithdrawn: 0,
+    });
+    expect(store.isAexCurrencyAvailable).toBe(false);
   });
 });
