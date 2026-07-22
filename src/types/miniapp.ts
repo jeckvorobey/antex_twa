@@ -128,11 +128,20 @@ export interface MiniappCalculatorState {
   amountSell: number;
 }
 
+export interface MiniappAexPayoutOption {
+  currencyBuy: 'USDT' | 'RUB';
+  rate: number;
+  rateDisplay: string;
+  rateText: string;
+  availableMethods: string[];
+}
+
 export interface MiniappExchangeScreenResponse {
   calculator: MiniappCalculatorState;
   chips: string[];
   pairs: MiniappRateCard[];
   quote: MiniappQuoteResponse;
+  aexPayoutOptions: MiniappAexPayoutOption[];
 }
 
 export interface MiniappBankSummary {
