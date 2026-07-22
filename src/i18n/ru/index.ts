@@ -81,6 +81,8 @@ export default {
     qrcode: 'Наличные по QR',
     cash: 'Доставка наличных',
     bankAccount: 'Перевод на счет в местном банке',
+    personalBankAccount: 'Перевод на счет в личном банке',
+    internalExchange: 'Внутренний обмен',
     payServices: 'Оплата сервисов',
   },
   history: {
@@ -200,6 +202,7 @@ export default {
     trusted_contact_not_ready: 'Добавьте телефон для связи перед отправкой заявки.',
     city_required: 'Для выдачи наличными нужно выбрать город.',
     city_country_mismatch: 'Выбранный город не соответствует выбранной стране.',
+    internal_payout_contract_invalid: 'Проверьте параметры внутреннего обмена.',
     min_amount: 'Минимальная сумма для обмена — {amount} {currency}',
     aex_insufficient_balance: 'Недостаточно доступных ATXG для вывода.',
     aex_withdraw_limit_not_reached: 'Вывод ATXG станет доступен после достижения минимального лимита.',

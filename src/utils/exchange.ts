@@ -1,4 +1,9 @@
-import type { MiniappCity, MiniappQuoteResponse, MiniappReceiveMethod } from '@types/miniapp';
+import type {
+  MiniappAexPayoutOption,
+  MiniappCity,
+  MiniappQuoteResponse,
+  MiniappReceiveMethod,
+} from '@types/miniapp';
 import { getMinAmount } from '@constants/limits';
 import { normalizeCityLabel, normalizeCountryLabel } from '@utils/display';
 
@@ -32,6 +37,7 @@ export interface ExchangeCityOption {
 
 export interface LocalQuoteParams {
   pairs: ExchangePairLike[];
+  aexPayoutOptions?: MiniappAexPayoutOption[];
   currencySell: string;
   currencyBuy: string;
   amountSell: number | null;
@@ -54,9 +60,15 @@ export type PreliminaryOrderValidationResult =
 
 export const TOKEN_CURRENCY = 'ATXG';
 const TOKEN_QUOTE_BASE_CURRENCY = 'USDT';
+const INTERNAL_PAYOUT_CURRENCIES = new Set(['USDT', 'RUB']);
 
 export function isTokenCurrency(currency: string) {
   return currency.toUpperCase() === TOKEN_CURRENCY;
+}
+
+/** Определяет специальную выплату ATXG без продуктовой страны. */
+export function isInternalAexPayout(currencySell: string, currencyBuy: string) {
+  return isTokenCurrency(currencySell) && INTERNAL_PAYOUT_CURRENCIES.has(currencyBuy.toUpperCase());
 }
 
 /**
@@ -95,17 +107,28 @@ function normalizeCountryKey(value: unknown): string {
 /**
  * Строит варианты валюты получения из backend-driven списка pair ids.
  */
-export function buildBuyCurrencyOptions(pairs: ExchangePairLike[], currencySell: string) {
+export function buildBuyCurrencyOptions(
+  pairs: ExchangePairLike[],
+  currencySell: string,
+  aexPayoutOptions: MiniappAexPayoutOption[] = [],
+) {
   const normalizedSellCurrency = currencySell.toUpperCase();
-  const quoteBaseCurrency =
-    isTokenCurrency(normalizedSellCurrency) ? TOKEN_QUOTE_BASE_CURRENCY : normalizedSellCurrency;
+  const quoteBaseCurrency = isTokenCurrency(normalizedSellCurrency)
+    ? TOKEN_QUOTE_BASE_CURRENCY
+    : normalizedSellCurrency;
 
-  return pairs
+  const externalCurrencies = pairs
     .map((pair) => parsePairId(pair.id))
     .filter((pair) => pair.currencySell === quoteBaseCurrency)
     .map((pair) => pair.currencyBuy)
     .filter((buy) => !isTokenCurrency(normalizedSellCurrency) || buy !== TOKEN_QUOTE_BASE_CURRENCY)
-    .filter((buy, index, items) => items.indexOf(buy) === index)
+    .filter((buy, index, items) => items.indexOf(buy) === index);
+  const internalCurrencies = isTokenCurrency(normalizedSellCurrency)
+    ? aexPayoutOptions.map((option) => option.currencyBuy)
+    : [];
+
+  return [...externalCurrencies, ...internalCurrencies]
+    .filter((currency, index, items) => items.indexOf(currency) === index)
     .map((currency) => ({ label: currency, value: currency }));
 }
 
@@ -211,12 +234,31 @@ export function calculateLocalQuote(params: LocalQuoteParams): MiniappQuoteRespo
 
   const normalizedSellCurrency = params.currencySell.toUpperCase();
   const normalizedBuyCurrency = params.currencyBuy.toUpperCase();
-  const quoteBaseCurrency =
-    isTokenCurrency(normalizedSellCurrency) ? TOKEN_QUOTE_BASE_CURRENCY : normalizedSellCurrency;
+  const payoutOption = isInternalAexPayout(normalizedSellCurrency, normalizedBuyCurrency)
+    ? params.aexPayoutOptions?.find((option) => option.currencyBuy === normalizedBuyCurrency)
+    : undefined;
+  if (payoutOption) {
+    return {
+      currencySell: normalizedSellCurrency,
+      currencyBuy: normalizedBuyCurrency,
+      amountSell: params.amountSell,
+      amountBuy: roundMoney(params.amountSell * payoutOption.rate),
+      rate: payoutOption.rate,
+      rateDisplay: payoutOption.rateDisplay,
+      rateText: payoutOption.rateText,
+      updatedAt: new Date().toISOString(),
+      availableMethods: payoutOption.availableMethods,
+    };
+  }
+  const quoteBaseCurrency = isTokenCurrency(normalizedSellCurrency)
+    ? TOKEN_QUOTE_BASE_CURRENCY
+    : normalizedSellCurrency;
 
   const pair = params.pairs.find((item) => {
     const parsed = parsePairId(item.id);
-    return parsed.currencySell === quoteBaseCurrency && parsed.currencyBuy === normalizedBuyCurrency;
+    return (
+      parsed.currencySell === quoteBaseCurrency && parsed.currencyBuy === normalizedBuyCurrency
+    );
   });
 
   const rate = pair?.calculationRate ?? pair?.rate;
@@ -254,6 +296,21 @@ export function validatePreliminaryOrderDraft(
 
   if (!normalizedCountry) {
     return { valid: false, messageKey: 'errors.country_required' };
+  }
+
+  if (isInternalAexPayout(params.currencySell, params.currencyBuy)) {
+    if (
+      normalizedCountry !== 'internal' ||
+      params.selectedMethod !== 'bank_account' ||
+      params.selectedCityId !== null
+    ) {
+      return { valid: false, messageKey: 'errors.internal_payout_contract_invalid' };
+    }
+    return { valid: true };
+  }
+
+  if (normalizedCountry === 'internal') {
+    return { valid: false, messageKey: 'errors.internal_payout_contract_invalid' };
   }
 
   if (expectedCountry && normalizedCountry !== expectedCountry) {

@@ -21,6 +21,7 @@
             :country-options="countryOptions"
             :city-options="cityOptions"
             :available-methods="currentQuoteMethods"
+            :internal-exchange="isInternalExchange"
           />
 
           <section class="app-section">
@@ -90,6 +91,7 @@ import {
   getCurrencyByCountry,
   getPreferredReceiveMethod,
   isTokenCurrency,
+  isInternalAexPayout,
   resetCityForMethod,
   TOKEN_CURRENCY,
   validatePreliminaryOrderDraft,
@@ -133,8 +135,16 @@ const sellOptions = computed(() => {
 });
 
 const buyOptions = computed(() => {
-  return buildBuyCurrencyOptions(exchangeStore.screen?.pairs ?? [], selectedSellCurrency.value);
+  return buildBuyCurrencyOptions(
+    exchangeStore.screen?.pairs ?? [],
+    selectedSellCurrency.value,
+    exchangeStore.screen?.aexPayoutOptions ?? [],
+  );
 });
+
+const isInternalExchange = computed(() =>
+  isInternalAexPayout(selectedSellCurrency.value, selectedBuyCurrency.value),
+);
 
 const countryOptions = computed(() => {
   return buildCountryOptions(exchangeStore.screen?.pairs ?? [], selectedSellCurrency.value);
@@ -231,6 +241,13 @@ watch(selectedSellCurrency, () => {
 });
 
 watch(selectedBuyCurrency, (currencyBuy) => {
+  if (isInternalAexPayout(selectedSellCurrency.value, currencyBuy)) {
+    selectedCountry.value = 'internal';
+    selectedMethod.value = 'bank_account';
+    selectedCityId.value = null;
+    void refreshQuoteForCurrentState();
+    return;
+  }
   selectedCountry.value = getCountryByCurrency(exchangeStore.screen?.pairs ?? [], currencyBuy);
   void refreshQuoteForCurrentState();
 });
@@ -312,11 +329,13 @@ function refreshQuoteForCurrentState() {
   }
 
   if (isTokenCurrency(selectedSellCurrency.value)) {
+    const normalizedAmountSell = Math.round(amountSell.value);
     const quote = calculateLocalQuote({
       pairs: exchangeStore.screen?.pairs ?? [],
+      aexPayoutOptions: exchangeStore.screen?.aexPayoutOptions ?? [],
       currencySell: selectedSellCurrency.value,
       currencyBuy: selectedBuyCurrency.value,
-      amountSell: amountSell.value,
+      amountSell: normalizedAmountSell,
     });
     aexQuote.value = quote;
     amountBuy.value = quote?.amountBuy ?? null;

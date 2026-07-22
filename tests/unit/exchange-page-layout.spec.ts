@@ -68,6 +68,11 @@ describe('ExchangePage responsive layout contract', () => {
     expect(pageSource).toContain('aexStore.isAexCurrencyAvailable');
     expect(pageSource).toContain("label: t('exchange.aexCurrency')");
     expect(pageSource).toContain('isTokenCurrency(selectedSellCurrency.value)');
+    expect(pageSource).toContain(':internal-exchange="isInternalExchange"');
+    expect(pageSource).toContain("selectedCountry.value = 'internal'");
+    expect(pageSource).toContain("selectedMethod.value = 'bank_account'");
+    expect(pageSource).toContain('const normalizedAmountSell = Math.round(amountSell.value)');
+    expect(pageSource).toContain('amountSell: normalizedAmountSell');
   });
 
   it('uses readable text inputs for grouped large amounts', () => {

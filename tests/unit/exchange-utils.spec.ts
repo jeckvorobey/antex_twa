@@ -9,6 +9,7 @@ import {
   getCountryByCurrency,
   getDefaultReceiveMethod,
   getReceiveLocationTitleKey,
+  isInternalAexPayout,
   resetCityForMethod,
   validatePreliminaryOrderDraft,
 } from '@utils/exchange';
@@ -40,11 +41,44 @@ describe('buildBuyCurrencyOptions', () => {
   });
 
   it('builds ATXG buy options from USDT-based target pairs without exposing USDT', () => {
-    expect(buildBuyCurrencyOptions(pairs, 'ATXG')).toEqual([
+    expect(
+      buildBuyCurrencyOptions(pairs, 'ATXG', [
+        {
+          currencyBuy: 'USDT',
+          rate: 1,
+          rateDisplay: '1.00',
+          rateText: '1 ATXG = 1.00 USDT',
+          availableMethods: ['bank_account'],
+        },
+        {
+          currencyBuy: 'RUB',
+          rate: 76.13,
+          rateDisplay: '76.13',
+          rateText: '1 ATXG = 76.13 RUB',
+          availableMethods: ['bank_account'],
+        },
+      ]),
+    ).toEqual([
       { label: 'THB', value: 'THB' },
       { label: 'VND', value: 'VND' },
       { label: 'GEL', value: 'GEL' },
+      { label: 'USDT', value: 'USDT' },
+      { label: 'RUB', value: 'RUB' },
     ]);
+  });
+
+  it('does not expose ATXG payout options for another sell currency', () => {
+    expect(
+      buildBuyCurrencyOptions(pairs, 'RUB', [
+        {
+          currencyBuy: 'USDT',
+          rate: 1,
+          rateDisplay: '1.00',
+          rateText: '1 ATXG = 1.00 USDT',
+          availableMethods: ['bank_account'],
+        },
+      ]),
+    ).not.toContainEqual({ label: 'USDT', value: 'USDT' });
   });
 });
 
@@ -133,6 +167,39 @@ describe('calculateLocalQuote', () => {
       rateDisplay: '35.50',
       availableMethods: ['qrcode', 'cash'],
     });
+  });
+
+  it('calculates internal ATXG payout from backend-driven option', () => {
+    expect(
+      calculateLocalQuote({
+        pairs,
+        aexPayoutOptions: [
+          {
+            currencyBuy: 'RUB',
+            rate: 76.13,
+            rateDisplay: '76.13',
+            rateText: '1 ATXG = 76.13 RUB',
+            availableMethods: ['bank_account'],
+          },
+        ],
+        currencySell: 'ATXG',
+        currencyBuy: 'RUB',
+        amountSell: 300,
+      }),
+    ).toMatchObject({
+      currencySell: 'ATXG',
+      currencyBuy: 'RUB',
+      amountBuy: 22839,
+      rate: 76.13,
+      availableMethods: ['bank_account'],
+    });
+  });
+
+  it('recognizes only ATXG to USDT/RUB as internal payout', () => {
+    expect(isInternalAexPayout('ATXG', 'USDT')).toBe(true);
+    expect(isInternalAexPayout('ATXG', 'RUB')).toBe(true);
+    expect(isInternalAexPayout('ATXG', 'THB')).toBe(false);
+    expect(isInternalAexPayout('RUB', 'USDT')).toBe(false);
   });
 });
 

@@ -73,7 +73,10 @@
       </div>
     </AppSurface>
 
-    <div v-if="countryOptions.length" class="app-chip-row app-chip-row--exchange">
+    <div
+      v-if="countryOptions.length && !internalExchange"
+      class="app-chip-row app-chip-row--exchange"
+    >
       <AppFlagOptionButton
         v-for="country in countryOptions"
         :key="country.value"
@@ -156,6 +159,7 @@ const props = defineProps<{
   selectedMethod: MiniappReceiveMethod;
   selectedCityId: number | null;
   availableMethods?: string[] | null;
+  internalExchange?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -169,7 +173,6 @@ const emit = defineEmits<{
 
 const { locale, t } = useI18n();
 const amountSellInputRef = ref<{ focus: () => void } | null>(null);
-
 
 const selectedSellCurrencyModel = computed({
   get: () => props.selectedSellCurrency,
@@ -196,10 +199,14 @@ const selectedCityIdModel = computed({
   set: (value: number | null) => emit('update:selectedCityId', value),
 });
 
-const selectedCountryLabel = computed(
-  () =>
-    props.countryOptions.find((country) => country.value === props.selectedCountry)?.label ?? null,
-);
+const selectedCountryLabel = computed(() => {
+  if (props.internalExchange) {
+    return t('exchange.internalExchange');
+  }
+  return (
+    props.countryOptions.find((country) => country.value === props.selectedCountry)?.label ?? null
+  );
+});
 
 const selectedCityLabel = computed(
   () => props.cityOptions.find((city) => city.value === props.selectedCityId)?.label ?? null,
@@ -219,7 +226,9 @@ const methodOptions = computed(() => {
   const labels: Record<MiniappReceiveMethod, string> = {
     qrcode: t('exchange.qrcode'),
     cash: t('exchange.cash'),
-    bank_account: t('exchange.bankAccount'),
+    bank_account: props.internalExchange
+      ? t('exchange.personalBankAccount')
+      : t('exchange.bankAccount'),
     pay_services: t('exchange.payServices'),
   };
   return normalizeReceiveMethods(props.availableMethods).map((method) => ({
