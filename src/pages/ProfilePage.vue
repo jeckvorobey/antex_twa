@@ -61,13 +61,14 @@ import AppSurface from '@components/ui/AppSurface.vue';
 import { useProfileStore } from '@stores/profile.store';
 import { useUiStore } from '@stores/ui.store';
 import type { MiniappMenuItem } from '@types/miniapp';
+import { openSafeExternalUrl, toSafeExternalUrl } from '@utils/safe-external-url';
 
 const router = useRouter();
 const uiStore = useUiStore();
 const profileStore = useProfileStore();
 const { t } = useI18n();
 
-const profilePhotoUrl = computed(() => profileStore.data?.user.photoUrl ?? null);
+const profilePhotoUrl = computed(() => toSafeExternalUrl(profileStore.data?.user.photoUrl));
 
 onMounted(async () => {
   if (!profileStore.loaded || !profileStore.data) {
@@ -84,7 +85,7 @@ function handleMenu(item: MiniappMenuItem) {
   }
 
   if (item.action === 'link' && item.href) {
-    window.open(item.href, '_blank');
+    openSafeExternalUrl(item.href);
     return;
   }
 

@@ -137,6 +137,7 @@ import AppButton from '@components/ui/AppButton.vue';
 import AppInfoRow from '@components/ui/AppInfoRow.vue';
 import AppSurface from '@components/ui/AppSurface.vue';
 import { useAexStore } from '@stores/aex.store';
+import { openSafeExternalUrl } from '@utils/safe-external-url';
 
 const { locale, t } = useI18n();
 const router = useRouter();
@@ -244,7 +245,7 @@ function shareLink() {
   const tg = window.Telegram?.WebApp;
   if (tg) {
     const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(referralLink.value)}&text=${encodeURIComponent(t('referral.shareText'))}`;
-    window.open(shareUrl, '_blank');
+    openSafeExternalUrl(shareUrl);
   } else {
     void navigator.clipboard.writeText(referralLink.value);
   }

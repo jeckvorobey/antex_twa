@@ -39,6 +39,7 @@ import { useRouter } from 'vue-router';
 import AppSurface from '@components/ui/AppSurface.vue';
 import { useProfileStore } from '@stores/profile.store';
 import type { MiniappMenuItem } from '@types/miniapp';
+import { openSafeExternalUrl } from '@utils/safe-external-url';
 
 defineProps<{
   modelValue: boolean;
@@ -68,7 +69,7 @@ function handleAction(item: MiniappMenuItem) {
   }
 
   if (item.action === 'link' && item.href) {
-    window.open(item.href, '_blank');
+    openSafeExternalUrl(item.href);
     emit('update:modelValue', false);
     return;
   }

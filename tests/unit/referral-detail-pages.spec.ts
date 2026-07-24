@@ -25,7 +25,10 @@ describe('Referral detail pages', () => {
     expect(operationsPageSource).toContain('<q-infinite-scroll');
     expect(operationsPageSource).toContain('loadNextPage');
     expect(operationsPageSource).toContain('txHasMore');
-    expect(operationsPageSource).toContain('formatMiniappDateTime');
+    expect(operationsPageSource).toContain('groupItemsByDate');
+    expect(operationsPageSource).toContain('formatMiniappTime');
+    expect(operationsPageSource).toContain('v-for="group in transactionGroups"');
+    expect(operationsPageSource).not.toContain('formatMiniappDateTime');
   });
 
   it('renders referrals page with total accrued card and lazy-load list', () => {
@@ -33,6 +36,10 @@ describe('Referral detail pages', () => {
     expect(referralsPageSource).toContain("t('referral.totalAccrued')");
     expect(referralsPageSource).toContain('<q-infinite-scroll');
     expect(referralsPageSource).toContain('loadReferralsNextPage');
+    expect(referralsPageSource).toContain('groupItemsByDate');
+    expect(referralsPageSource).toContain('formatMiniappTime');
+    expect(referralsPageSource).toContain('v-for="group in referralGroups"');
+    expect(referralsPageSource).not.toContain('formatMiniappDateTime');
     expect(referralsPageSource).not.toContain('earnedAex');
   });
 });
