@@ -19,33 +19,45 @@
       </div>
 
       <div ref="scrollRef" class="col app-referral-tx-scroll">
-        <AppSurface v-if="transactions.length" class="app-referral-tx-list">
-          <div v-for="tx in transactions" :key="tx.id" class="app-referral-tx-item">
-            <div class="app-referral-tx-item__info">
-              <div class="app-referral-tx-item__desc">
-                <q-icon
-                  :name="txTypeIcon(tx.type)"
-                  :color="txTypeColor(tx.type)"
-                  size="16px"
-                  class="q-mr-xs"
-                />
-                {{ txTypeLabel(tx.type) }}
-              </div>
-              <div v-if="tx.description" class="app-referral-tx-item__detail">
-                {{ tx.description }}
-              </div>
-              <div class="app-referral-tx-item__date">{{ formatDate(tx.createdAt) }}</div>
+        <template v-if="transactionGroups.length">
+          <section
+            v-for="group in transactionGroups"
+            :key="group.label"
+            class="app-history-group q-mb-md"
+          >
+            <div class="app-group-label app-group-label--history q-mb-sm">
+              {{ group.label }}
             </div>
-            <div
-              :class="[
-                'app-referral-tx-item__amount',
-                tx.amount >= 0 ? 'text-positive' : 'text-negative',
-              ]"
-            >
-              {{ tx.amount >= 0 ? '+' : '' }}{{ formatTokenAmount(tx.amount) }}
-            </div>
-          </div>
-        </AppSurface>
+
+            <AppSurface class="app-referral-tx-list">
+              <div v-for="tx in group.items" :key="tx.id" class="app-referral-tx-item">
+                <div class="app-referral-tx-item__info">
+                  <div class="app-referral-tx-item__desc">
+                    <q-icon
+                      :name="txTypeIcon(tx.type)"
+                      :color="txTypeColor(tx.type)"
+                      size="16px"
+                      class="q-mr-xs"
+                    />
+                    {{ txTypeLabel(tx.type) }}
+                  </div>
+                  <div v-if="tx.description" class="app-referral-tx-item__detail">
+                    {{ tx.description }}
+                  </div>
+                  <div class="app-referral-tx-item__date">{{ formatTime(tx.createdAt) }}</div>
+                </div>
+                <div
+                  :class="[
+                    'app-referral-tx-item__amount',
+                    tx.amount >= 0 ? 'text-positive' : 'text-negative',
+                  ]"
+                >
+                  {{ tx.amount >= 0 ? '+' : '' }}{{ formatTokenAmount(tx.amount) }}
+                </div>
+              </div>
+            </AppSurface>
+          </section>
+        </template>
 
         <AppSurface
           v-else-if="!aexStore.txLoading && aexStore.txLoaded"
@@ -79,7 +91,8 @@ import { useI18n } from 'vue-i18n';
 
 import AppSurface from '@components/ui/AppSurface.vue';
 import { useAexStore } from '@stores/aex.store';
-import { formatMiniappDateTime } from '@utils/formatters';
+import { groupItemsByDate } from '@utils/date-groups';
+import { formatMiniappTime } from '@utils/formatters';
 
 const { locale, t } = useI18n();
 const aexStore = useAexStore();
@@ -87,6 +100,9 @@ const infiniteScrollRef = ref<{ resume: () => void; stop: () => void } | null>(n
 const scrollRef = ref<HTMLElement | null>(null);
 
 const transactions = computed(() => aexStore.transactions ?? []);
+const transactionGroups = computed(() =>
+  groupItemsByDate(transactions.value, (transaction) => transaction.createdAt, locale.value),
+);
 
 onMounted(async () => {
   if (!aexStore.txLoaded || !transactions.value.length) {
@@ -106,10 +122,12 @@ async function loadMore(_: number, done: (stop?: boolean) => void) {
   done(!aexStore.txHasMore);
 }
 
-function formatDate(value: string) {
-  return formatMiniappDateTime(value, locale.value);
+/** Форматирует только время, потому что календарная дата вынесена в заголовок группы. */
+function formatTime(value: string) {
+  return formatMiniappTime(value, locale.value);
 }
 
+/** Форматирует ATXG-сумму без лишней дробной части. */
 function formatTokenAmount(value: number): string {
   if (Number.isInteger(value)) {
     return value.toLocaleString(locale.value);
@@ -117,12 +135,14 @@ function formatTokenAmount(value: number): string {
   return value.toLocaleString(locale.value, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+/** Возвращает локализованное название типа операции с безопасным fallback. */
 function txTypeLabel(type: string): string {
   const key = `referral.txType.${type}`;
   const translated = t(key);
   return translated !== key ? translated : type;
 }
 
+/** Сопоставляет тип операции с outline-иконкой Quasar. */
 function txTypeIcon(type: string): string {
   const icons: Record<string, string> = {
     referral_reward: 'card_giftcard',
@@ -136,6 +156,7 @@ function txTypeIcon(type: string): string {
   return icons[type] ?? 'swap_horiz';
 }
 
+/** Сопоставляет тип операции с семантическим цветом Quasar. */
 function txTypeColor(type: string): string {
   const colors: Record<string, string> = {
     referral_reward: 'positive',

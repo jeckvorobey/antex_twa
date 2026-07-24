@@ -10,6 +10,8 @@ export default {
     empty: 'Пока пусто',
     notifications: 'Уведомления',
     profile: 'Профиль',
+    back: 'Назад',
+    logoAlt: 'Логотип AntEx',
   },
   nav: {
     home: 'Главная',
@@ -136,7 +138,8 @@ export default {
       'При достижении минимальной суммы вывода вы сможете получить выплату, оформив обычный обмен на странице ',
     instructionStep5ExchangeLink: '«Обмен»',
     instructionStep5DescriptionSuffix: '.',
-    instructionReward: 'За каждого приглашённого друга вы получаете бонус в ATXG. Чем больше друзей — тем больше заработок!',
+    instructionReward:
+      'За каждого приглашённого друга вы получаете бонус в ATXG. Чем больше друзей — тем больше заработок!',
     termsTitle: 'Основные условия',
     terms: {
       referralPercent: 'Вознаграждение',
@@ -205,7 +208,8 @@ export default {
     internal_payout_contract_invalid: 'Проверьте параметры внутреннего обмена.',
     min_amount: 'Минимальная сумма для обмена — {amount} {currency}',
     aex_insufficient_balance: 'Недостаточно доступных ATXG для вывода.',
-    aex_withdraw_limit_not_reached: 'Вывод ATXG станет доступен после достижения минимального лимита.',
+    aex_withdraw_limit_not_reached:
+      'Вывод ATXG станет доступен после достижения минимального лимита.',
   },
   more: {
     title: 'Еще',

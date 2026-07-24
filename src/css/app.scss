@@ -391,19 +391,43 @@ body.body--dark .q-page {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 56px;
+  min-height: 52px;
+}
+
+.app-header-bar--with-back {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) 42px;
+  gap: var(--antex-space-sm);
+}
+
+.app-header-bar--with-back .app-header-bar__brand {
+  min-width: 0;
+  justify-self: center;
+}
+
+.app-header-bar--with-back .app-header-bar__avatar-button {
+  justify-self: end;
+}
+
+.app-back-button {
+  width: 42px;
+  height: 42px;
+  min-height: 42px;
+  color: var(--antex-gold-light);
+  background: var(--antex-gold-soft);
+  border: 1px solid var(--antex-gold-border);
 }
 
 .app-header-bar__brand {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--antex-space-sm);
 }
 
 .app-header-bar__logo {
   position: relative;
-  width: 54px;
-  height: 54px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   overflow: hidden;
   border: 1px solid rgba(242, 210, 122, 0.65);
@@ -420,13 +444,16 @@ body.body--dark .q-page {
 
 .app-header-bar__title {
   font-family: 'Montserrat', sans-serif;
-  font-size: 29px;
+  overflow: hidden;
+  font-size: 22px;
   font-weight: 800;
   line-height: 1;
   background: var(--antex-gold-gradient);
   background-clip: text;
   color: transparent;
   text-shadow: 0 0 18px rgba(242, 210, 122, 0.16);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .app-header-bar__avatar-button {
@@ -616,7 +643,8 @@ body.body--dark .q-page {
   position: fixed;
   left: 50%;
   bottom: calc(env(safe-area-inset-bottom) + var(--antex-space-md));
-  width: min(calc(100vw - (var(--antex-space-md) * 2)), 390px);
+  width: calc(100vw - (var(--antex-space-lg) * 2));
+  max-width: 360px;
   transform: translateX(-50%);
   z-index: 40;
 }
@@ -1396,17 +1424,17 @@ body.body--light .q-page,
 }
 
 .app-header-bar {
-  min-height: 58px;
+  min-height: 52px;
 }
 
 .app-header-bar__logo {
-  width: 54px;
-  height: 54px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
 }
 
 .app-header-bar__title {
-  font-size: 29px;
+  font-size: 22px;
   font-weight: 800;
 }
 
@@ -1792,12 +1820,13 @@ body.body--light .q-page,
 
 .app-bottom-nav {
   bottom: calc(env(safe-area-inset-bottom) + var(--antex-space-md));
-  width: min(calc(100vw - (var(--antex-space-md) * 2)), 390px);
+  width: calc(100vw - (var(--antex-space-lg) * 2));
+  max-width: 360px;
 }
 
 .app-bottom-nav__shell {
   gap: 2px;
-  padding: 4px;
+  padding: 3px;
   border-radius: 18px;
 }
 

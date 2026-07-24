@@ -25,42 +25,50 @@
       </div>
 
       <div ref="scrollRef" class="col app-referral-tx-scroll">
-        <AppSurface v-if="aexStore.referrals.length" class="app-referral-tx-list">
-          <div
-            v-for="referral in aexStore.referrals"
-            :key="referral.id"
-            class="app-referral-tx-item"
+        <template v-if="referralGroups.length">
+          <section
+            v-for="group in referralGroups"
+            :key="group.label"
+            class="app-history-group q-mb-md"
           >
-            <div class="row items-center no-wrap col">
-              <q-avatar size="36px" class="q-mr-sm">
-                <q-img
-                  v-if="referral.photoUrl"
-                  :src="referral.photoUrl"
-                  fit="cover"
-                  width="100%"
-                  height="100%"
-                  :alt="referral.displayName"
-                  no-spinner
-                />
-                <q-icon v-else name="person_outline" size="20px" />
-              </q-avatar>
+            <div class="app-group-label app-group-label--history q-mb-sm">
+              {{ group.label }}
+            </div>
 
-              <div class="app-referral-tx-item__info">
-                <div class="app-referral-tx-item__desc">{{ referral.displayName }}</div>
-                <div v-if="referral.username" class="app-referral-tx-item__detail">
-                  @{{ referral.username }}
+            <AppSurface class="app-referral-tx-list">
+              <div v-for="referral in group.items" :key="referral.id" class="app-referral-tx-item">
+                <div class="row items-center no-wrap col">
+                  <q-avatar size="36px" class="q-mr-sm">
+                    <q-img
+                      v-if="safePhotoUrl(referral.photoUrl)"
+                      :src="safePhotoUrl(referral.photoUrl) ?? undefined"
+                      fit="cover"
+                      width="100%"
+                      height="100%"
+                      :alt="referral.displayName"
+                      no-spinner
+                    />
+                    <q-icon v-else name="person_outline" size="20px" />
+                  </q-avatar>
+
+                  <div class="app-referral-tx-item__info">
+                    <div class="app-referral-tx-item__desc">{{ referral.displayName }}</div>
+                    <div v-if="referral.username" class="app-referral-tx-item__detail">
+                      @{{ referral.username }}
+                    </div>
+                    <div class="app-referral-tx-item__date">
+                      {{ formatTime(referral.joinedAt) }}
+                    </div>
+                  </div>
                 </div>
-                <div class="app-referral-tx-item__date">
-                  {{ t('referral.joinedAt') }}: {{ formatDate(referral.joinedAt) }}
+
+                <div class="app-referral-tx-item__amount text-warning">
+                  {{ referral.rewardPercent }}%
                 </div>
               </div>
-            </div>
-
-            <div class="app-referral-tx-item__amount text-warning">
-              {{ referral.rewardPercent }}%
-            </div>
-          </div>
-        </AppSurface>
+            </AppSurface>
+          </section>
+        </template>
 
         <AppSurface
           v-else-if="!aexStore.referralsLoading && aexStore.referralsLoaded"
@@ -95,7 +103,9 @@ import { useI18n } from 'vue-i18n';
 import AexBalanceCard from '@components/ui/AexBalanceCard.vue';
 import AppSurface from '@components/ui/AppSurface.vue';
 import { useAexStore } from '@stores/aex.store';
-import { formatMiniappDateTime } from '@utils/formatters';
+import { groupItemsByDate } from '@utils/date-groups';
+import { formatMiniappTime } from '@utils/formatters';
+import { toSafeExternalUrl } from '@utils/safe-external-url';
 
 const { locale, t } = useI18n();
 const aexStore = useAexStore();
@@ -103,6 +113,9 @@ const infiniteScrollRef = ref<{ resume: () => void; stop: () => void } | null>(n
 const scrollRef = ref<HTMLElement | null>(null);
 
 const totalAccrued = computed(() => parseDecimal(aexStore.referralsSummary?.totalAccrued));
+const referralGroups = computed(() =>
+  groupItemsByDate(aexStore.referrals, (referral) => referral.joinedAt, locale.value),
+);
 
 onMounted(async () => {
   if (!aexStore.referralsLoaded || !aexStore.referrals.length) {
@@ -122,10 +135,17 @@ async function loadMore(_: number, done: (stop?: boolean) => void) {
   done(!aexStore.referralsHasMore);
 }
 
-function formatDate(value: string) {
-  return formatMiniappDateTime(value, locale.value);
+/** Форматирует только время, потому что календарная дата вынесена в заголовок группы. */
+function formatTime(value: string) {
+  return formatMiniappTime(value, locale.value);
 }
 
+/** Отбрасывает небезопасную схему URL перед image binding. */
+function safePhotoUrl(value: string | null): string | null {
+  return toSafeExternalUrl(value);
+}
+
+/** Безопасно преобразует decimal-строку общей суммы в значение balance card. */
 function parseDecimal(value: string | null | undefined): number {
   const parsed = Number.parseFloat(value ?? '0');
   return Number.isFinite(parsed) ? parsed : 0;

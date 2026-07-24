@@ -187,6 +187,7 @@ import {
   resetHomeRateExpansion,
   resolveHomeCountryByCity,
 } from '@utils/home-rates';
+import { toSafeExternalUrl } from '@utils/safe-external-url';
 
 const homeStore = useHomeStore();
 const profileStore = useProfileStore();
@@ -285,13 +286,13 @@ const managerTelegramHref = computed(() => {
     .find((item) => item.id === 'support' && item.action === 'link')
     ?.href?.trim();
   if (supportHref) {
-    return supportHref;
+    return toSafeExternalUrl(supportHref);
   }
 
   const fallbackUsername = (import.meta.env.VITE_TG_BOT_USERNAME as string | undefined)
     ?.trim()
     .replace(/^@/, '');
-  return fallbackUsername ? `https://t.me/${fallbackUsername}` : null;
+  return fallbackUsername ? toSafeExternalUrl(`https://t.me/${fallbackUsername}`) : null;
 });
 
 onMounted(async () => {
