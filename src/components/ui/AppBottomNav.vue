@@ -7,7 +7,7 @@
       flat
       bordered
       class="bottom-nav__shell row no-wrap full-width q-pa-xs"
-      style="max-width: 308px"
+      style="max-width: 312px"
     >
       <q-btn
         v-for="item in items"
