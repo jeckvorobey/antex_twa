@@ -2,7 +2,7 @@
   <q-page class="app-page app-page--exchange">
     <div class="app-screen app-screen--exchange fit column no-wrap">
       <q-form class="col column no-wrap" @submit.prevent="submitOrder">
-        <div class="app-exchange-content col column q-gutter-md no-wrap overflow-hidden">
+        <div class="app-exchange-content col column q-gutter-md no-wrap">
           <AppWarningNotice>
             {{ t('order.rateNotice') }}
           </AppWarningNotice>

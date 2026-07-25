@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 const styles = readFileSync(resolve(process.cwd(), 'src/css/app.scss'), 'utf8');
 const appSurface = readFileSync(resolve(process.cwd(), 'src/components/ui/AppSurface.vue'), 'utf8');
 const homePage = readFileSync(resolve(process.cwd(), 'src/pages/HomePage.vue'), 'utf8');
+const exchangePage = readFileSync(resolve(process.cwd(), 'src/pages/ExchangePage.vue'), 'utf8');
 
 describe('Mini App card shadow contract', () => {
   it('defines the profile card shadow once and exposes it through a global helper', () => {
@@ -32,5 +33,33 @@ describe('Mini App card shadow contract', () => {
     expect(styles).toMatch(
       /\.app-history-scroll,\s*\.app-referral-tx-scroll\s*{[^}]*margin-inline:\s*calc\(var\(--antex-shadow-gutter\) \* -1\)[^}]*padding-inline:\s*var\(--antex-shadow-gutter\)/s,
     );
+  });
+
+  it('does not clip AppSurface shadows on exchange and home screens', () => {
+    expect(exchangePage).not.toContain('app-exchange-content col column q-gutter-md no-wrap overflow-hidden');
+    expect(styles).not.toMatch(/\.app-page--exchange\s*{[^}]*overflow:\s*hidden/s);
+    expect(styles).not.toMatch(/\.shadow-radius\s*{[^}]*overflow:\s*hidden/s);
+  });
+
+  it('removes obsolete card styles that are no longer used by components', () => {
+    for (const legacyClass of [
+      '.app-quick-card',
+      '.app-quick-grid',
+      '.app-service-grid',
+      '.app-service-card',
+      '.app-location-grid',
+      '.app-location-card',
+      '.app-bonus-banner',
+      '.app-calc-card',
+      '.app-calc-block',
+      '.app-rate-scroll',
+      '.app-rate-card',
+      '.app-home-overview',
+      '.app-home-quick-card',
+      '.app-home-stat-card',
+      '.app-home-location-card',
+    ]) {
+      expect(styles).not.toContain(legacyClass);
+    }
   });
 });
