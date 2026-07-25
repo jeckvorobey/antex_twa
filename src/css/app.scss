@@ -805,11 +805,9 @@ body.body--dark .q-page {
   border: 1px solid var(--antex-gold-border);
   border-radius: 18px;
   background: rgba(18, 53, 48, 0.96);
-  box-shadow: var(--antex-shadow-card);
   color: var(--antex-text-primary);
   text-align: left;
   transition:
-    box-shadow 0.25s ease,
     transform 0.25s ease,
     filter 0.25s ease;
 }
@@ -929,7 +927,6 @@ body.body--dark .q-page {
   border: 1px solid var(--antex-gold-border);
   border-radius: 20px;
   background: rgba(10, 31, 28, 0.96);
-  box-shadow: var(--antex-shadow-card);
 }
 
 .app-bonus-banner__coin,
@@ -972,7 +969,6 @@ body.body--dark .q-page {
   padding: 14px;
   border: 1px solid var(--antex-gold-border);
   border-radius: 18px;
-  box-shadow: var(--antex-shadow-card);
 }
 
 .app-location-card__title {
@@ -1469,7 +1465,6 @@ body.body--light .q-page,
   width: 100%;
   border: 1px solid var(--antex-gold-border);
   border-radius: 18px;
-  box-shadow: var(--antex-shadow-card);
 }
 
 .app-home-quick-card {
@@ -1689,16 +1684,14 @@ body.body--light .q-page,
   background: rgba(18, 53, 48, 0.96);
   transition:
     border-color 0.24s ease,
-    box-shadow 0.24s ease,
+    filter 0.24s ease,
     transform 0.24s ease;
 }
 
 .app-home-social-card:focus-within,
 .app-home-social-card:hover {
   border-color: rgba(212, 175, 55, 0.58);
-  box-shadow:
-    var(--antex-shadow-card),
-    0 0 18px rgba(212, 175, 55, 0.16);
+  filter: drop-shadow(0 0 8px rgba(212, 175, 55, 0.16));
   transform: translateY(-1px);
 }
 
@@ -1707,16 +1700,14 @@ body.body--light .q-page,
   background: rgba(18, 53, 48, 0.96);
   transition:
     border-color 0.24s ease,
-    box-shadow 0.24s ease,
+    filter 0.24s ease,
     transform 0.24s ease;
 }
 
 .app-home-service-card:focus-within,
 .app-home-service-card:hover {
   border-color: rgba(212, 175, 55, 0.58);
-  box-shadow:
-    var(--antex-shadow-card),
-    0 0 18px rgba(212, 175, 55, 0.16);
+  filter: drop-shadow(0 0 8px rgba(212, 175, 55, 0.16));
   transform: translateY(-1px);
 }
 
@@ -2195,9 +2186,7 @@ body.body--light .q-page,
   .app-exchange-pair-card:hover,
   .app-info-row--clickable:hover,
   .app-btn--ghost:hover {
-    box-shadow:
-      var(--antex-shadow-card),
-      0 0 20px rgba(212, 175, 55, 0.16);
+    filter: drop-shadow(0 0 8px rgba(212, 175, 55, 0.16));
   }
 }
 
@@ -2209,9 +2198,7 @@ body.body--light .q-page,
 
 .app-aex-balance-card--clickable {
   cursor: pointer;
-  transition:
-    box-shadow 0.2s ease,
-    filter 0.2s ease;
+  transition: filter 0.2s ease;
 }
 
 .app-aex-balance-card__label {
@@ -2403,8 +2390,6 @@ body.body--light .q-page,
 
 @media (hover: hover) {
   .app-aex-balance-card--clickable:hover {
-    box-shadow:
-      var(--antex-shadow-card),
-      0 0 20px rgba(212, 175, 55, 0.16);
+    filter: drop-shadow(0 0 8px rgba(212, 175, 55, 0.16));
   }
 }
