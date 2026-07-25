@@ -22,8 +22,11 @@
   --antex-radius-btn: 14px;
   --antex-radius-card: 18px;
   --antex-radius-chip: 20px;
-  --antex-shadow-card: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --antex-shadow-card:
+    0 8px 24px rgba(0, 0, 0, 0.4),
+    0 0 20px rgba(212, 175, 55, 0.06);
   --antex-shadow-glow: 0 0 20px rgba(212, 175, 55, 0.25);
+  --antex-shadow-gutter: 12px;
   --antex-gold-gradient: linear-gradient(135deg, #f2d27a, #d4af37, #b8962e);
 }
 
@@ -486,9 +489,12 @@ body.body--dark .q-page {
   background: rgba(18, 53, 48, 0.96);
   border: 1px solid var(--antex-gold-border);
   border-radius: var(--antex-radius-card);
-  box-shadow: var(--antex-shadow-card);
   color: var(--antex-text-primary);
   backdrop-filter: blur(18px);
+}
+
+.app-card-shadow {
+  box-shadow: var(--antex-shadow-card);
 }
 
 .shadow-radius {
@@ -498,12 +504,6 @@ body.body--dark .q-page {
 
 .app-surface--deep {
   background: rgba(10, 31, 28, 0.96);
-}
-
-.app-surface--elevated {
-  box-shadow:
-    0 8px 24px rgba(0, 0, 0, 0.4),
-    0 0 20px rgba(212, 175, 55, 0.06);
 }
 
 .app-section {
@@ -2062,8 +2062,12 @@ body.body--light .q-page,
   gap: 4px;
 }
 
-.app-history-scroll {
+.app-history-scroll,
+.app-referral-tx-scroll {
   min-height: 0;
+  margin-inline: calc(var(--antex-shadow-gutter) * -1);
+  padding-inline: var(--antex-shadow-gutter);
+  padding-bottom: var(--antex-shadow-gutter);
   overflow-y: auto;
 }
 
@@ -2358,8 +2362,6 @@ body.body--light .q-page,
 
 .app-referral-tx-scroll {
   max-height: 400px;
-  overflow-y: auto;
-  border-radius: var(--antex-radius-card);
 }
 
 .app-referral-tx-list,

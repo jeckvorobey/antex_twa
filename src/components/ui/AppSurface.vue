@@ -4,7 +4,7 @@
       'app-surface',
       'shadow-radius',
       deep ? 'app-surface--deep' : null,
-      elevated ? 'app-surface--elevated' : null,
+      elevated ? 'app-card-shadow' : null,
       padded ? 'q-pa-md' : null,
     ]"
   >
