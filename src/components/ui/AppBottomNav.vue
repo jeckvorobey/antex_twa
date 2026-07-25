@@ -18,7 +18,7 @@
         rounded
         no-caps
         class="col q-py-sm"
-        size="sm"
+        size="12px"
         :icon="item.icon"
         :label="item.label"
         :text-color="isActive(item.name) ? 'primary' : 'white'"
@@ -92,8 +92,8 @@ function navigateTo(name: string): void {
   box-shadow:
     0 18px 42px rgba(0, 0, 0, 0.3),
     inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
 }
 
 .bottom-nav__item--active {
