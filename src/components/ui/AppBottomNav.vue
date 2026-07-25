@@ -17,8 +17,8 @@
         stack
         rounded
         no-caps
-        class="col"
-        size="sm"
+        class="col q-py-sm"
+        size="md"
         :icon="item.icon"
         :label="item.label"
         :text-color="isActive(item.name) ? 'primary' : 'white'"
