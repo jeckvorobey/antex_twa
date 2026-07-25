@@ -17,6 +17,7 @@ const bottomNavSource = readFileSync(
   'utf8',
 );
 const appStylesSource = readFileSync(resolve(process.cwd(), 'src/css/app.scss'), 'utf8');
+const bottomNavStyles = bottomNavSource.split('<style scoped lang="scss">')[1] ?? '';
 
 describe('app navigation chrome', () => {
   it('keeps route pages lazy and declares deterministic referral back targets', () => {
@@ -44,12 +45,26 @@ describe('app navigation chrome', () => {
   });
 
   it('keeps four Quasar navigation actions inside a narrower compact shell', () => {
+    expect(bottomNavSource).toContain('<q-card');
+    expect(bottomNavSource).toContain('flat');
+    expect(bottomNavSource).toContain('bordered');
+    expect(bottomNavSource).toContain('class="app-bottom-nav__shell row no-wrap q-pa-sm"');
     expect(bottomNavSource).toContain('<q-btn');
+    expect(bottomNavSource).toContain('dense');
+    expect(bottomNavSource).toContain('size="sm"');
+    expect(bottomNavSource).toContain("'app-bottom-nav__item col'");
     expect(bottomNavSource).toContain("{ name: 'home'");
     expect(bottomNavSource).toContain("{ name: 'exchange'");
     expect(bottomNavSource).toContain("{ name: 'history'");
     expect(bottomNavSource).toContain("{ name: 'profile'");
-    expect(appStylesSource).toMatch(/\.app-bottom-nav\s*{[^}]*max-width:\s*360px/s);
-    expect(appStylesSource).toMatch(/\.app-bottom-nav__shell\s*{[^}]*padding:\s*3px/s);
+    expect(bottomNavStyles).toMatch(/\.app-bottom-nav\s*{[^}]*max-width:\s*344px/s);
+    expect(bottomNavStyles).toContain(
+      'bottom: calc(env(safe-area-inset-bottom) + var(--antex-space-sm))',
+    );
+    expect(bottomNavStyles).not.toContain('.app-bottom-nav__shell {\n  padding:');
+    expect(bottomNavStyles).not.toContain('.app-bottom-nav__item .q-btn__content');
+    expect(bottomNavStyles).not.toContain('.app-bottom-nav__item .q-icon');
+    expect(bottomNavStyles).not.toContain('.app-bottom-nav__item .block');
+    expect(appStylesSource).not.toContain('.app-bottom-nav');
   });
 });

@@ -18,26 +18,26 @@ describe('AppBottomNav', () => {
   });
 
   it('keeps the fixed nav inside the mobile screen width', () => {
-    const styles = readFileSync(stylesPath, 'utf8');
+    const component = readFileSync(componentPath, 'utf8');
+    const styles = component.split('<style scoped lang="scss">')[1] ?? '';
 
     expect(styles).toContain('left: 50%');
     expect(styles).toContain('transform: translateX(-50%)');
-    expect(styles).toContain('width: min(calc(100vw - (var(--antex-space-md) * 2)), 390px)');
-    expect(styles).toContain('bottom: calc(env(safe-area-inset-bottom) + var(--antex-space-md))');
-    expect(styles).not.toContain('.app-layout > .app-bottom-nav,\n.app-layout > .q-dialog');
-    expect(styles).toContain('.app-layout > .app-bottom-nav {\n  z-index: 40;\n}');
+    expect(styles).toContain('bottom: calc(env(safe-area-inset-bottom) + var(--antex-space-sm))');
+    expect(styles).toContain('max-width: 344px');
+    expect(readFileSync(stylesPath, 'utf8')).not.toContain('.app-bottom-nav');
   });
 
-  it('preserves 16px icons in stacked nav buttons', () => {
-    const styles = readFileSync(stylesPath, 'utf8');
+  it('delegates compact icon and label sizing to Quasar', () => {
+    const component = readFileSync(componentPath, 'utf8');
+    const styles = component.split('<style scoped lang="scss">')[1] ?? '';
 
-    expect(styles).toContain('.app-bottom-nav__item .q-icon {\n  font-size: 16px;\n}');
-    expect(styles).toContain(
-      '.app-bottom-nav__item:not(.app-bottom-nav__item--active) .q-icon {\n  color: var(--antex-text-primary);\n}',
-    );
-    expect(styles).toContain(
-      '.app-bottom-nav__item:not(.app-bottom-nav__item--active) .block {\n  color: var(--antex-text-primary);\n}',
-    );
+    expect(component).toContain('dense');
+    expect(component).toContain('size="sm"');
+    expect(component).toContain(":text-color=\"isActive(item.name) ? 'primary' : 'white'\"");
+    expect(styles).not.toContain('.app-bottom-nav__item .q-btn__content');
+    expect(styles).not.toContain('.app-bottom-nav__item .q-icon');
+    expect(styles).not.toContain('.app-bottom-nav__item .block');
   });
 
   it('renders the header from the shared layout on every page', () => {
