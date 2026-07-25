@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 
 const styles = readFileSync(resolve(process.cwd(), 'src/css/app.scss'), 'utf8');
 const appSurface = readFileSync(resolve(process.cwd(), 'src/components/ui/AppSurface.vue'), 'utf8');
+const homePage = readFileSync(resolve(process.cwd(), 'src/pages/HomePage.vue'), 'utf8');
 
 describe('Mini App card shadow contract', () => {
   it('defines the profile card shadow once and exposes it through a global helper', () => {
@@ -17,6 +18,14 @@ describe('Mini App card shadow contract', () => {
   it('applies the shared helper through AppSurface elevation', () => {
     expect(appSurface).toContain("elevated ? 'app-card-shadow' : null");
     expect(styles).not.toMatch(/\.app-surface--elevated\s*{\s*box-shadow:\s*0 8px/s);
+  });
+
+  it('keeps the card shadow token private to the helper class', () => {
+    expect(styles.match(/var\(--antex-shadow-card\)/g)).toHaveLength(1);
+  });
+
+  it('applies the helper explicitly to card-like blocks outside AppSurface', () => {
+    expect(homePage).toContain('class="app-home-rate-item app-card-shadow"');
   });
 
   it('keeps list card shadows visible inside vertical scroll containers', () => {

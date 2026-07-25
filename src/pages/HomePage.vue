@@ -44,7 +44,7 @@
           v-for="{ card, presentation } in visibleRateCards"
           :key="card.id"
           type="button"
-          class="app-home-rate-item"
+          class="app-home-rate-item app-card-shadow"
           @click="openOrderFromFeatured(card)"
         >
           <div class="app-home-rate-item__side">
