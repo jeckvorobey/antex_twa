@@ -18,7 +18,7 @@
         rounded
         no-caps
         class="col q-py-sm"
-        size="12px"
+        size="10px"
         :icon="item.icon"
         :label="item.label"
         :text-color="isActive(item.name) ? 'primary' : 'white'"
