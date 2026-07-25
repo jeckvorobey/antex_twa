@@ -17,6 +17,7 @@ const bottomNavSource = readFileSync(
   'utf8',
 );
 const appStylesSource = readFileSync(resolve(process.cwd(), 'src/css/app.scss'), 'utf8');
+const bottomNavStyles = bottomNavSource.split('<style scoped lang="scss">')[1] ?? '';
 
 describe('app navigation chrome', () => {
   it('keeps route pages lazy and declares deterministic referral back targets', () => {
@@ -44,12 +45,25 @@ describe('app navigation chrome', () => {
   });
 
   it('keeps four Quasar navigation actions inside a narrower compact shell', () => {
+    expect(bottomNavSource).toContain('<q-card');
+    expect(bottomNavSource).toContain('flat');
+    expect(bottomNavSource).toContain('bordered');
+    expect(bottomNavSource).toContain('class="bottom-nav__shell row no-wrap full-width q-pa-xs"');
+    expect(bottomNavSource).toContain('style="max-width: 308px"');
     expect(bottomNavSource).toContain('<q-btn');
-    expect(bottomNavSource).toContain("{ name: 'home'");
-    expect(bottomNavSource).toContain("{ name: 'exchange'");
-    expect(bottomNavSource).toContain("{ name: 'history'");
-    expect(bottomNavSource).toContain("{ name: 'profile'");
-    expect(appStylesSource).toMatch(/\.app-bottom-nav\s*{[^}]*max-width:\s*360px/s);
-    expect(appStylesSource).toMatch(/\.app-bottom-nav__shell\s*{[^}]*padding:\s*3px/s);
+    expect(bottomNavSource).toContain('dense');
+    expect(bottomNavSource).toContain('rounded');
+    expect(bottomNavSource).toContain('size="sm"');
+    expect(bottomNavSource).toContain('class="col"');
+    expect(bottomNavSource).toMatch(/name:\s*'home'/);
+    expect(bottomNavSource).toMatch(/name:\s*'exchange'/);
+    expect(bottomNavSource).toMatch(/name:\s*'history'/);
+    expect(bottomNavSource).toMatch(/name:\s*'profile'/);
+    expect(bottomNavSource).toContain('fixed-bottom row justify-center q-px-sm q-pb-sm z-top');
+    expect(bottomNavSource).toContain('margin-bottom: env(safe-area-inset-bottom)');
+    expect(bottomNavStyles).not.toContain('.q-btn__content');
+    expect(bottomNavStyles).not.toContain('.q-icon');
+    expect(bottomNavStyles).not.toContain('.block');
+    expect(appStylesSource).not.toContain('.app-bottom-nav');
   });
 });

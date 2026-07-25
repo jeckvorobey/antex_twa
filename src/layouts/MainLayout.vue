@@ -16,6 +16,7 @@
     </q-page-container>
 
     <AppBottomNav />
+
     <AppPageLoader :showing="pageLoading" />
 
     <OrderFormSheet v-model="uiStore.orderSheetOpen" />
