@@ -88,12 +88,12 @@ function navigateTo(name: string): void {
   border-color: rgba(242, 210, 122, 0.18);
   border-radius: 36px;
   background:
-    linear-gradient(180deg, rgba(28, 73, 65, 0.7), rgba(10, 31, 28, 0.5)), rgba(18, 53, 48, 0.5);
+    linear-gradient(180deg, rgba(28, 73, 65, 0.75), rgba(10, 31, 28, 0.65)), rgba(18, 53, 48, 0.36);
   box-shadow:
     0 18px 42px rgba(0, 0, 0, 0.3),
     inset 0 1px 0 rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(3px);
-  -webkit-backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(15px);
 }
 
 .bottom-nav__item--active {
