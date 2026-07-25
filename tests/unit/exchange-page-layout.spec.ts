@@ -18,7 +18,8 @@ describe('ExchangePage responsive layout contract', () => {
 
     expect(pageSource).toContain('class="app-screen app-screen--exchange fit column no-wrap"');
     expect(pageSource).toContain('class="col column no-wrap"');
-    expect(pageSource).toContain(
+    expect(pageSource).toContain('class="app-exchange-content col column q-gutter-md no-wrap"');
+    expect(pageSource).not.toContain(
       'class="app-exchange-content col column q-gutter-md no-wrap overflow-hidden"',
     );
     expect(pageSource).toContain('class="q-pt-md app-exchange-submit"');

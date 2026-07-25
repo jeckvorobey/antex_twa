@@ -499,7 +499,6 @@ body.body--dark .q-page {
 
 .shadow-radius {
   border-radius: var(--antex-radius-card);
-  overflow: hidden;
 }
 
 .app-surface--deep {
@@ -591,9 +590,7 @@ body.body--dark .q-page {
 
 @media (hover: hover) {
   .app-btn--ghost:hover,
-  .app-quick-card:hover,
   .app-sheet-menu-item:hover,
-  .app-home-rate-row:hover,
   .app-info-row--clickable:hover {
     box-shadow: var(--antex-shadow-glow);
     filter: drop-shadow(0 0 6px rgba(212, 175, 55, 0.5));
@@ -787,33 +784,6 @@ body.body--dark .q-page {
   color: var(--antex-gold-light);
 }
 
-.app-quick-grid,
-.app-service-grid,
-.app-location-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.app-quick-card {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 8px;
-  min-height: 92px;
-  padding: 14px 16px;
-  border: 1px solid var(--antex-gold-border);
-  border-radius: 18px;
-  background: rgba(18, 53, 48, 0.96);
-  color: var(--antex-text-primary);
-  text-align: left;
-  transition:
-    transform 0.25s ease,
-    filter 0.25s ease;
-}
-
-.app-quick-card__icon,
-.app-service-card__icon,
 .app-info-row__icon,
 .app-sheet-menu-item__icon {
   display: flex;
@@ -826,75 +796,11 @@ body.body--dark .q-page {
   color: var(--antex-gold-base);
 }
 
-.app-quick-card__title,
-.app-service-card__title {
-  font-size: 15px;
-  font-weight: 600;
-  line-height: 1.2;
-}
-
-.app-quick-card__subtitle,
-.app-service-card__subtitle,
 .app-sheet__description,
 .app-empty-state {
   color: var(--antex-text-secondary);
   font-size: 13px;
   line-height: 1.38;
-}
-
-.app-home-rates {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.app-home-rate-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  width: 100%;
-  padding: 12px 14px;
-  border: 1px solid rgba(212, 175, 55, 0.12);
-  border-radius: 18px;
-  background: rgba(10, 31, 28, 0.96);
-  color: var(--antex-text-primary);
-  transition:
-    border-color 0.25s ease,
-    box-shadow 0.25s ease,
-    transform 0.25s ease;
-}
-
-.app-home-rate-row__side {
-  flex: 1 1 0;
-  min-width: 0;
-}
-
-.app-home-rate-row__side--right {
-  text-align: right;
-}
-
-.app-home-rate-row__currency {
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.app-home-rate-row__meta {
-  color: var(--antex-text-secondary);
-  font-size: 12px;
-  line-height: 1.3;
-}
-
-.app-home-rate-row__pill {
-  display: inline-flex;
-  flex: 0 0 auto;
-  align-items: center;
-  justify-content: center;
-  min-height: 34px;
-  padding: 0 14px;
-  border: 1px solid var(--antex-gold-border);
-  border-radius: 20px;
-  background: rgba(212, 175, 55, 0.08);
 }
 
 .app-rate-value {
@@ -919,17 +825,6 @@ body.body--dark .q-page {
   pointer-events: none;
 }
 
-.app-bonus-banner {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 16px;
-  border: 1px solid var(--antex-gold-border);
-  border-radius: 20px;
-  background: rgba(10, 31, 28, 0.96);
-}
-
-.app-bonus-banner__coin,
 .app-profile-hero__avatar {
   display: flex;
   align-items: center;
@@ -939,159 +834,6 @@ body.body--dark .q-page {
   box-shadow: 0 8px 18px rgba(212, 175, 55, 0.18);
 }
 
-.app-bonus-banner__coin {
-  width: 54px;
-  height: 54px;
-  min-width: 54px;
-  border-radius: 50%;
-}
-
-.app-bonus-banner__copy {
-  flex: 1 1 auto;
-  font-family: 'Montserrat', 'Inter', sans-serif;
-  font-size: 16px;
-  font-weight: 700;
-  line-height: 1.25;
-}
-
-.app-service-card {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  min-height: 104px;
-}
-
-.app-location-card {
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  min-height: 204px;
-  padding: 14px;
-  border: 1px solid var(--antex-gold-border);
-  border-radius: 18px;
-}
-
-.app-location-card__title {
-  font-family: 'Montserrat', 'Inter', sans-serif;
-  font-size: 22px;
-  font-weight: 600;
-}
-
-.app-location-card__hours {
-  color: var(--antex-text-secondary);
-  font-size: 13px;
-}
-
-.app-calc-card {
-  position: relative;
-  padding: 14px 16px 10px;
-  overflow: hidden;
-}
-
-.app-calc-block {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 46px;
-  padding: 0 12px;
-  border-radius: 12px;
-  background: rgba(10, 31, 28, 0.9);
-}
-
-.app-calc-block__currency {
-  width: 110px;
-  color: var(--antex-text-primary);
-}
-
-.app-calc-block__currency .q-field__control,
-.app-calc-block__amount .q-field__control {
-  min-height: 46px;
-  color: var(--antex-text-primary);
-}
-
-.app-calc-block__currency .q-field__native,
-.app-calc-block__currency .q-field__marginal,
-.app-calc-block__amount .q-field__native,
-.app-calc-block__amount .q-field__marginal {
-  color: var(--antex-text-primary);
-}
-
-.app-calc-block__amount {
-  flex: 1 1 auto;
-}
-
-.app-calc-block__amount .q-field__native {
-  font-family: 'Montserrat', 'Inter', sans-serif;
-  font-size: 28px;
-  font-weight: 700;
-  color: var(--antex-text-primary);
-}
-
-.app-calc-block__result {
-  font-family: 'Montserrat', 'Inter', sans-serif;
-  font-size: 28px;
-  font-weight: 700;
-  color: var(--antex-gold-light);
-}
-
-.app-calc-swap {
-  display: flex;
-  justify-content: center;
-  margin: -8px 0;
-}
-
-.app-calc-swap__button {
-  width: 36px;
-  height: 36px;
-  min-height: 36px;
-  background: var(--antex-gold-gradient);
-  color: var(--antex-bg-primary);
-  box-shadow: 0 8px 18px rgba(212, 175, 55, 0.18);
-}
-
-.app-calc-rate {
-  padding-top: 10px;
-  color: var(--antex-text-secondary);
-  font-size: 13px;
-  text-align: center;
-}
-
-.app-rate-scroll {
-  display: flex;
-  gap: 12px;
-  overflow-x: auto;
-  scroll-snap-type: x proximity;
-  padding-bottom: 4px;
-}
-
-.app-rate-scroll::-webkit-scrollbar {
-  display: none;
-}
-
-.app-rate-card {
-  display: flex;
-  flex: 0 0 220px;
-  flex-direction: column;
-  gap: 12px;
-  scroll-snap-align: start;
-}
-
-.app-rate-card__pair {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--antex-text-primary);
-  font-family: 'Montserrat', 'Inter', sans-serif;
-  font-size: 15px;
-  font-weight: 600;
-}
-
-.app-rate-card__meta {
-  color: var(--antex-text-muted);
-  font-size: 13px;
-}
-
-.app-history-card,
 .app-profile-card {
   overflow: hidden;
 }
@@ -1373,10 +1115,6 @@ body.body--light .q-page,
   position: relative;
 }
 
-.app-page--exchange {
-  overflow: hidden;
-}
-
 .app-page--history {
   overflow: hidden;
 }
@@ -1434,7 +1172,6 @@ body.body--light .q-page,
   font-weight: 800;
 }
 
-.app-home-overview,
 .app-section--home,
 .app-history-group {
   display: flex;
@@ -1446,40 +1183,21 @@ body.body--light .q-page,
   margin-top: 12px;
 }
 
-.app-home-quick-grid,
-.app-home-stats-grid,
 .app-home-social-grid,
-.app-home-services-grid,
-.app-home-location-grid {
+.app-home-services-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
 }
 
-.app-home-quick-card,
-.app-home-stat-card,
 .app-home-social-card,
 .app-home-service-card,
-.app-home-location-card,
 .app-home-rate-item {
   width: 100%;
   border: 1px solid var(--antex-gold-border);
   border-radius: 18px;
 }
 
-.app-home-quick-card {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: space-between;
-  min-height: 92px;
-  padding: 14px 12px;
-  background: rgba(18, 53, 48, 0.96);
-  color: var(--antex-text-primary);
-  text-align: left;
-}
-
-.app-home-quick-card__icon,
 .app-home-social-card__icon,
 .app-home-service-card__icon {
   display: flex;
@@ -1492,33 +1210,12 @@ body.body--light .q-page,
   color: var(--antex-gold-base);
 }
 
-.app-home-quick-card__title,
-.app-home-stat-card__label,
 .app-home-social-card__title,
-.app-home-service-card__title,
-.app-home-location-card__title {
+.app-home-service-card__title {
   font-family: 'Montserrat', 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 700;
   line-height: 1.2;
-}
-
-.app-home-stat-card {
-  padding: 14px 12px;
-  background: rgba(18, 53, 48, 0.96);
-}
-
-.app-home-stat-card__label {
-  margin-bottom: 8px;
-  color: var(--antex-text-secondary);
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.app-home-stat-card__value {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--antex-text-primary);
 }
 
 .app-home-primary-button {
@@ -1616,7 +1313,6 @@ body.body--light .q-page,
 
 .app-home-rate-item__meta,
 .app-home-service-card__subtitle,
-.app-home-location-card__hours,
 .app-sheet__description {
   color: var(--antex-text-secondary);
   font-size: 12px;
@@ -1770,34 +1466,6 @@ body.body--light .q-page,
 
 .app-home-service-card__link--disabled {
   cursor: default;
-}
-
-.app-home-location-chip {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 30px;
-  padding: 0 12px;
-  border: 1px solid rgba(212, 175, 55, 0.18);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.04);
-  color: var(--antex-text-secondary);
-  font-size: 12px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.app-home-location-card {
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  min-height: 164px;
-  padding: 14px;
-  overflow: hidden;
-}
-
-.app-home-location-card__title {
-  font-size: 20px;
 }
 
 .app-btn--primary {
@@ -2180,9 +1848,7 @@ body.body--light .q-page,
 }
 
 @media (hover: hover) {
-  .app-home-quick-card:hover,
   .app-home-rate-item:hover,
-  .app-home-location-card:hover,
   .app-exchange-pair-card:hover,
   .app-info-row--clickable:hover,
   .app-btn--ghost:hover {
