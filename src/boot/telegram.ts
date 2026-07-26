@@ -1,10 +1,13 @@
 import { defineBoot } from '#q-app/wrappers';
+import { shallowRef } from 'vue';
 import type { Router } from 'vue-router';
 
 import { hasTelegramLaunchParams, resolveBackRouteName } from '@utils/telegram';
 
 const TELEGRAM_SDK_SRC = 'https://telegram.org/js/telegram-web-app.js';
 const TELEGRAM_SDK_ID = 'telegram-web-app-sdk';
+const TELEGRAM_SDK_TIMEOUT_MS = 5_000;
+export const TELEGRAM_SDK_READY_EVENT = 'antex:telegram-sdk-ready';
 
 export interface TelegramMainButton {
   show(): void;
@@ -56,9 +59,22 @@ declare global {
 
 export let tg: TelegramWebApp | undefined =
   typeof window === 'undefined' ? undefined : window.Telegram?.WebApp;
+export const telegramWebApp = shallowRef<TelegramWebApp | undefined>(tg);
 
 let telegramSdkPromise: Promise<TelegramWebApp | undefined> | null = null;
 let telegramReadySent = false;
+let configuredTelegramWebApp: TelegramWebApp | undefined;
+
+/** Публикует доступный WebApp и уведомляет поздних lifecycle consumers. */
+function publishTelegramWebApp(webApp: TelegramWebApp): void {
+  const becameAvailable = !tg;
+  tg = webApp;
+  telegramWebApp.value = webApp;
+
+  if (becameAvailable) {
+    window.dispatchEvent(new Event(TELEGRAM_SDK_READY_EVENT));
+  }
+}
 
 /** Определяет, запущена ли страница из Telegram client. */
 function isTelegramLaunchEnvironment(): boolean {
@@ -81,7 +97,7 @@ export function loadTelegramSdk(): Promise<TelegramWebApp | undefined> {
   }
 
   if (window.Telegram?.WebApp) {
-    tg = window.Telegram.WebApp;
+    publishTelegramWebApp(window.Telegram.WebApp);
     return Promise.resolve(tg);
   }
 
@@ -93,36 +109,56 @@ export function loadTelegramSdk(): Promise<TelegramWebApp | undefined> {
     const script =
       document.querySelector<HTMLScriptElement>(`script#${TELEGRAM_SDK_ID}`) ??
       document.createElement('script');
-    let settled = false;
+    let requestSettled = false;
+    let bootSettled = false;
 
-    /** Завершает успешную SDK-загрузку единожды и возвращает WebApp. */
-    const handleLoad = () => {
-      if (settled) {
+    /** Завершает ожидание Quasar boot один раз. */
+    const resolveBoot = (webApp: TelegramWebApp | undefined) => {
+      if (bootSettled) {
         return;
       }
 
-      settled = true;
-      tg = window.Telegram?.WebApp;
-      if (!tg) {
-        telegramSdkPromise = null;
-      }
-      resolve(tg);
+      bootSettled = true;
+      resolve(webApp);
     };
 
-    /** Разрешает fallback только после явной ошибки загрузки SDK. */
-    const handleError = () => {
-      if (settled) {
+    /** Обрабатывает load, включая позднюю загрузку после timeout. */
+    const handleLoad = () => {
+      if (requestSettled) {
         return;
       }
 
-      settled = true;
+      requestSettled = true;
+      window.clearTimeout(timeoutId);
+      const webApp = window.Telegram?.WebApp;
+      if (webApp) {
+        publishTelegramWebApp(webApp);
+      } else {
+        telegramSdkPromise = null;
+      }
+      resolveBoot(webApp);
+    };
+
+    /** Разрешает повторную загрузку после явной ошибки SDK request. */
+    const handleError = () => {
+      if (requestSettled) {
+        return;
+      }
+
+      requestSettled = true;
+      window.clearTimeout(timeoutId);
       telegramSdkPromise = null;
       script.remove();
-      resolve(undefined);
+      resolveBoot(undefined);
     };
 
     script.addEventListener('load', handleLoad, { once: true });
     script.addEventListener('error', handleError, { once: true });
+
+    const timeoutId = window.setTimeout(() => {
+      telegramSdkPromise = null;
+      resolveBoot(undefined);
+    }, TELEGRAM_SDK_TIMEOUT_MS);
 
     if (!script.isConnected) {
       script.id = TELEGRAM_SDK_ID;
@@ -133,6 +169,24 @@ export function loadTelegramSdk(): Promise<TelegramWebApp | undefined> {
   });
 
   return telegramSdkPromise;
+}
+
+/** Настраивает Telegram chrome ровно один раз для текущего WebApp. */
+function configureTelegramWebApp(router: Router): void {
+  if (!tg || configuredTelegramWebApp === tg) {
+    return;
+  }
+
+  tg.expand();
+  tg.setHeaderColor('#0F2A26');
+  tg.setBackgroundColor('#1B342F');
+
+  if (tg.isVersionAtLeast('7.10')) {
+    tg.setBottomBarColor('#1B342F');
+  }
+
+  configureTelegramBackButton(router);
+  configuredTelegramWebApp = tg;
 }
 
 /** Синхронизирует native BackButton с актуальным parent route. */
@@ -183,18 +237,7 @@ export function markTelegramReady(): void {
 }
 
 export default defineBoot(async ({ router }) => {
-  tg = await loadTelegramSdk();
-  if (!tg) {
-    return;
-  }
-
-  tg.expand();
-  tg.setHeaderColor('#0F2A26');
-  tg.setBackgroundColor('#1B342F');
-
-  if (tg.isVersionAtLeast('7.10')) {
-    tg.setBottomBarColor('#1B342F');
-  }
-
-  configureTelegramBackButton(router);
+  window.addEventListener(TELEGRAM_SDK_READY_EVENT, () => configureTelegramWebApp(router));
+  await loadTelegramSdk();
+  configureTelegramWebApp(router);
 });

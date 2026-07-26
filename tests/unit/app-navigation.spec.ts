@@ -58,8 +58,13 @@ describe('app navigation chrome', () => {
   it('initializes Telegram SDK lifecycle without blocking an ordinary browser', () => {
     expect(indexSource).not.toContain('telegram-web-app.js');
     expect(telegramBootSource).toContain('loadTelegramSdk');
-    expect(telegramBootSource).not.toContain('TELEGRAM_SDK_TIMEOUT_MS');
-    expect(telegramBootSource).not.toContain('window.setTimeout');
+    expect(telegramBootSource).toContain('TELEGRAM_SDK_TIMEOUT_MS');
+    expect(telegramBootSource).toContain('window.setTimeout');
+    expect(telegramBootSource).toContain('TELEGRAM_SDK_READY_EVENT');
+    expect(telegramBootSource).toContain('window.dispatchEvent');
+    expect(initBootSource).toContain('TELEGRAM_SDK_READY_EVENT');
+    expect(initBootSource).toContain('initializeAuth');
+    expect(layoutSource).toContain('computed(() => Boolean(telegramWebApp.value))');
     expect(telegramBootSource).toContain('script#${TELEGRAM_SDK_ID}');
     expect(telegramBootSource).toContain(
       "const TELEGRAM_SDK_SRC = 'https://telegram.org/js/telegram-web-app.js'",
