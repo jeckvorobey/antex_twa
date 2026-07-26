@@ -7,7 +7,9 @@
       <div class="app-layout-background__grain" />
     </div>
 
-    <AppHeaderBar v-if="!isTelegramMiniApp" />
+    <div class="app-header-shell">
+      <AppHeaderBar />
+    </div>
 
     <q-page-container>
       <router-view />
@@ -31,7 +33,6 @@ import OrderFormSheet from '@components/orders/OrderFormSheet.vue';
 import AppBottomNav from '@components/ui/AppBottomNav.vue';
 import AppHeaderBar from '@components/ui/AppHeaderBar.vue';
 import AppPageLoader from '@components/ui/AppPageLoader.vue';
-import { telegramWebApp } from '@boot/telegram';
 import { useExchangeStore } from '@stores/exchange.store';
 import { useHomeStore } from '@stores/home.store';
 import { useOrdersStore } from '@stores/orders.store';
@@ -44,7 +45,6 @@ const exchangeStore = useExchangeStore();
 const ordersStore = useOrdersStore();
 const profileStore = useProfileStore();
 const uiStore = useUiStore();
-const isTelegramMiniApp = computed(() => Boolean(telegramWebApp.value));
 
 const pageLoading = computed(() => {
   switch (route.name) {

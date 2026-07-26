@@ -1,56 +1,40 @@
 <template>
-  <q-footer class="bottom-nav bg-transparent text-white">
-    <div class="bottom-nav__safe-area row justify-center q-px-sm">
-      <q-card
+  <div
+    class="fixed-bottom row justify-center q-px-sm q-pb-sm z-top"
+    style="margin-bottom: env(safe-area-inset-bottom)"
+  >
+    <q-card
+      flat
+      bordered
+      class="bottom-nav__shell row no-wrap full-width q-pa-xs"
+      style="max-width: 316px;"
+    >
+      <q-btn
+        v-for="item in items"
+        :key="item.name"
         flat
-        bordered
-        class="bottom-nav__shell row no-wrap full-width q-pa-xs"
-        style="max-width: 308px"
-      >
-        <q-btn
-          v-for="item in items"
-          :key="item.name"
-          flat
-          dense
-          stack
-          rounded
-          no-caps
-          class="col"
-          size="sm"
-          :text-color="isActive(item.name) ? 'primary' : 'white'"
-          :class="{ 'bottom-nav__item--active': isActive(item.name) }"
-          :aria-label="item.label"
-          :aria-current="isActive(item.name) ? 'page' : undefined"
-          @click="navigateTo(item.name)"
-        >
-          <q-avatar v-if="item.name === 'profile'" size="24px">
-            <q-img
-              v-if="userPhotoUrl"
-              :src="userPhotoUrl"
-              fit="cover"
-              width="100%"
-              height="100%"
-              :alt="item.label"
-              no-spinner
-            />
-            <span v-else class="text-caption text-weight-bold">{{ userInitials }}</span>
-          </q-avatar>
-          <q-icon v-else :name="item.icon" size="24px" />
-          <span class="text-caption text-weight-medium">{{ item.label }}</span>
-        </q-btn>
-      </q-card>
-    </div>
-  </q-footer>
+        dense
+        stack
+        rounded
+        no-caps
+        class="col q-py-sm"
+        size="10px"
+        :icon="item.icon"
+        :label="item.label"
+        :text-color="isActive(item.name) ? 'primary' : 'white'"
+        :class="{ 'bottom-nav__item--active': isActive(item.name) }"
+        :aria-label="item.label"
+        :aria-current="isActive(item.name) ? 'page' : undefined"
+        @click="navigateTo(item.name)"
+      />
+    </q-card>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
-
-import { useAuthStore } from '@stores/auth.store';
-import { toSafeExternalUrl } from '@utils/safe-external-url';
-import { getTelegramUserInitials } from '@utils/telegram';
 
 interface NavigationItem {
   name: string;
@@ -60,11 +44,7 @@ interface NavigationItem {
 
 const route = useRoute();
 const router = useRouter();
-const authStore = useAuthStore();
 const { t } = useI18n();
-
-const userPhotoUrl = computed(() => toSafeExternalUrl(authStore.user?.photo_url));
-const userInitials = computed(() => getTelegramUserInitials(authStore.user));
 
 const items = computed<NavigationItem[]>(() => [
   {
@@ -89,12 +69,10 @@ const items = computed<NavigationItem[]>(() => [
   },
 ]);
 
-/** Проверяет, соответствует ли action текущему route. */
 function isActive(name: string): boolean {
   return route.name === name;
 }
 
-/** Переходит к route, пропуская повторное нажатие активного action. */
 function navigateTo(name: string): void {
   if (route.name === name) {
     return;
@@ -105,10 +83,6 @@ function navigateTo(name: string): void {
 </script>
 
 <style scoped lang="scss">
-.bottom-nav__safe-area {
-  padding-bottom: var(--antex-safe-area-bottom);
-}
-
 .bottom-nav__shell {
   overflow: hidden;
   border-color: rgba(242, 210, 122, 0.18);
