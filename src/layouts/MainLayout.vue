@@ -15,9 +15,9 @@
       <router-view />
     </q-page-container>
 
-    <AppBottomNav />
+    <AppBottomNav v-if="navigationVisible" />
 
-    <AppPageLoader :showing="pageLoading" />
+    <AppPageLoader :showing="pageLoading" @hidden="showNavigation" />
 
     <OrderFormSheet v-model="uiStore.orderSheetOpen" />
     <MoreMenuSheet v-model="uiStore.moreSheetOpen" />
@@ -25,7 +25,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 
 import MoreMenuSheet from '@components/orders/MoreMenuSheet.vue';
@@ -60,4 +60,18 @@ const pageLoading = computed(() => {
       return false;
   }
 });
+
+const navigationVisible = ref(!pageLoading.value);
+
+watch(pageLoading, (loading) => {
+  if (loading) {
+    navigationVisible.value = false;
+  }
+});
+
+function showNavigation(): void {
+  if (!pageLoading.value) {
+    navigationVisible.value = true;
+  }
+}
 </script>
