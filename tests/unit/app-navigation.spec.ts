@@ -49,11 +49,11 @@ describe('app navigation chrome', () => {
     expect(bottomNavSource).toContain('flat');
     expect(bottomNavSource).toContain('bordered');
     expect(bottomNavSource).toContain('class="bottom-nav__shell row no-wrap full-width q-pa-xs"');
-    expect(bottomNavSource).toContain('style="max-width: 308px"');
+    expect(bottomNavSource).toContain('style="max-width: 316px;"');
     expect(bottomNavSource).toContain('<q-btn');
     expect(bottomNavSource).toContain('dense');
     expect(bottomNavSource).toContain('rounded');
-    expect(bottomNavSource).toContain('size="sm"');
+    expect(bottomNavSource).toContain('size="10px"');
     expect(bottomNavSource).toContain('class="col q-py-sm"');
     expect(bottomNavSource).toMatch(/name:\s*'home'/);
     expect(bottomNavSource).toMatch(/name:\s*'exchange'/);

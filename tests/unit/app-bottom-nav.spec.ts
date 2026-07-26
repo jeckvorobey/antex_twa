@@ -23,7 +23,7 @@ describe('AppBottomNav', () => {
 
     expect(component).toContain('fixed-bottom row justify-center q-px-sm q-pb-sm z-top');
     expect(component).toContain('margin-bottom: env(safe-area-inset-bottom)');
-    expect(component).toContain('max-width: 308px');
+    expect(component).toContain('max-width: 316px');
     expect(component).toContain('q-pa-xs');
     expect(readFileSync(stylesPath, 'utf8')).not.toContain('.app-bottom-nav');
   });
@@ -34,7 +34,7 @@ describe('AppBottomNav', () => {
 
     expect(component).toContain('dense');
     expect(component).toContain('rounded');
-    expect(component).toContain('size="sm"');
+    expect(component).toContain('size="10px"');
     expect(component).toContain(":text-color=\"isActive(item.name) ? 'primary' : 'white'\"");
     expect(component).toContain(`:aria-current="isActive(item.name) ? 'page' : undefined"`);
     expect(styles).not.toContain('.q-btn__content');
