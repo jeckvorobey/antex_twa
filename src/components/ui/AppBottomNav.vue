@@ -7,7 +7,7 @@
       flat
       bordered
       class="bottom-nav__shell row no-wrap full-width q-pa-xs"
-      style="width: min(80dvw, 19.5rem)"
+      style="width: min(65dvw, 19.5rem)"
     >
       <q-btn
         v-for="item in items"
@@ -79,7 +79,7 @@ function navigateTo(name: string): void {
   }
 
   void router.push({ name });
-}
+}style="max-width: 312px"
 </script>
 
 <style scoped lang="scss">
