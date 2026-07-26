@@ -128,6 +128,18 @@ export interface MiniappCalculatorState {
   amountSell: number;
 }
 
+export interface MiniappManagerAvailability {
+  status: 'working' | 'offline' | 'unknown';
+  scheduleEnabled: boolean;
+  workingDaysUtc: number[];
+  startTimeUtc: string;
+  endTimeUtc: string;
+  currentStartAt: string | null;
+  currentEndAt: string | null;
+  nextStartAt: string | null;
+  businessHoursText: string;
+}
+
 export interface MiniappAexPayoutOption {
   currencyBuy: 'USDT' | 'RUB';
   rate: number;
@@ -142,6 +154,7 @@ export interface MiniappExchangeScreenResponse {
   pairs: MiniappRateCard[];
   quote: MiniappQuoteResponse;
   aexPayoutOptions: MiniappAexPayoutOption[];
+  managerAvailability: MiniappManagerAvailability;
 }
 
 export interface MiniappBankSummary {
@@ -166,6 +179,7 @@ export interface MiniappOrderItem {
   createdAt: string;
   updatedAt: string;
   city: MiniappCity | null;
+  managerAvailability?: MiniappManagerAvailability | null;
 }
 
 export interface MiniappOrdersResponse {
@@ -215,6 +229,7 @@ export interface MiniappProfileResponse {
   menu: MiniappMenuItem[];
   version: string;
   aex?: AexProfileSection;
+  managerAvailability: MiniappManagerAvailability;
 }
 
 export interface GroupedOrders {
