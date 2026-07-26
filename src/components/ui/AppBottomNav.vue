@@ -79,7 +79,7 @@ function navigateTo(name: string): void {
   }
 
   void router.push({ name });
-}style="max-width: 312px"
+}
 </script>
 
 <style scoped lang="scss">
