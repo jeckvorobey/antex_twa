@@ -7,7 +7,8 @@ interface TelegramUserIdentity {
 /** Проверяет URL на наличие официальных Telegram Mini App launch parameters. */
 export function hasTelegramLaunchParams(url: string): boolean {
   const parsedUrl = new URL(url, 'https://antex.invalid');
-  const hashQuery = parsedUrl.hash.includes('?') ? parsedUrl.hash.split('?')[1] : '';
+  const rawHash = parsedUrl.hash.slice(1);
+  const hashQuery = rawHash.includes('?') ? rawHash.slice(rawHash.indexOf('?') + 1) : rawHash;
   const hashParams = new URLSearchParams(hashQuery);
 
   return [parsedUrl.searchParams, hashParams].some(

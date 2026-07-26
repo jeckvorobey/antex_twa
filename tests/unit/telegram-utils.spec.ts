@@ -10,6 +10,11 @@ describe('Telegram Mini App helpers', () => {
   it('detects official Telegram launch params without treating an ordinary URL as Telegram', () => {
     expect(
       hasTelegramLaunchParams(
+        'https://example.com/#tgWebAppData=query_id%3D1&tgWebAppVersion=9.6&tgWebAppPlatform=android',
+      ),
+    ).toBe(true);
+    expect(
+      hasTelegramLaunchParams(
         'https://example.com/?tgWebAppVersion=9.6&tgWebAppPlatform=android#/profile',
       ),
     ).toBe(true);
