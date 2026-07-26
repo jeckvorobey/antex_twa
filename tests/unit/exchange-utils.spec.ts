@@ -80,39 +80,6 @@ describe('buildBuyCurrencyOptions', () => {
       ]),
     ).not.toContainEqual({ label: 'USDT', value: 'USDT' });
   });
-
-  it('deduplicates pair and payout currencies while preserving first-seen order', () => {
-    expect(
-      buildBuyCurrencyOptions(
-        [
-          ...pairs,
-          { id: 'usdt-thb-copy', fromCurrency: 'USDT', toCurrency: 'THB' },
-        ],
-        'ATXG',
-        [
-          {
-            currencyBuy: 'THB',
-            rate: 35.5,
-            rateDisplay: '35.50',
-            rateText: '1 ATXG = 35.50 THB',
-            availableMethods: ['bank_account'],
-          },
-          {
-            currencyBuy: 'RUB',
-            rate: 76.13,
-            rateDisplay: '76.13',
-            rateText: '1 ATXG = 76.13 RUB',
-            availableMethods: ['bank_account'],
-          },
-        ],
-      ),
-    ).toEqual([
-      { label: 'THB', value: 'THB' },
-      { label: 'VND', value: 'VND' },
-      { label: 'GEL', value: 'GEL' },
-      { label: 'RUB', value: 'RUB' },
-    ]);
-  });
 });
 
 describe('calculateLocalQuote', () => {

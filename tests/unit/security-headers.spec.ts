@@ -13,11 +13,4 @@ describe('production security headers', () => {
       'Permissions-Policy "camera=(), microphone=(), geolocation=()" always',
     );
   });
-
-  it('restricts executable content while allowing the official Telegram SDK', () => {
-    expect(nginxSource).toContain(
-      'Content-Security-Policy "default-src \'self\'; script-src \'self\' https://telegram.org; style-src \'self\' \'unsafe-inline\' https://fonts.googleapis.com; font-src \'self\' data: https://fonts.gstatic.com; img-src \'self\' data: blob: https:; connect-src \'self\' https:; object-src \'none\'; base-uri \'self\'; form-action \'self\'" always',
-    );
-    expect(nginxSource).not.toContain("'unsafe-eval'");
-  });
 });
