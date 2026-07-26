@@ -54,7 +54,7 @@ describe('app navigation chrome', () => {
     expect(bottomNavSource).toContain('dense');
     expect(bottomNavSource).toContain('rounded');
     expect(bottomNavSource).toContain('size="sm"');
-    expect(bottomNavSource).toContain('class="col"');
+    expect(bottomNavSource).toContain('class="col q-py-sm"');
     expect(bottomNavSource).toMatch(/name:\s*'home'/);
     expect(bottomNavSource).toMatch(/name:\s*'exchange'/);
     expect(bottomNavSource).toMatch(/name:\s*'history'/);
