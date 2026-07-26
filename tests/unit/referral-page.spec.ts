@@ -10,7 +10,7 @@ describe('ReferralPage structure', () => {
   it('renders shared balance hero with token currency label', () => {
     expect(referralSource).toContain('<AexBalanceCard');
     expect(referralSource).toContain(':balance="availableBalance"');
-    expect(referralSource).toContain(":label=\"t('referral.balanceLabel')\"");
+    expect(referralSource).toContain(':label="t(\'referral.balanceLabel\')"');
   });
 
   it('shows available balance separately from reserved amount', () => {
@@ -27,17 +27,21 @@ describe('ReferralPage structure', () => {
     expect(referralSource).not.toContain('copyCode');
   });
 
-  it('keeps only referral link controls and the share button in the referral card', () => {
+  it('keeps referral link copy and share actions compact in the referral card', () => {
     expect(referralSource).toContain('referralLink');
     expect(referralSource).toContain('shareLink');
     expect(referralSource).toContain('copyLink');
     expect(referralSource).toContain("t('referral.referralLinkLabel')");
-    expect(referralSource).toContain("t('referral.share')");
+    expect(referralSource).toContain('icon="share"');
+    expect(referralSource).toContain(':aria-label="t(\'referral.share\')"');
     expect(referralSource).toContain("t('referral.copyLink')");
+    expect(referralSource).not.toContain('<AppButton block color="warning" icon="share"');
   });
 
   it('uses the ready referral link returned by backend', () => {
-    expect(referralSource).toContain('const referralLink = computed(() => aexStore.referralInfo?.referralLink ?? \'\')');
+    expect(referralSource).toContain(
+      "const referralLink = computed(() => aexStore.referralInfo?.referralLink ?? '')",
+    );
     expect(referralSource).not.toContain('startapp=ref_');
     expect(referralSource).not.toContain('VITE_TELEGRAM_BOT_USERNAME');
   });

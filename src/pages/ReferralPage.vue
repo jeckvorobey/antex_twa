@@ -34,14 +34,18 @@
               :aria-label="t('referral.copyLink')"
               @click="copyLink"
             />
+            <q-btn
+              round
+              flat
+              dense
+              icon="share"
+              color="warning"
+              size="sm"
+              :aria-label="t('referral.share')"
+              @click="shareLink"
+            />
           </template>
         </q-input>
-
-        <div class="q-mt-md">
-          <AppButton block color="warning" icon="share" @click="shareLink">
-            {{ t('referral.share') }}
-          </AppButton>
-        </div>
       </AppSurface>
 
       <AppSurface padded class="app-referral-info-card justify-between">
@@ -133,7 +137,6 @@ import { useRouter } from 'vue-router';
 import { Notify } from 'quasar';
 
 import AexBalanceCard from '@components/ui/AexBalanceCard.vue';
-import AppButton from '@components/ui/AppButton.vue';
 import AppInfoRow from '@components/ui/AppInfoRow.vue';
 import AppSurface from '@components/ui/AppSurface.vue';
 import { useAexStore } from '@stores/aex.store';
