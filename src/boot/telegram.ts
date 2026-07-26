@@ -5,7 +5,6 @@ import { hasTelegramLaunchParams, resolveBackRouteName } from '@utils/telegram';
 
 const TELEGRAM_SDK_SRC = 'https://telegram.org/js/telegram-web-app.js';
 const TELEGRAM_SDK_ID = 'telegram-web-app-sdk';
-const TELEGRAM_SDK_TIMEOUT_MS = 5_000;
 
 export interface TelegramMainButton {
   show(): void;
@@ -75,7 +74,7 @@ function isTelegramLaunchEnvironment(): boolean {
   );
 }
 
-/** Загружает официальный SDK только для Telegram launch и ограничивает ожидание. */
+/** Загружает официальный SDK только для Telegram launch. */
 export function loadTelegramSdk(): Promise<TelegramWebApp | undefined> {
   if (typeof window === 'undefined' || !isTelegramLaunchEnvironment()) {
     return Promise.resolve(undefined);
@@ -96,21 +95,34 @@ export function loadTelegramSdk(): Promise<TelegramWebApp | undefined> {
       document.createElement('script');
     let settled = false;
 
-    /** Завершает SDK startup единожды и возвращает доступный WebApp. */
-    const finish = () => {
+    /** Завершает успешную SDK-загрузку единожды и возвращает WebApp. */
+    const handleLoad = () => {
       if (settled) {
         return;
       }
 
       settled = true;
-      window.clearTimeout(timeoutId);
       tg = window.Telegram?.WebApp;
+      if (!tg) {
+        telegramSdkPromise = null;
+      }
       resolve(tg);
     };
 
-    const timeoutId = window.setTimeout(finish, TELEGRAM_SDK_TIMEOUT_MS);
-    script.addEventListener('load', finish, { once: true });
-    script.addEventListener('error', finish, { once: true });
+    /** Разрешает fallback только после явной ошибки загрузки SDK. */
+    const handleError = () => {
+      if (settled) {
+        return;
+      }
+
+      settled = true;
+      telegramSdkPromise = null;
+      script.remove();
+      resolve(undefined);
+    };
+
+    script.addEventListener('load', handleLoad, { once: true });
+    script.addEventListener('error', handleError, { once: true });
 
     if (!script.isConnected) {
       script.id = TELEGRAM_SDK_ID;
