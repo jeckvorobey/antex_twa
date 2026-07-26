@@ -4,6 +4,7 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const routesSource = readFileSync(resolve(process.cwd(), 'src/router/routes.ts'), 'utf8');
+const layoutSource = readFileSync(resolve(process.cwd(), 'src/layouts/MainLayout.vue'), 'utf8');
 const headerSource = readFileSync(
   resolve(process.cwd(), 'src/components/ui/AppHeaderBar.vue'),
   'utf8',
@@ -16,6 +17,9 @@ const bottomNavSource = readFileSync(
   resolve(process.cwd(), 'src/components/ui/AppBottomNav.vue'),
   'utf8',
 );
+const telegramBootSource = readFileSync(resolve(process.cwd(), 'src/boot/telegram.ts'), 'utf8');
+const initBootSource = readFileSync(resolve(process.cwd(), 'src/boot/init.ts'), 'utf8');
+const indexSource = readFileSync(resolve(process.cwd(), 'index.html'), 'utf8');
 const appStylesSource = readFileSync(resolve(process.cwd(), 'src/css/app.scss'), 'utf8');
 const bottomNavStyles = bottomNavSource.split('<style scoped lang="scss">')[1] ?? '';
 
@@ -29,22 +33,46 @@ describe('app navigation chrome', () => {
     expect(routesSource).toMatch(/name:\s*'referralOperations',[\s\S]*backRouteName:\s*'referral'/);
   });
 
-  it('uses a reusable localized Quasar back button', () => {
+  it('uses a reusable localized Quasar back button in browser fallback header', () => {
     expect(backButtonSource).toContain('<q-btn');
     expect(backButtonSource).toContain('icon="arrow_back"');
     expect(backButtonSource).toContain(':aria-label="t(\'common.back\')"');
     expect(backButtonSource).toContain('defineEmits<{ click: [] }>()');
+    expect(headerSource).toContain('<q-header');
+    expect(headerSource).toContain('<q-toolbar');
+    expect(headerSource).toContain('<AppBackButton v-if="backRouteName"');
   });
 
-  it('centers the brand only when back navigation is visible and keeps avatar right', () => {
+  it('uses native Telegram chrome and renders fallback header only outside Telegram', () => {
+    expect(layoutSource).toContain('<AppHeaderBar v-if="!isTelegramMiniApp"');
+    expect(layoutSource).not.toContain('app-header-shell');
     expect(headerSource).toContain("import AppBackButton from '@components/ui/AppBackButton.vue'");
-    expect(headerSource).toContain('v-if="backRouteName"');
-    expect(headerSource).toContain("'app-header-bar--with-back': backRouteName");
-    expect(headerSource).toContain('<q-avatar');
-    expect(headerSource).toContain('openProfile');
+    expect(headerSource).not.toContain('<q-img');
+    expect(headerSource).not.toContain('<q-avatar');
+    expect(headerSource).not.toContain('logoImage');
+    expect(telegramBootSource).toContain('BackButton.show()');
+    expect(telegramBootSource).toContain('BackButton.hide()');
+    expect(telegramBootSource).toContain('router.afterEach');
   });
 
-  it('keeps four Quasar navigation actions inside a narrower compact shell', () => {
+  it('initializes Telegram SDK lifecycle without blocking an ordinary browser', () => {
+    expect(indexSource).not.toContain('telegram-web-app.js');
+    expect(telegramBootSource).toContain('loadTelegramSdk');
+    expect(telegramBootSource).toContain('script#${TELEGRAM_SDK_ID}');
+    expect(telegramBootSource).toContain(
+      "const TELEGRAM_SDK_SRC = 'https://telegram.org/js/telegram-web-app.js'",
+    );
+    expect(telegramBootSource).toContain('tg.expand()');
+    expect(telegramBootSource).toContain("tg.setHeaderColor('#0F2A26')");
+    expect(telegramBootSource).toContain("tg.setBackgroundColor('#1B342F')");
+    expect(telegramBootSource).toContain("tg.isVersionAtLeast('7.10')");
+    expect(telegramBootSource).toContain("tg.setBottomBarColor('#1B342F')");
+    expect(initBootSource).toContain('markTelegramReady');
+    expect(initBootSource).toContain('markTelegramReady()');
+  });
+
+  it('keeps four readable Quasar actions and Telegram profile identity in compact footer', () => {
+    expect(bottomNavSource).toContain('<q-footer');
     expect(bottomNavSource).toContain('<q-card');
     expect(bottomNavSource).toContain('flat');
     expect(bottomNavSource).toContain('bordered');
@@ -55,15 +83,32 @@ describe('app navigation chrome', () => {
     expect(bottomNavSource).toContain('rounded');
     expect(bottomNavSource).toContain('size="sm"');
     expect(bottomNavSource).toContain('class="col"');
+    expect(bottomNavSource).toContain('<q-avatar');
+    expect(bottomNavSource).toContain('v-if="item.name === \'profile\'"');
+    expect(bottomNavSource).toContain('v-if="userPhotoUrl"');
+    expect(bottomNavSource).toContain('{{ userInitials }}');
+    expect(bottomNavSource).toContain('size="24px"');
+    expect(bottomNavSource).toContain('text-caption');
     expect(bottomNavSource).toMatch(/name:\s*'home'/);
     expect(bottomNavSource).toMatch(/name:\s*'exchange'/);
     expect(bottomNavSource).toMatch(/name:\s*'history'/);
     expect(bottomNavSource).toMatch(/name:\s*'profile'/);
-    expect(bottomNavSource).toContain('fixed-bottom row justify-center q-px-sm q-pb-sm z-top');
-    expect(bottomNavSource).toContain('margin-bottom: env(safe-area-inset-bottom)');
+    expect(bottomNavSource).toContain('bottom-nav__safe-area');
+    expect(bottomNavStyles).toContain('var(--antex-safe-area-bottom)');
     expect(bottomNavStyles).not.toContain('.q-btn__content');
     expect(bottomNavStyles).not.toContain('.q-icon');
     expect(bottomNavStyles).not.toContain('.block');
     expect(appStylesSource).not.toContain('.app-bottom-nav');
+  });
+
+  it('uses Telegram and browser safe-area variables without fixed page compensation', () => {
+    expect(appStylesSource).toContain('--antex-safe-area-bottom: max(');
+    expect(appStylesSource).toContain('var(--tg-safe-area-inset-bottom, 0px)');
+    expect(appStylesSource).toContain('var(--tg-content-safe-area-inset-bottom, 0px)');
+    expect(appStylesSource).toContain('env(safe-area-inset-bottom, 0px)');
+    expect(appStylesSource).toContain('var(--tg-viewport-stable-height, 100dvh)');
+    expect(appStylesSource).not.toContain('calc(112px + env(safe-area-inset-bottom))');
+    expect(appStylesSource).not.toContain('calc(104px + env(safe-area-inset-bottom))');
+    expect(telegramBootSource).not.toContain('viewportHeight');
   });
 });

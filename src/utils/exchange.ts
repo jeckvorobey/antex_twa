@@ -116,32 +116,59 @@ export function buildBuyCurrencyOptions(
   const quoteBaseCurrency = isTokenCurrency(normalizedSellCurrency)
     ? TOKEN_QUOTE_BASE_CURRENCY
     : normalizedSellCurrency;
+  const tokenSell = isTokenCurrency(normalizedSellCurrency);
+  const currencies: string[] = [];
+  const seenCurrencies = new Set<string>();
 
-  const externalCurrencies = pairs
-    .map((pair) => parsePairId(pair.id))
-    .filter((pair) => pair.currencySell === quoteBaseCurrency)
-    .map((pair) => pair.currencyBuy)
-    .filter((buy) => !isTokenCurrency(normalizedSellCurrency) || buy !== TOKEN_QUOTE_BASE_CURRENCY)
-    .filter((buy, index, items) => items.indexOf(buy) === index);
-  const internalCurrencies = isTokenCurrency(normalizedSellCurrency)
-    ? aexPayoutOptions.map((option) => option.currencyBuy)
-    : [];
+  /** Добавляет валюту один раз, сохраняя порядок первого появления. */
+  const addCurrency = (currency: string) => {
+    if (!seenCurrencies.has(currency)) {
+      seenCurrencies.add(currency);
+      currencies.push(currency);
+    }
+  };
 
-  return [...externalCurrencies, ...internalCurrencies]
-    .filter((currency, index, items) => items.indexOf(currency) === index)
-    .map((currency) => ({ label: currency, value: currency }));
+  for (const pair of pairs) {
+    const parsedPair = parsePairId(pair.id);
+    if (
+      parsedPair.currencySell === quoteBaseCurrency &&
+      (!tokenSell || parsedPair.currencyBuy !== TOKEN_QUOTE_BASE_CURRENCY)
+    ) {
+      addCurrency(parsedPair.currencyBuy);
+    }
+  }
+
+  if (tokenSell) {
+    for (const option of aexPayoutOptions) {
+      addCurrency(option.currencyBuy);
+    }
+  }
+
+  return currencies.map((currency) => ({ label: currency, value: currency }));
 }
 
 export function buildCountryOptions(
   pairs: ExchangePairLike[],
   currencySell: string,
 ): ExchangeOption[] {
+  const pairByBuyCurrency = new Map<string, ExchangePairLike>();
+
+  for (const pair of pairs) {
+    const { currencyBuy } = parsePairId(pair.id);
+    if (!pairByBuyCurrency.has(currencyBuy)) {
+      pairByBuyCurrency.set(currencyBuy, pair);
+    }
+  }
+
   return buildBuyCurrencyOptions(pairs, currencySell)
-    .map((option) => ({
-      value: getCountryByCurrency(pairs, option.value),
-      label: normalizeCountryLabel(getCountryLabelByCurrency(pairs, option.value) ?? option.value),
-      mark: getCountryFlagByCurrency(pairs, option.value),
-    }))
+    .map((option) => {
+      const pair = pairByBuyCurrency.get(option.value);
+      return {
+        value: pair?.country ?? null,
+        label: normalizeCountryLabel(pair?.countryLabel ?? option.value),
+        mark: pair?.countryFlag ?? '',
+      };
+    })
     .filter((option): option is ExchangeOption => Boolean(option.value));
 }
 
