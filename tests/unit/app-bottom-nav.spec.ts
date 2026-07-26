@@ -13,16 +13,17 @@ describe('AppBottomNav', () => {
     const component = readFileSync(componentPath, 'utf8');
 
     expect(component).toContain('stack');
-    expect(component).toContain(':icon="item.icon"');
-    expect(component).toContain(':label="item.label"');
+    expect(component).toContain('<q-icon v-else :name="item.icon"');
+    expect(component).toContain('{{ item.label }}');
   });
 
   it('keeps the fixed nav inside the mobile screen width', () => {
     const component = readFileSync(componentPath, 'utf8');
     const styles = component.split('<style scoped lang="scss">')[1] ?? '';
 
-    expect(component).toContain('fixed-bottom row justify-center q-px-sm q-pb-sm z-top');
-    expect(component).toContain('margin-bottom: env(safe-area-inset-bottom)');
+    expect(component).toContain('<q-footer');
+    expect(component).toContain('bottom-nav__safe-area');
+    expect(styles).toContain('padding-bottom: var(--antex-safe-area-bottom)');
     expect(component).toContain('max-width: 308px');
     expect(component).toContain('q-pa-xs');
     expect(readFileSync(stylesPath, 'utf8')).not.toContain('.app-bottom-nav');
@@ -37,6 +38,8 @@ describe('AppBottomNav', () => {
     expect(component).toContain('size="sm"');
     expect(component).toContain(":text-color=\"isActive(item.name) ? 'primary' : 'white'\"");
     expect(component).toContain(`:aria-current="isActive(item.name) ? 'page' : undefined"`);
+    expect(component).toContain('size="24px"');
+    expect(component).toContain('text-caption');
     expect(styles).not.toContain('.q-btn__content');
     expect(styles).not.toContain('.q-icon');
     expect(styles).not.toContain('.block');
@@ -50,23 +53,20 @@ describe('AppBottomNav', () => {
     expect(component).toContain('void router.push({ name })');
   });
 
-  it('renders the header from the shared layout on every page', () => {
+  it('renders the browser fallback header from the shared layout only outside Telegram', () => {
     const layout = readFileSync(mainLayoutPath, 'utf8');
     const homePage = readFileSync(homePagePath, 'utf8');
 
-    expect(layout).toContain('<AppHeaderBar />');
+    expect(layout).toContain('<AppHeaderBar v-if="!isTelegramMiniApp"');
     expect(homePage).not.toContain('<AppHeaderBar />');
   });
 
-  it('renders the shared header as a regular centered block with top inset', () => {
+  it('removes the custom header shell and lets content follow Telegram chrome', () => {
     const styles = readFileSync(stylesPath, 'utf8');
 
-    expect(styles).toContain('.app-header-shell {');
-    expect(styles).toContain('position: relative;');
-    expect(styles).toContain(
-      'margin: calc(env(safe-area-inset-top) + var(--antex-space-md)) auto 0',
-    );
-    expect(styles).toContain('width: min(calc(100vw - (var(--antex-space-md) * 2)), 390px)');
-    expect(styles).toContain('transform: none;');
+    expect(styles).not.toContain('.app-header-shell {');
+    expect(styles).not.toContain('.app-header-bar__logo');
+    expect(styles).not.toContain('.app-header-bar__avatar');
+    expect(styles).toContain('padding: var(--antex-content-safe-area-top)');
   });
 });

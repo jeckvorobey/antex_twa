@@ -2,77 +2,96 @@
 
 ## Краткое резюме
 
-Проверен Vue 3 / TypeScript / Quasar frontend, его production Docker/nginx entrypoint,
-навигационные URL, media bindings, auth storage и основные XSS/code-execution sinks.
-Критических и high-severity уязвимостей в проверенном коде не найдено.
+Проверены Vue 3 / TypeScript / Quasar frontend, Telegram SDK bootstrap,
+production Docker/nginx entrypoint, внешние URL, auth storage и основные
+XSS/code-execution sinks. Критических, high- и неподтверждённых medium-severity
+уязвимостей в проверенном коде не найдено.
 
-В рамках проверки исправлены два подтверждённых замечания: внешние URL теперь проходят
-централизованную HTTPS-only проверку и открываются без `window.opener`; production nginx
-получил безопасные базовые headers. Остался один осознанный low-risk auth debt — JWT с
-TTL 24 часа хранится в `localStorage`; его перенос требует отдельного изменения auth
-lifecycle и backend/browser session contract.
+В рамках текущей проверки добавлен production CSP с разрешением только официального
+Telegram SDK origin и усилен поиск уже созданного SDK script против DOM clobbering.
+Ранее внедрённые HTTPS-only URL guards и базовые security headers сохранены и повторно
+проверены.
 
 ## Исправленные замечания
 
-### SEC-001 — Непроверенные внешние URL
+### SEC-001 — Динамические внешние URL без централизованной allowlist
 
-- **Rule ID:** `VUE-XSS-004`, `JS-URL-001`, `JS-URL-002`
+- **Rule ID:** `JS-URL-001`, `JS-URL-002`
 - **Severity:** Medium
-- **Location:** `src/utils/safe-external-url.ts:4-31`,
-  `src/components/ui/AppHeaderBar.vue:53-66`,
-  `src/components/orders/MoreMenuSheet.vue:64-73`, `src/pages/ProfilePage.vue:64-88`
-- **Evidence:** menu/photo URL приходят из Telegram или backend payload и до исправления
-  напрямую передавались в `window.open`/`src`.
-- **Impact:** скомпрометированный или ошибочный payload мог передать активную URL-схему
-  либо открыть новую вкладку с доступом к `window.opener`.
-- **Fix:** добавлены `toSafeExternalUrl` и `openSafeExternalUrl`; разрешены только
-  абсолютные `https:` URL, используется `noopener,noreferrer`, `opener` обнуляется.
-- **Mitigation:** backend по-прежнему должен валидировать сохраняемые внешние URL.
-- **False positive notes:** статические social URLs были безопасными и уже имели
-  `rel="noopener noreferrer"`; helper применяется к динамическим URL.
+- **Location:** `src/utils/safe-external-url.ts:1-66`,
+  `src/components/ui/AppBottomNav.vue:26-38`, `src/pages/ProfilePage.vue:64-88`,
+  `src/components/orders/MoreMenuSheet.vue:64-73`
+- **Evidence:** avatar/menu URL поступают из Telegram или backend payload и являются
+  недоверенными browser input.
+- **Impact:** без проверки payload мог бы передать активную URL-схему или открыть новую
+  вкладку с доступом к `window.opener`.
+- **Fix:** все динамические media URL ограничены абсолютным `https:`; внешняя навигация
+  проходит allowlist `https:`/строгого `tg://user?id=...` и открывается с
+  `noopener,noreferrer`.
+- **Mitigation:** backend также должен валидировать сохраняемые внешние URL.
+- **False positive notes:** статические social URL уже имели
+  `rel="noopener noreferrer"` и не являлись уязвимостью.
 
-### SEC-002 — Отсутствовали безопасные базовые response headers
+### SEC-002 — Не было CSP для runtime Telegram SDK
 
-- **Rule ID:** `VUE-HEADERS-001`
+- **Rule ID:** `VUE-HEADERS-001`, `VUE-THIRDPARTY-001`, `VUE-SRI-001`
+- **Severity:** Medium
+- **Location:** `nginx.conf:6-20`, `src/boot/telegram.ts:6-8,78-123`
+- **Evidence:** Mini App загружает официальный
+  `https://telegram.org/js/telegram-web-app.js`, а production nginx ранее не
+  ограничивал допустимые script origins.
+- **Impact:** при появлении HTML/script injection отсутствие CSP увеличивало бы радиус
+  DOM XSS и позволяло загрузку скрипта с произвольного origin.
+- **Fix:** добавлен CSP response header без `unsafe-eval`; `script-src` разрешает только
+  `'self'` и `https://telegram.org`. Источник SDK задан константой, загрузка выполняется
+  только в Telegram launch environment. CSP продублирован в asset location из-за
+  наследования `add_header` nginx.
+- **Mitigation:** после deployment проверить фактический header на reverse proxy/CDN.
+  SRI не добавлен, потому что официальный Telegram SDK URL не version-pinned и Telegram
+  обновляет его содержимое; риск ограничен фиксированным origin и CSP.
+- **False positive notes:** `style-src 'unsafe-inline'` оставлен для runtime styles
+  Quasar/Vue; выполнение inline JavaScript политикой не разрешено.
+
+### SEC-003 — Недостаточно строгий selector существующего SDK script
+
+- **Rule ID:** `JS-DOM-001`, `VUE-THIRDPARTY-001`
 - **Severity:** Low
-- **Location:** `nginx.conf:6-18`
-- **Evidence:** production nginx ранее задавал только cache headers.
-- **Impact:** браузер не получал явную защиту от MIME sniffing и избыточной передачи
-  referrer/capabilities.
-- **Fix:** добавлены `X-Content-Type-Options: nosniff`,
-  `Referrer-Policy: strict-origin-when-cross-origin` и ограничивающий
-  `Permissions-Policy`; headers продублированы в asset location из-за правил наследования
-  `add_header` nginx.
-- **Mitigation:** проверять фактические headers после deployment на reverse proxy/CDN.
-- **False positive notes:** `frame-ancestors`/`X-Frame-Options` намеренно не добавлены,
-  потому что Telegram Web может встраивать miniapp; допустимые origins требуют проверки
-  реального production hosting.
+- **Location:** `src/boot/telegram.ts:93-119`
+- **Evidence:** поиск по одному `#telegram-web-app-sdk` мог вернуть элемент другого типа
+  с совпадающим `id`.
+- **Impact:** при DOM clobbering загрузка SDK могла быть заблокирована до timeout.
+- **Fix:** selector ограничен `script#telegram-web-app-sdk`; URL по-прежнему задаётся
+  только внутренней константой.
+- **Mitigation:** CSP дополнительно ограничивает допустимый script origin.
+- **False positive notes:** эксплуатация требует предварительной возможности внедрить
+  DOM; исправление является defense-in-depth.
 
 ## Низкий остаточный риск
 
-### SEC-003 — Bearer token хранится в `localStorage`
+### SEC-004 — Bearer token хранится в `localStorage`
 
 - **Rule ID:** `VUE-AUTH-001`, `JS-STORAGE-001`
 - **Severity:** Low
 - **Location:** `src/boot/axios.ts:9-22`, `src/stores/auth.store.ts:9-41`
-- **Evidence:** `access_token` читается и записывается через `localStorage`; backend default
-  `JWT_TTL_SECONDS` равен 86400 секунд.
-- **Impact:** при DOM XSS token может быть прочитан и использован до истечения TTL.
-- **Fix:** не внесён в этой UI-поставке, потому что существующие tests и non-Telegram
-  fallback явно зависят от persistent token. Безопасное исправление — отдельный OpenSpec
-  change на memory-only token либо HttpOnly cookie + CSRF contract.
-- **Mitigation:** короткий TTL, повторная Telegram initData authentication, отсутствие
-  `v-html`/`innerHTML`, HTTPS-only внешние URL и CSP на deployment layer.
-- **False positive notes:** это defense-in-depth риск, а не доказанный exploit; текущий
-  код не содержит найденного XSS sink.
+- **Evidence:** `access_token` читается и записывается через `localStorage`.
+- **Impact:** при DOM XSS token может быть прочитан JavaScript-кодом.
+- **Fix:** не внесён: memory-only token либо HttpOnly cookie требуют отдельного изменения
+  backend auth/session contract, что выходит за ограничения текущей UI-задачи.
+- **Mitigation:** CSP, отсутствие найденных HTML/code sinks, HTTPS-only URL bindings,
+  повторная Telegram `initData` authentication и ограниченный JWT TTL.
+- **False positive notes:** это defense-in-depth риск, а не доказанный exploit; найденного
+  пути XSS к storage в текущем коде нет.
 
 ## Дополнительные проверки
 
-- `v-html`, `innerHTML`, `insertAdjacentHTML`, `document.write`, `eval`, `new Function`,
-  dynamic script injection и небезопасные `postMessage` handlers не найдены.
-- Production image строится через `yarn build` и обслуживается nginx, dev server в
+- Не найдены `v-html`, `innerHTML`, `insertAdjacentHTML`, `document.write`, `eval`,
+  `new Function`, string timers, unsafe `postMessage` handlers или open redirects.
+- `target="_blank"` используется с `rel="noopener noreferrer"`.
+- `.env` игнорируется Git; секреты в tracked frontend sources не обнаружены.
+- Production image собирается через `yarn build` и обслуживается nginx, dev server в
   production не используется.
-- `VITE_API_URL` является публичной browser-конфигурацией; секреты в проверенных
-  frontend sources не обнаружены.
-- CSP/clickjacking policy не видна в repo и должна быть проверена на фактическом edge с
-  учётом обязательного Telegram embedding и `telegram-web-app.js`.
+- `yarn audit` не дал пригодного результата: registry вернул gzip payload вместо
+  ожидаемого JSON. Dependency advisories нужно дополнительно контролировать через GitHub
+  Dependabot/CI на стороне репозитория.
+- `frame-ancestors`/`X-Frame-Options` намеренно не добавлены: Mini App должна
+  встраиваться Telegram.
