@@ -20,15 +20,14 @@ describe('AppPageLoader', () => {
     expect(layout).toContain('<AppBottomNav v-if="shouldShowNavigation" />');
     expect(layout).toContain('@hidden="showNavigation"');
     expect(layout).toContain('const navigationVisible = ref(!pageLoading.value);');
-    expect(layout).toContain('const keyboardInputFocused = ref(false);');
     expect(layout).toContain('const shouldShowNavigation = computed(');
     expect(layout).toMatch(
-      /navigationVisible\.value\s+&&\s+!keyboardInputFocused\.value\s+&&\s+!uiStore\.orderSheetOpen/,
+      /navigationVisible\.value\s+&&\s+!uiStore\.orderSheetOpen\s+&&\s+!uiStore\.moreSheetOpen/,
     );
     expect(layout).toContain('watch(pageLoading, (loading) => {');
     expect(layout).toContain('navigationVisible.value = false;');
-    expect(layout).toContain("document.addEventListener('focusin', handleFocusIn);");
-    expect(layout).toContain("document.removeEventListener('focusin', handleFocusIn);");
+    expect(layout).not.toContain('keyboardInputFocused');
+    expect(layout).not.toContain("document.addEventListener('focusin'");
     expect(layout).toContain('const pageLoading = computed(() => {');
     expect(layout).toContain("case 'home':");
     expect(layout).toContain('return homeStore.loading || !homeStore.loaded;');
