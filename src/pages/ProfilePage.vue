@@ -24,17 +24,11 @@
         </div>
       </div>
 
-      <AppSurface class="app-profile-card">
-        <AppInfoRow
-          icon="group_add"
-          :title="t('profile.referralProgram')"
-          clickable
-          @click="goToReferral"
-        />
-      </AppSurface>
-
       <AppSurface
-        v-if="profileStore.data?.managerAvailability && profileStore.data.managerAvailability.status !== 'unknown'"
+        v-if="
+          profileStore.data?.managerAvailability &&
+          profileStore.data.managerAvailability.status !== 'unknown'
+        "
         class="app-profile-card q-pa-md"
       >
         <div class="row no-wrap items-start q-gutter-sm">
@@ -52,6 +46,15 @@
             </div>
           </div>
         </div>
+      </AppSurface>
+
+      <AppSurface class="app-profile-card">
+        <AppInfoRow
+          icon="group_add"
+          :title="t('profile.referralProgram')"
+          clickable
+          @click="goToReferral"
+        />
       </AppSurface>
 
       <AppSurface class="app-profile-card">
@@ -130,9 +133,12 @@ watch(
     if (!Number.isFinite(delay) || delay <= 0) {
       return;
     }
-    managerRefreshTimer = window.setTimeout(() => {
-      void profileStore.refresh();
-    }, Math.min(delay, 2_147_483_647));
+    managerRefreshTimer = window.setTimeout(
+      () => {
+        void profileStore.refresh();
+      },
+      Math.min(delay, 2_147_483_647),
+    );
   },
   { immediate: true },
 );

@@ -15,7 +15,7 @@
       <router-view />
     </q-page-container>
 
-    <AppBottomNav v-if="navigationVisible" />
+    <AppBottomNav v-if="shouldShowNavigation" />
 
     <AppPageLoader :showing="pageLoading" @hidden="showNavigation" />
 
@@ -62,6 +62,9 @@ const pageLoading = computed(() => {
 });
 
 const navigationVisible = ref(!pageLoading.value);
+const shouldShowNavigation = computed(
+  () => navigationVisible.value && !uiStore.orderSheetOpen && !uiStore.moreSheetOpen,
+);
 
 watch(pageLoading, (loading) => {
   if (loading) {

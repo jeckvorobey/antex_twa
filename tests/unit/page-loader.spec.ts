@@ -17,9 +17,13 @@ describe('AppPageLoader', () => {
     const layout = readFileSync(layoutPath, 'utf8');
 
     expect(layout).toContain("import AppPageLoader from '@components/ui/AppPageLoader.vue'");
-    expect(layout).toContain('<AppBottomNav v-if="navigationVisible" />');
+    expect(layout).toContain('<AppBottomNav v-if="shouldShowNavigation" />');
     expect(layout).toContain('@hidden="showNavigation"');
     expect(layout).toContain('const navigationVisible = ref(!pageLoading.value);');
+    expect(layout).toContain('const shouldShowNavigation = computed(');
+    expect(layout).toContain(
+      'navigationVisible.value && !uiStore.orderSheetOpen && !uiStore.moreSheetOpen',
+    );
     expect(layout).toContain('watch(pageLoading, (loading) => {');
     expect(layout).toContain('navigationVisible.value = false;');
     expect(layout).toContain('const pageLoading = computed(() => {');

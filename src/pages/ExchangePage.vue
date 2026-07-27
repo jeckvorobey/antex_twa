@@ -7,6 +7,10 @@
             {{ t('order.rateNotice') }}
           </AppWarningNotice>
 
+          <AppWarningNotice v-if="isManagersOffline">
+            {{ t('order.offlineInlineNotice') }}
+          </AppWarningNotice>
+
           <ExchangeOrderDetails
             v-model:selected-sell-currency="selectedSellCurrency"
             v-model:selected-buy-currency="selectedBuyCurrency"
@@ -66,26 +70,26 @@
       </q-form>
     </div>
 
-    <q-dialog v-model="offlineConfirmVisible" position="bottom">
-      <AppSurface class="app-sheet q-pa-md">
+    <q-dialog v-model="offlineConfirmVisible" position="bottom" persistent>
+      <AppSurface class="app-sheet app-sheet--confirm q-pa-md">
         <div class="text-subtitle1">{{ t('order.offlineTitle') }}</div>
         <div class="text-body2 text-grey-5 q-mt-sm">{{ t('order.offlineText') }}</div>
         <div class="text-body2 q-mt-sm">
           {{ exchangeStore.screen?.managerAvailability.businessHoursText }}
         </div>
-        <div class="row q-col-gutter-sm q-mt-md">
-          <div class="col">
+        <div class="row q-col-gutter-sm q-mt-lg">
+          <div class="col-12 col-sm">
             <AppButton
               block
               :loading="exchangeStore.submitting || submitFlowPending"
               @click="confirmOffline"
             >
-              {{ t('order.continue') }}
+              {{ t('common.yes') }}
             </AppButton>
           </div>
-          <div class="col">
-            <AppButton block variant="secondary" @click="offlineConfirmVisible = false">
-              {{ t('order.back') }}
+          <div class="col-12 col-sm">
+            <AppButton block variant="secondary" @click="cancelOffline">
+              {{ t('common.cancel') }}
             </AppButton>
           </div>
         </div>
@@ -187,6 +191,9 @@ const countryOptions = computed(() => {
 const cityOptions = computed(() => buildCityOptions(exchangeStore.cities, selectedCountry.value));
 
 const currentQuoteMethods = computed(() => resolveCurrentQuote()?.availableMethods ?? null);
+const isManagersOffline = computed(
+  () => exchangeStore.screen?.managerAvailability.status === 'offline',
+);
 
 onMounted(async () => {
   if (!exchangeStore.loaded || !exchangeStore.screen || !exchangeStore.cities.length) {
@@ -404,6 +411,22 @@ function getDefaultAmountSell(currencySell: string) {
   return currencySell === 'USDT' ? 100 : 5000;
 }
 
+/** Возвращает форму обмена к backend-driven значениям по умолчанию. */
+function resetFormToDefaults() {
+  selectedSellCurrency.value = exchangeStore.screen?.calculator.fromCurrency ?? 'RUB';
+  selectedBuyCurrency.value = exchangeStore.screen?.calculator.toCurrency ?? 'THB';
+  amountSell.value =
+    exchangeStore.screen?.calculator.amountSell ?? getDefaultAmountSell(selectedSellCurrency.value);
+  amountBuy.value = exchangeStore.screen?.quote.amountBuy ?? null;
+  selectedCountry.value = getCountryByCurrency(
+    exchangeStore.screen?.pairs ?? [],
+    selectedBuyCurrency.value,
+  );
+  selectedMethod.value = 'qrcode';
+  selectedCityId.value = null;
+  amountSellTouched.value = false;
+}
+
 function resolveCurrentQuote() {
   if (isTokenCurrency(selectedSellCurrency.value)) {
     return aexQuote.value;
@@ -484,14 +507,8 @@ async function submitOrder() {
           : t('order.success'),
     });
     syncingState.value = true;
-    amountSell.value =
-      exchangeStore.screen?.calculator.amountSell ??
-      getDefaultAmountSell(selectedSellCurrency.value);
-    amountBuy.value = exchangeStore.screen?.quote.amountBuy ?? null;
-    amountSellTouched.value = false;
+    resetFormToDefaults();
     syncingState.value = false;
-    selectedMethod.value = 'qrcode';
-    selectedCityId.value = null;
     offlineConfirmed.value = false;
     await router.push({ name: 'history' });
   } catch (error: unknown) {
@@ -519,5 +536,15 @@ function confirmOffline() {
   offlineConfirmed.value = true;
   offlineConfirmVisible.value = false;
   void submitOrder();
+}
+
+/** Отменяет off-hours оформление и сбрасывает форму к начальному состоянию. */
+function cancelOffline() {
+  offlineConfirmed.value = false;
+  offlineConfirmVisible.value = false;
+  syncingState.value = true;
+  resetFormToDefaults();
+  syncingState.value = false;
+  refreshQuoteForCurrentState();
 }
 </script>

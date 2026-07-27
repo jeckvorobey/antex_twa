@@ -1,28 +1,29 @@
 <template>
   <div
-    class="fixed-bottom row justify-center q-px-sm q-pb-sm z-top"
+    class="app-bottom-nav fixed-bottom row justify-center q-px-sm q-pb-sm z-top"
     style="margin-bottom: env(safe-area-inset-bottom)"
   >
     <q-card
       flat
       bordered
-      class="bottom-nav__shell row no-wrap full-width q-pa-xs"
-      style="max-width: 316px;"
+      class="app-bottom-nav__shell bottom-nav__shell row no-wrap full-width q-pa-xs"
+      style="max-width: 322px"
     >
       <q-btn
-        v-for="item in items"
+        v-for="(item, index) in items"
         :key="item.name"
         flat
         dense
         stack
         rounded
         no-caps
-        class="col q-py-sm"
+        class="app-bottom-nav__item col q-py-sm"
         size="10px"
         :icon="item.icon"
         :label="item.label"
         :text-color="isActive(item.name) ? 'primary' : 'white'"
         :class="{ 'bottom-nav__item--active': isActive(item.name) }"
+        :style="{ '--bottom-nav-item-delay': `${index * 60}ms` }"
         :aria-label="item.label"
         :aria-current="isActive(item.name) ? 'page' : undefined"
         @click="navigateTo(item.name)"
@@ -81,22 +82,3 @@ function navigateTo(name: string): void {
   void router.push({ name });
 }
 </script>
-
-<style scoped lang="scss">
-.bottom-nav__shell {
-  overflow: hidden;
-  border-color: rgba(242, 210, 122, 0.18);
-  border-radius: 36px;
-  background:
-    linear-gradient(180deg, rgba(28, 73, 65, 0.75), rgba(10, 31, 28, 0.65)), rgba(18, 53, 48, 0.36);
-  box-shadow:
-    0 18px 42px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(25px);
-  -webkit-backdrop-filter: blur(25px);
-}
-
-.bottom-nav__item--active {
-  background: rgba(212, 175, 55, 0.14);
-}
-</style>

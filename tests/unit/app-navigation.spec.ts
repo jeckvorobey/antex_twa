@@ -48,22 +48,25 @@ describe('app navigation chrome', () => {
     expect(bottomNavSource).toContain('<q-card');
     expect(bottomNavSource).toContain('flat');
     expect(bottomNavSource).toContain('bordered');
-    expect(bottomNavSource).toContain('class="bottom-nav__shell row no-wrap full-width q-pa-xs"');
-    expect(bottomNavSource).toContain('style="max-width: 316px;"');
+    expect(bottomNavSource).toContain(
+      'class="app-bottom-nav__shell bottom-nav__shell row no-wrap full-width q-pa-xs"',
+    );
+    expect(bottomNavSource).toContain('style="max-width: 322px"');
     expect(bottomNavSource).toContain('<q-btn');
     expect(bottomNavSource).toContain('dense');
     expect(bottomNavSource).toContain('rounded');
     expect(bottomNavSource).toContain('size="10px"');
-    expect(bottomNavSource).toContain('class="col q-py-sm"');
+    expect(bottomNavSource).toContain('class="app-bottom-nav__item col q-py-sm"');
     expect(bottomNavSource).toMatch(/name:\s*'home'/);
     expect(bottomNavSource).toMatch(/name:\s*'exchange'/);
     expect(bottomNavSource).toMatch(/name:\s*'history'/);
     expect(bottomNavSource).toMatch(/name:\s*'profile'/);
-    expect(bottomNavSource).toContain('fixed-bottom row justify-center q-px-sm q-pb-sm z-top');
+    expect(bottomNavSource).toContain(
+      'app-bottom-nav fixed-bottom row justify-center q-px-sm q-pb-sm z-top',
+    );
     expect(bottomNavSource).toContain('margin-bottom: env(safe-area-inset-bottom)');
     expect(bottomNavStyles).not.toContain('.q-btn__content');
-    expect(bottomNavStyles).not.toContain('.q-icon');
     expect(bottomNavStyles).not.toContain('.block');
-    expect(appStylesSource).not.toContain('.app-bottom-nav');
+    expect(appStylesSource).toContain('.app-bottom-nav {');
   });
 });
