@@ -7,9 +7,13 @@
             {{ t('order.rateNotice') }}
           </AppWarningNotice>
 
-          <AppWarningNotice v-if="isManagersOffline">
-            {{ t('order.offlineInlineNotice') }}
-          </AppWarningNotice>
+          <div
+            v-if="isManagersOffline"
+            class="app-order-offline-note row no-wrap items-center q-pa-sm"
+          >
+            <q-icon name="schedule" size="18px" class="col-auto" />
+            <div class="col text-body2">{{ t('order.offlineInlineNotice') }}</div>
+          </div>
 
           <ExchangeOrderDetails
             v-model:selected-sell-currency="selectedSellCurrency"
@@ -70,7 +74,7 @@
       </q-form>
     </div>
 
-    <q-dialog v-model="offlineConfirmVisible" position="bottom" persistent>
+    <q-dialog v-model="offlineConfirmVisible" persistent class="app-dialog--confirm">
       <AppSurface class="app-sheet app-sheet--confirm q-pa-md">
         <div class="text-subtitle1">{{ t('order.offlineTitle') }}</div>
         <div class="text-body2 text-grey-5 q-mt-sm">{{ t('order.offlineText') }}</div>

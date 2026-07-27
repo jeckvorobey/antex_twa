@@ -28,9 +28,11 @@ describe('ExchangePage rate formatting', () => {
     const source = readFileSync(exchangePagePath, 'utf8');
 
     expect(source).toContain('offlineConfirmVisible');
-    expect(source).toContain('v-if="isManagersOffline"');
+    expect(source).toContain('class="app-order-offline-note row no-wrap items-center q-pa-sm"');
     expect(source).toContain("{{ t('order.offlineInlineNotice') }}");
     expect(source).toContain('persistent');
+    expect(source).toContain('class="app-dialog--confirm"');
+    expect(source).not.toContain('v-model="offlineConfirmVisible" position="bottom" persistent');
     expect(source).toContain('shouldConfirmOfflineSubmit');
     expect(source).toContain('await exchangeStore.refresh()');
     expect(source).toContain('refreshQuoteForCurrentState();');

@@ -30,8 +30,9 @@ describe('AppBottomNav', () => {
     expect(appStyles).toContain('.app-bottom-nav {');
   });
 
-  it('delegates compact icon and label sizing to Quasar', () => {
+  it('keeps button size compact and delegates visual icon/label emphasis to CSS', () => {
     const component = readFileSync(componentPath, 'utf8');
+    const appStyles = readFileSync(stylesPath, 'utf8');
 
     expect(component).toContain('dense');
     expect(component).toContain('rounded');
@@ -40,6 +41,10 @@ describe('AppBottomNav', () => {
     expect(component).toContain(`:aria-current="isActive(item.name) ? 'page' : undefined"`);
     expect(component).not.toContain('.q-btn__content');
     expect(component).not.toContain('.block');
+    expect(appStyles).toContain('.app-bottom-nav__item .q-icon {');
+    expect(appStyles).toContain('font-size: 21px;');
+    expect(appStyles).toContain('.app-bottom-nav__item .q-btn__content > span:not(.q-icon)');
+    expect(appStyles).toContain('font-size: 11.5px;');
   });
 
   it('adds premium first-mount reveal, stagger, active focus and reduced motion CSS', () => {
