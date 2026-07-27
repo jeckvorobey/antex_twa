@@ -1619,6 +1619,12 @@ body.body--light .q-page,
   overflow-x: auto;
   padding-bottom: 2px;
   scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.app-chip-row--exchange > *,
+.app-chip-row--history > * {
+  flex: 0 0 auto;
 }
 
 .app-chip-row--exchange::-webkit-scrollbar,
