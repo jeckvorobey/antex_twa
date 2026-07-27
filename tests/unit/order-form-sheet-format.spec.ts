@@ -10,6 +10,7 @@ const detailsComponentPath = resolve(
 );
 const localePath = resolve(process.cwd(), 'src/i18n/ru/index.ts');
 const warningNoticePath = resolve(process.cwd(), 'src/components/ui/AppWarningNotice.vue');
+const offlineNoticePath = resolve(process.cwd(), 'src/components/ui/AppOfflineNotice.vue');
 
 describe('OrderFormSheet amount formatting', () => {
   it('does not keep duplicated amount, currency, and contact fields after replacing them with the shared component', () => {
@@ -61,6 +62,20 @@ describe('OrderFormSheet amount formatting', () => {
     expect(warningNoticeSource).toContain('app-warning-notice__close');
     expect(warningNoticeSource).toContain('role="alert"');
     expect(warningNoticeSource).not.toContain('<q-banner');
+  });
+
+  it('keeps both notices compact and responsive on narrow mobile screens', () => {
+    const warningNoticeSource = readFileSync(warningNoticePath, 'utf8');
+    const offlineNoticeSource = readFileSync(offlineNoticePath, 'utf8');
+
+    expect(warningNoticeSource).toContain('grid-template-columns: auto minmax(0, 1fr)');
+    expect(warningNoticeSource).toContain('font-size: clamp(');
+    expect(warningNoticeSource).toContain('min-width: 26px');
+    expect(offlineNoticeSource).toContain(
+      'grid-template-columns: auto minmax(0, 1fr) auto',
+    );
+    expect(offlineNoticeSource).toContain("replace(/^Ежедневно\\s+/i, '')");
+    expect(offlineNoticeSource).toContain('white-space: nowrap');
   });
 });
 
