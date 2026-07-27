@@ -36,6 +36,16 @@ describe('ExchangePage rate formatting', () => {
     expect(source).toContain("t('order.successOffline')");
     expect(source).toContain('if (submitFlowPending.value)');
     expect(source).toContain(':disable="!canSubmit || submitFlowPending"');
-    expect(source).toContain("catch {\n    return exchangeStore.screen?.managerAvailability.status === 'offline';");
+    expect(source).toContain(
+      "catch {\n    return exchangeStore.screen?.managerAvailability.status === 'offline';",
+    );
+  });
+
+  it('uses the create-order availability snapshot for the final success message', () => {
+    const source = readFileSync(exchangePagePath, 'utf8');
+
+    expect(source).toContain('const order = await exchangeStore.submitOrder');
+    expect(source).toContain("order.managerAvailability?.status === 'offline'");
+    expect(source).toContain("t('order.successOffline')");
   });
 });

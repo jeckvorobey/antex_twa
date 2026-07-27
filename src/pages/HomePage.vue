@@ -158,6 +158,30 @@
             </div>
           </AppSurface>
         </div>
+
+        <AppSurface
+          v-if="
+            profileStore.data?.managerAvailability &&
+            profileStore.data.managerAvailability.status !== 'unknown'
+          "
+          class="app-profile-card q-pa-md"
+        >
+          <div class="row no-wrap items-start q-gutter-sm">
+            <q-icon name="support_agent" color="primary" size="22px" />
+            <div class="col">
+              <div class="text-subtitle2">{{ t('profile.managerHours') }}</div>
+              <div class="text-body2 text-grey-5 q-mt-xs">
+                {{ profileStore.data.managerAvailability.businessHoursText }}
+              </div>
+              <div class="text-body2 q-mt-sm">
+                {{ managerStatusText }}
+              </div>
+              <div v-if="nextStartText" class="text-caption text-grey-5 q-mt-xs">
+                {{ t('profile.nextStart', { time: nextStartText }) }}
+              </div>
+            </div>
+          </div>
+        </AppSurface>
       </section>
     </div>
   </q-page>
@@ -187,6 +211,7 @@ import {
   resetHomeRateExpansion,
   resolveHomeCountryByCity,
 } from '@utils/home-rates';
+import { formatManagerNextStart } from '@utils/manager-working-hours';
 import { toSafeNavigationUrl } from '@utils/safe-external-url';
 
 const homeStore = useHomeStore();
@@ -281,6 +306,14 @@ const canExpand = computed(() => rateView.value.canExpand);
 const defaultExchangeCard = computed(
   () => featuredRates.value.find((card) => card.id === 'rub-thb') ?? featuredRates.value[0],
 );
+const managerStatusText = computed(() => {
+  const status = profileStore.data?.managerAvailability?.status;
+  return status === 'working' ? t('profile.managersWorking') : t('profile.managersOffline');
+});
+const nextStartText = computed(() => {
+  const value = profileStore.data?.managerAvailability?.nextStartAt;
+  return formatManagerNextStart(value);
+});
 const managerTelegramHref = computed(() => {
   const supportHref = profileStore.data?.menu
     .find((item) => item.id === 'support' && item.action === 'link')
