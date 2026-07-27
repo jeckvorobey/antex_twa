@@ -77,4 +77,19 @@ describe('orders store pagination', () => {
     expect(store.items.map((item) => item.id)).toEqual([1, 2, 3]);
     expect(store.hasMore).toBe(false);
   });
+
+  it('prepend moves existing order to top without increasing total', () => {
+    const store = useOrdersStore();
+    const first = makeOrder(1);
+    const second = makeOrder(2);
+
+    store.prepend(first);
+    store.prepend(second);
+    store.prepend({ ...first, amountSell: 9000 });
+
+    expect(store.items.map((item) => item.id)).toEqual([1, 2]);
+    expect(store.items[0]?.amountSell).toBe(9000);
+    expect(store.total).toBe(2);
+    expect(store.offset).toBe(2);
+  });
 });

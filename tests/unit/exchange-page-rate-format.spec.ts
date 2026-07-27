@@ -28,6 +28,9 @@ describe('ExchangePage rate formatting', () => {
     const source = readFileSync(exchangePagePath, 'utf8');
 
     expect(source).toContain('offlineConfirmVisible');
+    expect(source).toContain('v-if="isManagersOffline"');
+    expect(source).toContain("{{ t('order.offlineInlineNotice') }}");
+    expect(source).toContain('persistent');
     expect(source).toContain('shouldConfirmOfflineSubmit');
     expect(source).toContain('await exchangeStore.refresh()');
     expect(source).toContain('refreshQuoteForCurrentState();');
@@ -36,6 +39,9 @@ describe('ExchangePage rate formatting', () => {
     expect(source).toContain("t('order.successOffline')");
     expect(source).toContain('if (submitFlowPending.value)');
     expect(source).toContain(':disable="!canSubmit || submitFlowPending"');
+    expect(source).toContain('@click="cancelOffline"');
+    expect(source).toContain("{{ t('common.yes') }}");
+    expect(source).toContain("{{ t('common.cancel') }}");
     expect(source).toContain(
       "catch {\n    return exchangeStore.screen?.managerAvailability.status === 'offline';",
     );

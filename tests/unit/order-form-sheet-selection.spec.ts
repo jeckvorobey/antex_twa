@@ -48,11 +48,23 @@ describe('OrderFormSheet selection sync contract', () => {
 
   it('refreshes manager availability before showing offline confirmation', () => {
     expect(source).toContain('shouldConfirmOfflineSubmit');
+    expect(source).toContain('v-if="isManagersOffline"');
+    expect(source).toContain("{{ t('order.offlineInlineNotice') }}");
+    expect(source).toContain('persistent');
     expect(source).toContain('await exchangeStore.refresh()');
     expect(source).toContain('refreshQuoteForCurrentState();');
     expect(source).toContain('const refreshedValidation = preliminaryValidation.value;');
     expect(source).toContain("managerAvailability.status === 'offline'");
     expect(source).toContain('if (submitFlowPending.value)');
-    expect(source).toContain("catch {\n    return exchangeStore.screen?.managerAvailability.status === 'offline';");
+    expect(source).toContain('@click="cancelOffline"');
+    expect(source).toContain('resetFormToDefaults();');
+    expect(source).toContain('class="app-sheet__header"');
+    expect(source).toContain('class="app-sheet__scroll"');
+    expect(source).toContain('@touchstart.passive="startSheetDrag"');
+    expect(source).toContain('@touchmove.passive="trackSheetDrag"');
+    expect(source).toContain('@touchend="finishSheetDrag"');
+    expect(source).toContain(
+      "catch {\n    return exchangeStore.screen?.managerAvailability.status === 'offline';",
+    );
   });
 });

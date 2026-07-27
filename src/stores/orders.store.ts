@@ -74,12 +74,16 @@ export const useOrdersStore = defineStore('orders', () => {
   }
 
   function prepend(order: MiniappOrderItem) {
-    const existed = items.value.some((item) => item.id === order.id);
-    items.value = [order, ...items.value.filter((item) => item.id !== order.id)];
-    offset.value = items.value.length;
-    if (!existed) {
+    const existingIndex = items.value.findIndex((item) => item.id === order.id);
+    if (existingIndex === -1) {
+      items.value = [order, ...items.value];
       total.value += 1;
+    } else {
+      const nextItems = items.value.slice();
+      nextItems.splice(existingIndex, 1);
+      items.value = [order, ...nextItems];
     }
+    offset.value = items.value.length;
   }
 
   return {

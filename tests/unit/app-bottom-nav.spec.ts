@@ -19,27 +19,42 @@ describe('AppBottomNav', () => {
 
   it('keeps the fixed nav inside the mobile screen width', () => {
     const component = readFileSync(componentPath, 'utf8');
-    const styles = component.split('<style scoped lang="scss">')[1] ?? '';
+    const appStyles = readFileSync(stylesPath, 'utf8');
 
-    expect(component).toContain('fixed-bottom row justify-center q-px-sm q-pb-sm z-top');
+    expect(component).toContain(
+      'app-bottom-nav fixed-bottom row justify-center q-px-sm q-pb-sm z-top',
+    );
     expect(component).toContain('margin-bottom: env(safe-area-inset-bottom)');
-    expect(component).toContain('max-width: 316px');
+    expect(component).toContain('max-width: 322px');
     expect(component).toContain('q-pa-xs');
-    expect(readFileSync(stylesPath, 'utf8')).not.toContain('.app-bottom-nav');
+    expect(appStyles).toContain('.app-bottom-nav {');
   });
 
   it('delegates compact icon and label sizing to Quasar', () => {
     const component = readFileSync(componentPath, 'utf8');
-    const styles = component.split('<style scoped lang="scss">')[1] ?? '';
 
     expect(component).toContain('dense');
     expect(component).toContain('rounded');
     expect(component).toContain('size="10px"');
     expect(component).toContain(":text-color=\"isActive(item.name) ? 'primary' : 'white'\"");
     expect(component).toContain(`:aria-current="isActive(item.name) ? 'page' : undefined"`);
-    expect(styles).not.toContain('.q-btn__content');
-    expect(styles).not.toContain('.q-icon');
-    expect(styles).not.toContain('.block');
+    expect(component).not.toContain('.q-btn__content');
+    expect(component).not.toContain('.block');
+  });
+
+  it('adds premium first-mount reveal, stagger, active focus and reduced motion CSS', () => {
+    const component = readFileSync(componentPath, 'utf8');
+    const appStyles = readFileSync(stylesPath, 'utf8');
+
+    expect(component).toContain('v-for="(item, index) in items"');
+    expect(component).toContain('app-bottom-nav__item col q-py-sm');
+    expect(component).toContain('`${index * 60}ms`');
+    expect(appStyles).toContain('@keyframes app-bottom-nav-velvet-reveal');
+    expect(appStyles).toContain('@keyframes app-bottom-nav-item-reveal');
+    expect(appStyles).toContain('translate3d(0, 22px, 0) scale(0.97)');
+    expect(appStyles).toContain('animation-delay: calc(160ms + var(--bottom-nav-item-delay, 0ms))');
+    expect(appStyles).toContain('.app-bottom-nav__item.bottom-nav__item--active .q-icon');
+    expect(appStyles).toContain('@media (prefers-reduced-motion: reduce)');
   });
 
   it('keeps labels reactive and skips navigation to the active route', () => {

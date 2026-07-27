@@ -2,34 +2,50 @@
   <q-dialog
     :model-value="modelValue"
     position="bottom"
+    persistent
     class="app-dialog--bottom app-dialog--order"
     @update:model-value="$emit('update:modelValue', $event)"
   >
-    <AppSurface class="app-sheet q-pt-sm q-px-md">
-      <div class="app-sheet-handle" />
-      <AppWarningNotice>
-        {{ t('order.rateNotice') }}
-      </AppWarningNotice>
+    <AppSurface
+      class="app-sheet app-sheet--order q-pt-sm q-px-md"
+      @touchstart.passive="startSheetDrag"
+      @touchmove.passive="trackSheetDrag"
+      @touchend="finishSheetDrag"
+    >
+      <div class="app-sheet__header">
+        <div class="app-sheet-handle" />
+      </div>
 
-      <ExchangeOrderDetails
-        ref="orderDetailsRef"
-        v-model:selected-sell-currency="selectedSellCurrency"
-        v-model:selected-buy-currency="currencyBuy"
-        v-model:amount-sell="amountSell"
-        :amount-buy="amountBuy"
-        v-model:selected-country="selectedCountry"
-        v-model:selected-method="selectedMethod"
-        v-model:selected-city-id="selectedCityId"
-        :sell-options="sellOptions"
-        :buy-options="currencyOptions"
-        :rate-label="currentRateLabel"
-        :country-options="countryOptions"
-        :city-options="cityOptions"
-        :available-methods="currentQuoteMethods"
-      />
+      <div class="app-sheet__scroll">
+        <AppWarningNotice>
+          {{ t('order.rateNotice') }}
+        </AppWarningNotice>
+
+        <AppWarningNotice v-if="isManagersOffline">
+          {{ t('order.offlineInlineNotice') }}
+        </AppWarningNotice>
+
+        <ExchangeOrderDetails
+          ref="orderDetailsRef"
+          v-model:selected-sell-currency="selectedSellCurrency"
+          v-model:selected-buy-currency="currencyBuy"
+          v-model:amount-sell="amountSell"
+          :amount-buy="amountBuy"
+          v-model:selected-country="selectedCountry"
+          v-model:selected-method="selectedMethod"
+          v-model:selected-city-id="selectedCityId"
+          :sell-options="sellOptions"
+          :buy-options="currencyOptions"
+          :rate-label="currentRateLabel"
+          :country-options="countryOptions"
+          :city-options="cityOptions"
+          :available-methods="currentQuoteMethods"
+        />
+      </div>
 
       <AppButton
         block
+        class="q-mt-md q-mb-md"
         :loading="exchangeStore.submitting || submitFlowPending"
         :disable="!canSubmit || submitFlowPending"
         @click="submit"
@@ -39,14 +55,27 @@
     </AppSurface>
   </q-dialog>
 
-  <q-dialog v-model="offlineConfirmVisible" position="bottom">
-    <AppSurface class="app-sheet q-pa-md">
+  <q-dialog v-model="offlineConfirmVisible" position="bottom" persistent>
+    <AppSurface class="app-sheet app-sheet--confirm q-pa-md">
       <div class="text-subtitle1">{{ t('order.offlineTitle') }}</div>
       <div class="text-body2 text-grey-5 q-mt-sm">{{ t('order.offlineText') }}</div>
-      <div class="text-body2 q-mt-sm">{{ exchangeStore.screen?.managerAvailability.businessHoursText }}</div>
-      <div class="row q-col-gutter-sm q-mt-md">
-        <div class="col"><AppButton block :loading="exchangeStore.submitting || submitFlowPending" @click="confirmOffline">{{ t('order.continue') }}</AppButton></div>
-        <div class="col"><AppButton block variant="secondary" @click="offlineConfirmVisible = false">{{ t('order.back') }}</AppButton></div>
+      <div class="text-body2 q-mt-sm">
+        {{ exchangeStore.screen?.managerAvailability.businessHoursText }}
+      </div>
+      <div class="row q-col-gutter-sm q-mt-lg">
+        <div class="col-12 col-sm">
+          <AppButton
+            block
+            :loading="exchangeStore.submitting || submitFlowPending"
+            @click="confirmOffline"
+            >{{ t('common.yes') }}</AppButton
+          >
+        </div>
+        <div class="col-12 col-sm">
+          <AppButton block variant="secondary" @click="cancelOffline">{{
+            t('common.cancel')
+          }}</AppButton>
+        </div>
       </div>
     </AppSurface>
   </q-dialog>
@@ -109,6 +138,8 @@ const offlineConfirmVisible = ref(false);
 const offlineConfirmed = ref(false);
 const submitFlowPending = ref(false);
 const orderDetailsRef = ref<{ focusAmountSell: () => void } | null>(null);
+const sheetDragStartY = ref<number | null>(null);
+const sheetDragDeltaY = ref(0);
 
 const sellOptions = computed(() =>
   [
@@ -164,6 +195,9 @@ const currentRateLabel = computed(() => {
 
   return currentQuote.rateText;
 });
+const isManagersOffline = computed(
+  () => exchangeStore.screen?.managerAvailability.status === 'offline',
+);
 
 const preliminaryValidation = computed(() =>
   validatePreliminaryOrderDraft({
@@ -192,6 +226,8 @@ watch(
   async (opened) => {
     if (!opened) {
       offlineConfirmed.value = false;
+      offlineConfirmVisible.value = false;
+      resetSheetDrag();
       return;
     }
 
@@ -201,24 +237,7 @@ watch(
 
     shouldFocusAmountSellAfterOpen.value = Boolean(uiStore.orderContext);
     syncingState.value = true;
-    selectedSellCurrency.value =
-      uiStore.orderContext?.currencySell ?? exchangeStore.quote?.currencySell ?? 'RUB';
-    amountSell.value =
-      uiStore.orderContext?.amountSell ??
-      exchangeStore.quote?.amountSell ??
-      getDefaultAmountSell(selectedSellCurrency.value);
-    amountBuy.value = null;
-    currencyBuy.value =
-      uiStore.orderContext?.currencyBuy ?? exchangeStore.quote?.currencyBuy ?? 'THB';
-    selectedCountry.value =
-      uiStore.orderContext?.country ??
-      getCountryByCurrency(exchangeStore.screen?.pairs ?? [], currencyBuy.value);
-    selectedCityId.value = uiStore.orderContext?.cityId ?? null;
-    selectedMethod.value = getPreferredReceiveMethod(
-      currentQuoteMethods.value,
-      selectedCityId.value,
-    );
-    amountSellTouched.value = Boolean(uiStore.orderContext?.amountSell);
+    resetFormToDefaults();
     syncingState.value = false;
     refreshQuoteForCurrentState();
     if (shouldFocusAmountSellAfterOpen.value) {
@@ -355,6 +374,25 @@ function getDefaultAmountSell(currencySell: string) {
   return currencySell === 'USDT' ? 100 : 5000;
 }
 
+/** Возвращает форму к начальному состоянию с учётом контекста повторной заявки. */
+function resetFormToDefaults() {
+  selectedSellCurrency.value =
+    uiStore.orderContext?.currencySell ?? exchangeStore.quote?.currencySell ?? 'RUB';
+  amountSell.value =
+    uiStore.orderContext?.amountSell ??
+    exchangeStore.quote?.amountSell ??
+    getDefaultAmountSell(selectedSellCurrency.value);
+  amountBuy.value = null;
+  currencyBuy.value =
+    uiStore.orderContext?.currencyBuy ?? exchangeStore.quote?.currencyBuy ?? 'THB';
+  selectedCountry.value =
+    uiStore.orderContext?.country ??
+    getCountryByCurrency(exchangeStore.screen?.pairs ?? [], currencyBuy.value);
+  selectedCityId.value = uiStore.orderContext?.cityId ?? null;
+  selectedMethod.value = getPreferredReceiveMethod(currentQuoteMethods.value, selectedCityId.value);
+  amountSellTouched.value = Boolean(uiStore.orderContext?.amountSell);
+}
+
 /**
  * Отправляет miniapp-заявку и показывает локализованное сообщение по коду ошибки.
  */
@@ -456,5 +494,46 @@ function confirmOffline() {
   offlineConfirmed.value = true;
   offlineConfirmVisible.value = false;
   void submit();
+}
+
+/** Отменяет off-hours оформление и сбрасывает форму без закрытия sheet. */
+function cancelOffline() {
+  offlineConfirmed.value = false;
+  offlineConfirmVisible.value = false;
+  syncingState.value = true;
+  resetFormToDefaults();
+  syncingState.value = false;
+  refreshQuoteForCurrentState();
+}
+
+/** Запоминает начальную точку drag-down жеста закрытия нижнего sheet. */
+function startSheetDrag(event: TouchEvent) {
+  sheetDragStartY.value = event.touches[0]?.clientY ?? null;
+  sheetDragDeltaY.value = 0;
+}
+
+/** Отслеживает только движение вниз; внешний tap не влияет на состояние dialog. */
+function trackSheetDrag(event: TouchEvent) {
+  if (sheetDragStartY.value === null) {
+    return;
+  }
+  sheetDragDeltaY.value = Math.max(
+    0,
+    (event.touches[0]?.clientY ?? sheetDragStartY.value) - sheetDragStartY.value,
+  );
+}
+
+/** Закрывает sheet, если пользователь явно потянул его вниз. */
+function finishSheetDrag() {
+  if (sheetDragDeltaY.value > 80) {
+    emit('update:modelValue', false);
+  }
+  resetSheetDrag();
+}
+
+/** Сбрасывает временное состояние drag-жеста. */
+function resetSheetDrag() {
+  sheetDragStartY.value = null;
+  sheetDragDeltaY.value = 0;
 }
 </script>
