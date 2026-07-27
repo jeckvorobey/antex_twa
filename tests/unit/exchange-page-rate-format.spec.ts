@@ -23,4 +23,14 @@ describe('ExchangePage rate formatting', () => {
     expect(source).toContain('validatePreliminaryOrderDraft');
     expect(source).toContain("Notify.create({ type: 'negative', message: t(validation.messageKey");
   });
+
+  it('refreshes manager availability and confirms offline submit on the dedicated route', () => {
+    const source = readFileSync(exchangePagePath, 'utf8');
+
+    expect(source).toContain('offlineConfirmVisible');
+    expect(source).toContain('shouldConfirmOfflineSubmit');
+    expect(source).toContain('await exchangeStore.refresh()');
+    expect(source).toContain("managerAvailability.status === 'offline'");
+    expect(source).toContain("t('order.successOffline')");
+  });
 });

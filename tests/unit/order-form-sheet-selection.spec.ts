@@ -46,4 +46,10 @@ describe('OrderFormSheet selection sync contract', () => {
     expect(source).toContain('orderDetailsRef.value?.focusAmountSell();');
     expect(source).not.toContain('amountBuy.value = uiStore.orderContext?.amountBuy');
   });
+
+  it('refreshes manager availability before showing offline confirmation', () => {
+    expect(source).toContain('shouldConfirmOfflineSubmit');
+    expect(source).toContain('await exchangeStore.refresh()');
+    expect(source).toContain("managerAvailability.status === 'offline'");
+  });
 });

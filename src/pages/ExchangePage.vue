@@ -60,6 +60,28 @@
         </div>
       </q-form>
     </div>
+
+    <q-dialog v-model="offlineConfirmVisible" position="bottom">
+      <AppSurface class="app-sheet q-pa-md">
+        <div class="text-subtitle1">{{ t('order.offlineTitle') }}</div>
+        <div class="text-body2 text-grey-5 q-mt-sm">{{ t('order.offlineText') }}</div>
+        <div class="text-body2 q-mt-sm">
+          {{ exchangeStore.screen?.managerAvailability.businessHoursText }}
+        </div>
+        <div class="row q-col-gutter-sm q-mt-md">
+          <div class="col">
+            <AppButton block :loading="exchangeStore.submitting" @click="confirmOffline">
+              {{ t('order.continue') }}
+            </AppButton>
+          </div>
+          <div class="col">
+            <AppButton block variant="secondary" @click="offlineConfirmVisible = false">
+              {{ t('order.back') }}
+            </AppButton>
+          </div>
+        </div>
+      </AppSurface>
+    </q-dialog>
   </q-page>
 </template>
 
@@ -113,6 +135,8 @@ const selectedCityId = ref<number | null>(null);
 const amountSellTouched = ref(false);
 const syncingState = ref(false);
 const aexQuote = ref<MiniappQuoteResponse | null>(null);
+const offlineConfirmVisible = ref(false);
+const offlineConfirmed = ref(false);
 
 const sellOptions = computed(() => {
   const options = [
@@ -403,6 +427,11 @@ async function submitOrder() {
     return;
   }
 
+  if ((await shouldConfirmOfflineSubmit()) && !offlineConfirmed.value) {
+    offlineConfirmVisible.value = true;
+    return;
+  }
+
   try {
     const order = await exchangeStore.submitOrder({
       country: selectedCountry.value,
@@ -416,6 +445,13 @@ async function submitOrder() {
     });
 
     ordersStore.prepend(order);
+    Notify.create({
+      type: 'positive',
+      message:
+        order.managerAvailability?.status === 'offline'
+          ? t('order.successOffline')
+          : t('order.success'),
+    });
     syncingState.value = true;
     amountSell.value =
       exchangeStore.screen?.calculator.amountSell ??
@@ -425,6 +461,7 @@ async function submitOrder() {
     syncingState.value = false;
     selectedMethod.value = 'qrcode';
     selectedCityId.value = null;
+    offlineConfirmed.value = false;
     await router.push({ name: 'history' });
   } catch (error: unknown) {
     const code = (error as { response?: { data?: { code?: string } } })?.response?.data?.code;
@@ -432,5 +469,21 @@ async function submitOrder() {
     const messageKey = status === 401 ? 'errors.auth' : getMiniappErrorMessageKey(code);
     Notify.create({ type: 'negative', message: t(messageKey) });
   }
+}
+
+async function shouldConfirmOfflineSubmit() {
+  try {
+    await exchangeStore.refresh();
+  } catch {
+    return false;
+  }
+  return exchangeStore.screen?.managerAvailability.status === 'offline';
+}
+
+function confirmOffline() {
+  if (exchangeStore.submitting) return;
+  offlineConfirmed.value = true;
+  offlineConfirmVisible.value = false;
+  void submitOrder();
 }
 </script>

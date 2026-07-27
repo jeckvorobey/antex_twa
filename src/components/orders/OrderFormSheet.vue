@@ -369,7 +369,7 @@ async function submit() {
     return;
   }
 
-  if (exchangeStore.screen?.managerAvailability.status === 'offline' && !offlineConfirmed.value) {
+  if ((await shouldConfirmOfflineSubmit()) && !offlineConfirmed.value) {
     offlineConfirmVisible.value = true;
     return;
   }
@@ -409,6 +409,15 @@ async function submit() {
         : t(messageKey);
     Notify.create({ type: 'negative', message });
   }
+}
+
+async function shouldConfirmOfflineSubmit() {
+  try {
+    await exchangeStore.refresh();
+  } catch {
+    return false;
+  }
+  return exchangeStore.screen?.managerAvailability.status === 'offline';
 }
 
 /** Подтверждает один оффлайн-сценарий в пределах открытой формы. */
