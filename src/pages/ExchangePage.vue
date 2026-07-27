@@ -492,7 +492,7 @@ async function shouldConfirmOfflineSubmit() {
   try {
     await exchangeStore.refresh();
   } catch {
-    return false;
+    return exchangeStore.screen?.managerAvailability.status === 'offline';
   }
   return exchangeStore.screen?.managerAvailability.status === 'offline';
 }
