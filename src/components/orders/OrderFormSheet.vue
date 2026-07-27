@@ -6,13 +6,13 @@
     class="app-dialog--bottom app-dialog--order"
     @update:model-value="$emit('update:modelValue', $event)"
   >
-    <AppSurface
-      class="app-sheet app-sheet--order q-pt-sm q-px-md"
-      @touchstart.passive="startSheetDrag"
-      @touchmove.passive="trackSheetDrag"
-      @touchend="finishSheetDrag"
-    >
-      <div class="app-sheet__header">
+    <AppSurface class="app-sheet app-sheet--order q-pt-sm q-px-md">
+      <div
+        class="app-sheet__header"
+        @touchstart.passive="startSheetDrag"
+        @touchmove.passive="trackSheetDrag"
+        @touchend="finishSheetDrag"
+      >
         <div class="app-sheet-handle" />
       </div>
 

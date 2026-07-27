@@ -63,6 +63,10 @@ describe('OrderFormSheet selection sync contract', () => {
     expect(source).toContain('@touchstart.passive="startSheetDrag"');
     expect(source).toContain('@touchmove.passive="trackSheetDrag"');
     expect(source).toContain('@touchend="finishSheetDrag"');
+    expect(source).toMatch(
+      /<div\s+class="app-sheet__header"\s+@touchstart\.passive="startSheetDrag"\s+@touchmove\.passive="trackSheetDrag"\s+@touchend="finishSheetDrag"/,
+    );
+    expect(source).not.toMatch(/<AppSurface[^>]+@touchstart\.passive="startSheetDrag"/);
     expect(source).toContain(
       "catch {\n    return exchangeStore.screen?.managerAvailability.status === 'offline';",
     );
