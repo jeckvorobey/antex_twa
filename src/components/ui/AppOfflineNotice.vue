@@ -1,5 +1,5 @@
 <template>
-  <div class="app-offline-notice row no-wrap items-center" role="status">
+  <div class="app-offline-notice row no-wrap items-center q-gutter-x-sm" role="status">
     <div class="app-offline-notice__icon col-auto">
       <q-icon name="schedule" />
     </div>
@@ -36,8 +36,6 @@ const compactBusinessHours = computed(() =>
   align-items: center;
   box-sizing: border-box;
   min-height: clamp(58px, 16vw, 68px);
-  gap: clamp(8px, 2.5vw, 12px);
-  padding: clamp(9px, 2.7vw, 12px) clamp(11px, 3.4vw, 15px);
   overflow: hidden;
   border: 1px solid rgba(79, 190, 112, 0.75);
   border-radius: clamp(14px, 4.5vw, 18px);
@@ -73,7 +71,6 @@ const compactBusinessHours = computed(() =>
   font-size: clamp(12px, 3.5vw, 15px);
   font-weight: 700;
   line-height: 1.25;
-  white-space: nowrap;
 }
 
 .app-offline-notice__text {
