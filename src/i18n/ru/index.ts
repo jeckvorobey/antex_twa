@@ -126,7 +126,7 @@ export default {
     history: 'История операций',
     refresh: 'Обновить',
     noTransactions: 'Операций пока нет.',
-    shareText: 'Присоединяйся к AntEx и получи бонус ATXG!',
+    shareText: 'Рекомендую! AntEx — один из лучших ботов для обмена.',
     howItWorks: 'Как это работает',
     instructionStep1: 'Поделиться ссылкой',
     instructionStep1Description: 'Отправьте готовую реферальную ссылку другу.',
