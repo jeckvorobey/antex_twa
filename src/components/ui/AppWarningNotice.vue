@@ -1,5 +1,5 @@
 <template>
-  <div v-if="visible" class="app-warning-notice row no-wrap items-center" role="alert">
+  <div v-if="visible" class="app-warning-notice row no-wrap items-center q-gutter-x-sm" role="alert">
     <div class="app-warning-notice__icon col-auto">
       <q-icon name="warning" />
     </div>
@@ -10,17 +10,6 @@
       </div>
       <div class="app-warning-notice__text"><slot /></div>
     </div>
-
-    <q-btn
-      v-if="dismissible"
-      flat
-      round
-      dense
-      icon="close"
-      class="app-warning-notice__close"
-      aria-label="Закрыть уведомление"
-      @click="dismiss"
-    />
   </div>
 </template>
 
@@ -41,11 +30,6 @@ const emit = defineEmits<{
 }>();
 
 const visible = ref(true);
-
-function dismiss() {
-  visible.value = false;
-  emit('dismiss');
-}
 </script>
 
 <style scoped lang="scss">
@@ -56,9 +40,6 @@ function dismiss() {
   align-items: center;
   box-sizing: border-box;
   min-height: clamp(68px, 19vw, 76px);
-  gap: clamp(10px, 3vw, 14px);
-  padding: clamp(10px, 3vw, 13px) clamp(34px, 10vw, 40px)
-    clamp(10px, 3vw, 13px) clamp(12px, 3.6vw, 16px);
   overflow: hidden;
   border: 1px solid rgba(224, 160, 40, 0.92);
   border-radius: clamp(14px, 4.5vw, 18px);
