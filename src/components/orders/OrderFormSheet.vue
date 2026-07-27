@@ -18,16 +18,17 @@
 
       <div class="app-sheet__scroll">
         <AppWarningNotice>
+          <template #title>{{ t('order.rateNoticeTitle') }}</template>
           {{ t('order.rateNotice') }}
         </AppWarningNotice>
 
-        <div
+        <AppOfflineNotice
           v-if="isManagersOffline"
-          class="app-order-offline-note row no-wrap items-center q-pa-sm"
+          :business-hours="exchangeStore.screen?.managerAvailability.businessHoursText ?? ''"
         >
-          <q-icon name="schedule" size="18px" class="col-auto" />
-          <div class="col text-body2">{{ t('order.offlineInlineNotice') }}</div>
-        </div>
+          <template #title>{{ t('order.offlineInlineTitle') }}</template>
+          {{ t('order.offlineInlineNotice') }}
+        </AppOfflineNotice>
 
         <ExchangeOrderDetails
           ref="orderDetailsRef"
@@ -92,6 +93,7 @@ import { useRouter } from 'vue-router';
 
 import AppButton from '@components/ui/AppButton.vue';
 import ExchangeOrderDetails from '@components/orders/ExchangeOrderDetails.vue';
+import AppOfflineNotice from '@components/ui/AppOfflineNotice.vue';
 import AppSurface from '@components/ui/AppSurface.vue';
 import AppWarningNotice from '@components/ui/AppWarningNotice.vue';
 import { useExchangeStore } from '@stores/exchange.store';

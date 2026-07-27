@@ -28,7 +28,9 @@ describe('ExchangePage rate formatting', () => {
     const source = readFileSync(exchangePagePath, 'utf8');
 
     expect(source).toContain('offlineConfirmVisible');
-    expect(source).toContain('class="app-order-offline-note row no-wrap items-center q-pa-sm"');
+    expect(source).toContain('<AppOfflineNotice');
+    expect(source).toContain(':business-hours=');
+    expect(source).toContain("{{ t('order.offlineInlineTitle') }}");
     expect(source).toContain("{{ t('order.offlineInlineNotice') }}");
     expect(source).toContain('persistent');
     expect(source).toContain('class="app-dialog--confirm"');

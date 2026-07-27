@@ -45,6 +45,7 @@ describe('ExchangePage responsive layout contract', () => {
       "import AppWarningNotice from '@components/ui/AppWarningNotice.vue'",
     );
     expect(pageSource).toContain('<AppWarningNotice>');
+    expect(pageSource).toContain("{{ t('order.rateNoticeTitle') }}");
     expect(pageSource).toContain("{{ t('order.rateNotice') }}");
     expect(pageSource).toContain(
       "import ExchangeOrderDetails from '@components/orders/ExchangeOrderDetails.vue'",
