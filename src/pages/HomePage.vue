@@ -188,7 +188,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 import AppButton from '@components/ui/AppButton.vue';
@@ -314,6 +314,7 @@ const nextStartText = computed(() => {
   const value = profileStore.data?.managerAvailability?.nextStartAt;
   return formatManagerNextStart(value);
 });
+let managerRefreshTimer: ReturnType<typeof window.setTimeout> | null = null;
 const managerTelegramHref = computed(() => {
   const supportHref = profileStore.data?.menu
     .find((item) => item.id === 'support' && item.action === 'link')
@@ -346,6 +347,44 @@ onMounted(async () => {
   selectedCityId.value = null;
   ratesExpanded.value = resetHomeRateExpansion(ratesExpanded.value);
 });
+
+onUnmounted(() => {
+  clearManagerRefreshTimer();
+});
+
+watch(
+  () => profileStore.data?.managerAvailability,
+  (availability) => {
+    clearManagerRefreshTimer();
+    const boundary =
+      availability?.status === 'working'
+        ? availability.currentEndAt
+        : availability?.status === 'offline'
+          ? availability.nextStartAt
+          : null;
+    if (!boundary) {
+      return;
+    }
+    const delay = Date.parse(boundary) - Date.now() + 1000;
+    if (!Number.isFinite(delay) || delay <= 0) {
+      return;
+    }
+    managerRefreshTimer = window.setTimeout(
+      () => {
+        void profileStore.refresh();
+      },
+      Math.min(delay, 2_147_483_647),
+    );
+  },
+  { immediate: true },
+);
+
+function clearManagerRefreshTimer() {
+  if (managerRefreshTimer !== null) {
+    window.clearTimeout(managerRefreshTimer);
+    managerRefreshTimer = null;
+  }
+}
 
 /**
  * Открывает sheet заявки с предзаполнением по выбранной паре.
