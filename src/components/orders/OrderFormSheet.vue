@@ -385,6 +385,17 @@ async function submit() {
       offlineConfirmVisible.value = true;
       return;
     }
+    const refreshedValidation = preliminaryValidation.value;
+    if (!refreshedValidation.valid) {
+      Notify.create({
+        type: 'negative',
+        message: t(refreshedValidation.messageKey, refreshedValidation.params),
+      });
+      return;
+    }
+    if (!selectedCountry.value) {
+      return;
+    }
     quote = resolveCurrentQuote();
     if (!quote || !amountBuy.value) {
       Notify.create({ type: 'negative', message: t('exchange.quoteUnavailable') });
