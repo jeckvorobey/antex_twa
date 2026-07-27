@@ -12,26 +12,35 @@
     </div>
 
     <div class="app-offline-notice__hours col-auto">
-      {{ businessHours }}
+      {{ compactBusinessHours }}
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-defineProps<{
+import { computed } from 'vue';
+
+const props = defineProps<{
   businessHours: string;
 }>();
+
+const compactBusinessHours = computed(() =>
+  props.businessHours.replace(/^Ежедневно\s+/i, '').trim(),
+);
 </script>
 
 <style scoped lang="scss">
 .app-offline-notice {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
   box-sizing: border-box;
-  min-height: 72px;
-  gap: 14px;
-  padding: 14px 16px;
+  min-height: clamp(58px, 16vw, 68px);
+  gap: clamp(8px, 2.5vw, 12px);
+  padding: clamp(9px, 2.7vw, 12px) clamp(11px, 3.4vw, 15px);
   overflow: hidden;
   border: 1px solid rgba(79, 190, 112, 0.75);
-  border-radius: 16px;
+  border-radius: clamp(14px, 4.5vw, 18px);
   background:
     radial-gradient(circle at 12% 50%, rgba(87, 198, 119, 0.14), transparent 34%),
     linear-gradient(135deg, rgba(31, 104, 69, 0.34), rgba(18, 67, 56, 0.74));
@@ -44,14 +53,14 @@ defineProps<{
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
+  width: clamp(34px, 10vw, 42px);
+  height: clamp(34px, 10vw, 42px);
   color: var(--antex-gold-light);
   filter: drop-shadow(0 0 7px rgba(242, 210, 122, 0.24));
 }
 
 .app-offline-notice__icon :deep(.q-icon) {
-  font-size: 44px;
+  font-size: clamp(34px, 10vw, 42px);
 }
 
 .app-offline-notice__content {
@@ -59,51 +68,37 @@ defineProps<{
 }
 
 .app-offline-notice__title {
-  margin-bottom: 3px;
+  margin-bottom: 1px;
   color: #f7f1dd;
-  font-size: 16px;
+  font-size: clamp(12px, 3.5vw, 15px);
   font-weight: 700;
-  line-height: 1.3;
+  line-height: 1.25;
+  white-space: nowrap;
 }
 
 .app-offline-notice__text {
   color: rgba(255, 255, 255, 0.76);
-  font-size: 14px;
-  line-height: 1.4;
+  font-size: clamp(11px, 3.1vw, 13px);
+  line-height: 1.3;
+  white-space: nowrap;
 }
 
 .app-offline-notice__hours {
-  max-width: 42%;
-  padding: 8px 12px;
+  padding: clamp(6px, 1.8vw, 8px) clamp(9px, 2.8vw, 12px);
   border-radius: 999px;
   background: rgba(36, 107, 84, 0.48);
   color: rgba(255, 255, 255, 0.88);
-  font-size: 13px;
+  font-size: clamp(10px, 2.9vw, 12px);
   font-weight: 500;
-  line-height: 1.25;
+  line-height: 1.2;
   text-align: center;
-  white-space: normal;
+  white-space: nowrap;
 }
 
-@media (max-width: 370px) {
-  .app-offline-notice {
-    gap: 10px;
-    padding: 12px;
-  }
-
-  .app-offline-notice__icon {
-    width: 38px;
-    height: 38px;
-  }
-
-  .app-offline-notice__icon :deep(.q-icon) {
-    font-size: 38px;
-  }
-
+@media (max-width: 340px) {
   .app-offline-notice__hours {
-    max-width: 38%;
-    padding: 7px 9px;
-    font-size: 12px;
+    padding-inline: 7px;
+    font-size: 9.5px;
   }
 }
 </style>
