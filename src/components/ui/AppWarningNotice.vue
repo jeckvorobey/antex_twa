@@ -51,13 +51,17 @@ function dismiss() {
 <style scoped lang="scss">
 .app-warning-notice {
   position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
   box-sizing: border-box;
-  min-height: 96px;
-  gap: 14px;
-  padding: 16px 42px 16px 16px;
+  min-height: clamp(68px, 19vw, 76px);
+  gap: clamp(10px, 3vw, 14px);
+  padding: clamp(10px, 3vw, 13px) clamp(34px, 10vw, 40px)
+    clamp(10px, 3vw, 13px) clamp(12px, 3.6vw, 16px);
   overflow: hidden;
   border: 1px solid rgba(224, 160, 40, 0.92);
-  border-radius: 16px;
+  border-radius: clamp(14px, 4.5vw, 18px);
   background:
     radial-gradient(circle at 12% 50%, rgba(232, 164, 36, 0.16), transparent 35%),
     linear-gradient(135deg, rgba(112, 72, 18, 0.2), rgba(20, 55, 47, 0.86));
@@ -72,14 +76,14 @@ function dismiss() {
   align-items: center;
   justify-content: center;
   flex: 0 0 auto;
-  width: 48px;
-  height: 48px;
+  width: clamp(36px, 11vw, 44px);
+  height: clamp(36px, 11vw, 44px);
   color: #f1a72a;
   filter: drop-shadow(0 0 8px rgba(232, 164, 36, 0.28));
 }
 
 .app-warning-notice__icon :deep(.q-icon) {
-  font-size: 48px;
+  font-size: clamp(36px, 11vw, 44px);
 }
 
 .app-warning-notice__content {
@@ -87,17 +91,17 @@ function dismiss() {
 }
 
 .app-warning-notice__title {
-  margin-bottom: 4px;
-  font-size: 15px;
+  margin-bottom: 2px;
+  font-size: clamp(11px, 3.2vw, 14px);
   font-weight: 700;
-  line-height: 1.35;
+  line-height: 1.3;
   color: #f4edd6;
 }
 
 .app-warning-notice__text {
-  font-size: 14px;
+  font-size: clamp(11px, 3.1vw, 13px);
   font-weight: 400;
-  line-height: 1.45;
+  line-height: 1.35;
   color: rgba(255, 255, 255, 0.78);
   white-space: normal;
   word-break: normal;
@@ -106,28 +110,23 @@ function dismiss() {
 
 .app-warning-notice__close {
   position: absolute;
-  top: 7px;
-  right: 7px;
+  top: 5px;
+  right: 5px;
+  width: 26px;
+  min-width: 26px;
+  height: 26px;
+  min-height: 26px;
+  padding: 0;
   color: rgba(212, 175, 55, 0.48);
 }
 
 .app-warning-notice__close :deep(.q-icon) {
-  font-size: 22px;
+  font-size: 18px;
 }
 
-@media (max-width: 370px) {
+@media (min-width: 430px) {
   .app-warning-notice {
-    gap: 10px;
-    padding-left: 12px;
-  }
-
-  .app-warning-notice__icon {
-    width: 42px;
-    height: 42px;
-  }
-
-  .app-warning-notice__icon :deep(.q-icon) {
-    font-size: 42px;
+    min-height: 82px;
   }
 }
 </style>

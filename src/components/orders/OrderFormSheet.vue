@@ -20,7 +20,7 @@
         <div class="app-sheet-handle" />
       </div>
 
-      <div class="app-sheet__scroll">
+      <div ref="sheetScrollRef" class="app-sheet__scroll">
         <AppWarningNotice>
           <template #title>{{ t('order.rateNoticeTitle') }}</template>
           {{ t('order.rateNotice') }}
@@ -35,7 +35,6 @@
         </AppOfflineNotice>
 
         <ExchangeOrderDetails
-          ref="orderDetailsRef"
           v-model:selected-sell-currency="selectedSellCurrency"
           v-model:selected-buy-currency="currencyBuy"
           v-model:amount-sell="amountSell"
@@ -91,7 +90,7 @@
 
 <script setup lang="ts">
 import { Notify } from 'quasar';
-import { computed, nextTick, ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import type { ComponentPublicInstance, CSSProperties } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
@@ -143,12 +142,11 @@ const selectedMethod = ref<MiniappReceiveMethod>('qrcode');
 const selectedCityId = ref<number | null>(null);
 const amountSellTouched = ref(false);
 const syncingState = ref(false);
-const shouldFocusAmountSellAfterOpen = ref(false);
 const offlineConfirmVisible = ref(false);
 const offlineConfirmed = ref(false);
 const submitFlowPending = ref(false);
-const orderDetailsRef = ref<{ focusAmountSell: () => void } | null>(null);
 const sheetRef = ref<ComponentPublicInstance | null>(null);
+const sheetScrollRef = ref<HTMLElement | null>(null);
 const sheetDragStartY = ref<number | null>(null);
 const sheetDragDeltaY = ref(0);
 const sheetDragging = ref(false);
@@ -256,16 +254,10 @@ watch(
       await exchangeStore.load();
     }
 
-    shouldFocusAmountSellAfterOpen.value = Boolean(uiStore.orderContext);
     syncingState.value = true;
     resetFormToDefaults();
     syncingState.value = false;
     refreshQuoteForCurrentState();
-    if (shouldFocusAmountSellAfterOpen.value) {
-      await nextTick();
-      orderDetailsRef.value?.focusAmountSell();
-      shouldFocusAmountSellAfterOpen.value = false;
-    }
   },
   { immediate: true },
 );
@@ -533,7 +525,12 @@ function cancelOffline() {
 
 /** Запоминает начальную точку drag-down жеста на любой области нижнего sheet. */
 function startSheetDrag(event: TouchEvent) {
-  if (sheetClosingByDrag.value || event.touches.length !== 1) {
+  if (
+    sheetClosingByDrag.value ||
+    event.touches.length !== 1 ||
+    (sheetScrollRef.value?.scrollTop ?? 0) > 0
+  ) {
+    sheetDragStartY.value = null;
     return;
   }
 
