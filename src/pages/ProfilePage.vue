@@ -34,7 +34,7 @@
       </AppSurface>
 
       <AppSurface
-        v-if="profileStore.data?.managerAvailability?.status !== 'unknown'"
+        v-if="profileStore.data?.managerAvailability && profileStore.data.managerAvailability.status !== 'unknown'"
         class="app-profile-card q-pa-md"
       >
         <div class="row no-wrap items-start q-gutter-sm">

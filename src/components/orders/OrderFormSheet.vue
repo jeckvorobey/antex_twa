@@ -40,7 +40,7 @@
       <div class="text-body2 text-grey-5 q-mt-sm">{{ t('order.offlineText') }}</div>
       <div class="text-body2 q-mt-sm">{{ exchangeStore.screen?.managerAvailability.businessHoursText }}</div>
       <div class="row q-col-gutter-sm q-mt-md">
-        <div class="col"><AppButton block @click="confirmOffline">{{ t('order.continue') }}</AppButton></div>
+        <div class="col"><AppButton block :loading="exchangeStore.submitting" @click="confirmOffline">{{ t('order.continue') }}</AppButton></div>
         <div class="col"><AppButton block variant="secondary" @click="offlineConfirmVisible = false">{{ t('order.back') }}</AppButton></div>
       </div>
     </AppSurface>
@@ -413,6 +413,7 @@ async function submit() {
 
 /** Подтверждает один оффлайн-сценарий в пределах открытой формы. */
 function confirmOffline() {
+  if (exchangeStore.submitting) return;
   offlineConfirmed.value = true;
   offlineConfirmVisible.value = false;
   void submit();

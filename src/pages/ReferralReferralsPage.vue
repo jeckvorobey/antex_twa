@@ -94,7 +94,7 @@
   </q-page>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import {
     computed,
     onMounted,
@@ -124,12 +124,10 @@ const {
     t
 } = useI18n();
 const aexStore = useAexStore();
-const infiniteScrollRef = ref < {
-    resume: () => void;stop: () => void
-} | null > (null);
+const infiniteScrollRef = ref<{ resume: () => void; stop: () => void } | null>(null);
 const scrollRef = ref < HTMLElement | null > (null);
 
-const totalAccrued = computed(() => parseDecimal(aexStore.referralsSummary ? .totalAccrued));
+const totalAccrued = computed(() => parseDecimal(aexStore.referralsSummary?.totalAccrued));
 const referralGroups = computed(() =>
     groupItemsByDate(aexStore.referrals, (referral) => referral.joinedAt, locale.value),
 );
@@ -144,10 +142,10 @@ onMounted(async () => {
 
 async function refresh() {
     await aexStore.refreshReferrals();
-    infiniteScrollRef.value ? .resume();
+    infiniteScrollRef.value?.resume();
 }
 
-async function loadMore(_: number, done: (stop ? : boolean) => void) {
+async function loadMore(_: number, done: (stop?: boolean) => void) {
     await aexStore.loadReferralsNextPage();
     done(!aexStore.referralsHasMore);
 }
@@ -164,7 +162,7 @@ function safePhotoUrl(value: string | null): string | null {
 
 /** Безопасно преобразует decimal-строку общей суммы в значение balance card. */
 function parseDecimal(value: string | null | undefined): number {
-    const parsed = Number.parseFloat(value ? ? '0');
+    const parsed = Number.parseFloat(value ?? '0');
     return Number.isFinite(parsed) ? parsed : 0;
 }
 </script>
