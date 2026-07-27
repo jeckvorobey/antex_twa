@@ -1,17 +1,17 @@
 <template>
-  <div class="app-offline-notice row no-wrap items-center q-gutter-x-sm" role="status">
+  <div class="app-offline-notice row no-wrap items-center q-px-sm" role="status">
     <div class="app-offline-notice__icon col-auto">
       <q-icon name="schedule" />
     </div>
 
-    <div class="app-offline-notice__content col">
+    <div class="app-offline-notice__content col q-ml-sm">
       <div class="app-offline-notice__title">
         <slot name="title" />
       </div>
       <div class="app-offline-notice__text"><slot /></div>
     </div>
 
-    <div class="app-offline-notice__hours col-auto">
+    <div class="app-offline-notice__hours col-auto q-mx-sm">
       {{ compactBusinessHours }}
     </div>
   </div>

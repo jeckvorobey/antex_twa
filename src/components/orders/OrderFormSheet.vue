@@ -22,7 +22,7 @@
 
       <div ref="sheetScrollRef" class="app-sheet__scroll">
         <AppWarningNotice>
-          <template #title>{{ t('order.rateNoticeTitle') }}</template>
+          <template #title class="q-pr-md">{{ t('order.rateNoticeTitle') }}</template>
           {{ t('order.rateNotice') }}
         </AppWarningNotice>
 

@@ -1,10 +1,10 @@
 <template>
-  <div v-if="visible" class="app-warning-notice row no-wrap items-center q-px-sm q-gutter-x-sm" role="alert">
+  <div v-if="visible" class="app-warning-notice row no-wrap items-center q-px-sm" role="alert">
     <div class="app-warning-notice__icon col-auto">
       <q-icon name="warning" />
     </div>
 
-    <div class="app-warning-notice__content col">
+    <div class="app-warning-notice__content col q-ml-sm">
       <div class="app-warning-notice__title">
         <slot name="title" />
       </div>
