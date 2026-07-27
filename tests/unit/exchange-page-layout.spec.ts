@@ -18,7 +18,8 @@ describe('ExchangePage responsive layout contract', () => {
 
     expect(pageSource).toContain('class="app-screen app-screen--exchange fit column no-wrap"');
     expect(pageSource).toContain('class="col column no-wrap"');
-    expect(pageSource).toContain(
+    expect(pageSource).toContain('class="app-exchange-content col column q-gutter-md no-wrap"');
+    expect(pageSource).not.toContain(
       'class="app-exchange-content col column q-gutter-md no-wrap overflow-hidden"',
     );
     expect(pageSource).toContain('class="q-pt-md app-exchange-submit"');
@@ -44,6 +45,7 @@ describe('ExchangePage responsive layout contract', () => {
       "import AppWarningNotice from '@components/ui/AppWarningNotice.vue'",
     );
     expect(pageSource).toContain('<AppWarningNotice>');
+    expect(pageSource).toContain("{{ t('order.rateNoticeTitle') }}");
     expect(pageSource).toContain("{{ t('order.rateNotice') }}");
     expect(pageSource).toContain(
       "import ExchangeOrderDetails from '@components/orders/ExchangeOrderDetails.vue'",
@@ -58,6 +60,21 @@ describe('ExchangePage responsive layout contract', () => {
     expect(pageSource).toContain('v-model:selected-city-id="selectedCityId"');
     expect(pageSource).not.toContain("{{ t('exchange.payAmount') }}");
     expect(pageSource).not.toContain("{{ t('exchange.receiveCurrency') }}");
+  });
+
+  it('adds ATXG sell option from token store and calculates USDT equivalent locally', () => {
+    const pageSource = readFileSync(exchangePagePath, 'utf8');
+
+    expect(pageSource).toContain("import { useAexStore } from '@stores/aex.store'");
+    expect(pageSource).toContain('const aexStore = useAexStore()');
+    expect(pageSource).toContain('aexStore.isAexCurrencyAvailable');
+    expect(pageSource).toContain("label: t('exchange.aexCurrency')");
+    expect(pageSource).toContain('isTokenCurrency(selectedSellCurrency.value)');
+    expect(pageSource).toContain(':internal-exchange="isInternalExchange"');
+    expect(pageSource).toContain("selectedCountry.value = 'internal'");
+    expect(pageSource).toContain("selectedMethod.value = 'bank_account'");
+    expect(pageSource).toContain('const normalizedAmountSell = Math.round(amountSell.value)');
+    expect(pageSource).toContain('amountSell: normalizedAmountSell');
   });
 
   it('uses readable text inputs for grouped large amounts', () => {

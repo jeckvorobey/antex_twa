@@ -121,6 +121,20 @@ describe('HomePage preview rates', () => {
     expect(styleSource).toContain('.app-home-service-card:focus-within');
   });
 
+  it('renders manager working-hours card from profile availability', () => {
+    const source = readFileSync(homePagePath, 'utf8');
+
+    expect(source).toContain('profileStore.data?.managerAvailability');
+    expect(source).toContain("profileStore.data.managerAvailability.status !== 'unknown'");
+    expect(source).toContain("t('profile.managerHours')");
+    expect(source).toContain('profileStore.data.managerAvailability.businessHoursText');
+    expect(source).toContain('const managerStatusText = computed(() => {');
+    expect(source).toContain("t('profile.managersWorking')");
+    expect(source).toContain("t('profile.managersOffline')");
+    expect(source).toContain('const nextStartText = computed(() => {');
+    expect(source).toContain('formatManagerNextStart(value)');
+  });
+
   it('keeps the home chips fully rounded through shared chip styles', () => {
     const source = readFileSync(resolve(process.cwd(), 'src/css/app.scss'), 'utf8');
     const pageSource = readFileSync(homePagePath, 'utf8');

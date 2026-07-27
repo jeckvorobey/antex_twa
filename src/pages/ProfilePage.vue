@@ -24,6 +24,39 @@
         </div>
       </div>
 
+      <AppSurface
+        v-if="
+          profileStore.data?.managerAvailability &&
+          profileStore.data.managerAvailability.status !== 'unknown'
+        "
+        class="app-profile-card q-pa-md"
+      >
+        <div class="row no-wrap items-start q-gutter-sm">
+          <q-icon name="support_agent" color="primary" size="22px" />
+          <div class="col">
+            <div class="text-subtitle2">{{ t('profile.managerHours') }}</div>
+            <div class="text-body2 text-grey-5 q-mt-xs">
+              {{ profileStore.data.managerAvailability.businessHoursText }}
+            </div>
+            <div class="text-body2 q-mt-sm">
+              {{ managerStatusText }}
+            </div>
+            <div v-if="nextStartText" class="text-caption text-grey-5 q-mt-xs">
+              {{ t('profile.nextStart', { time: nextStartText }) }}
+            </div>
+          </div>
+        </div>
+      </AppSurface>
+
+      <AppSurface class="app-profile-card">
+        <AppInfoRow
+          icon="group_add"
+          :title="t('profile.referralProgram')"
+          clickable
+          @click="goToReferral"
+        />
+      </AppSurface>
+
       <AppSurface class="app-profile-card">
         <AppInfoRow
           v-for="item in profileStore.data?.menu ?? []"
@@ -43,7 +76,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue';
+import { computed, onMounted, onUnmounted, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 
@@ -52,13 +85,24 @@ import AppSurface from '@components/ui/AppSurface.vue';
 import { useProfileStore } from '@stores/profile.store';
 import { useUiStore } from '@stores/ui.store';
 import type { MiniappMenuItem } from '@types/miniapp';
+import { formatManagerNextStart } from '@utils/manager-working-hours';
+import { openSafeExternalUrl, toSafeExternalUrl } from '@utils/safe-external-url';
 
 const router = useRouter();
 const uiStore = useUiStore();
 const profileStore = useProfileStore();
 const { t } = useI18n();
 
-const profilePhotoUrl = computed(() => profileStore.data?.user.photoUrl ?? null);
+const profilePhotoUrl = computed(() => toSafeExternalUrl(profileStore.data?.user.photoUrl));
+const managerStatusText = computed(() => {
+  const status = profileStore.data?.managerAvailability?.status;
+  return status === 'working' ? t('profile.managersWorking') : t('profile.managersOffline');
+});
+const nextStartText = computed(() => {
+  const value = profileStore.data?.managerAvailability?.nextStartAt;
+  return formatManagerNextStart(value);
+});
+let managerRefreshTimer: ReturnType<typeof window.setTimeout> | null = null;
 
 onMounted(async () => {
   if (!profileStore.loaded || !profileStore.data) {
@@ -68,6 +112,44 @@ onMounted(async () => {
   }
 });
 
+onUnmounted(() => {
+  clearManagerRefreshTimer();
+});
+
+watch(
+  () => profileStore.data?.managerAvailability,
+  (availability) => {
+    clearManagerRefreshTimer();
+    const boundary =
+      availability?.status === 'working'
+        ? availability.currentEndAt
+        : availability?.status === 'offline'
+          ? availability.nextStartAt
+          : null;
+    if (!boundary) {
+      return;
+    }
+    const delay = Date.parse(boundary) - Date.now() + 1000;
+    if (!Number.isFinite(delay) || delay <= 0) {
+      return;
+    }
+    managerRefreshTimer = window.setTimeout(
+      () => {
+        void profileStore.refresh();
+      },
+      Math.min(delay, 2_147_483_647),
+    );
+  },
+  { immediate: true },
+);
+
+function clearManagerRefreshTimer() {
+  if (managerRefreshTimer !== null) {
+    window.clearTimeout(managerRefreshTimer);
+    managerRefreshTimer = null;
+  }
+}
+
 function handleMenu(item: MiniappMenuItem) {
   if (item.action === 'route' && item.route) {
     void router.push(item.route);
@@ -75,10 +157,14 @@ function handleMenu(item: MiniappMenuItem) {
   }
 
   if (item.action === 'link' && item.href) {
-    window.open(item.href, '_blank');
+    openSafeExternalUrl(item.href);
     return;
   }
 
   uiStore.openMoreSheet();
+}
+
+function goToReferral() {
+  void router.push({ name: 'referral' });
 }
 </script>

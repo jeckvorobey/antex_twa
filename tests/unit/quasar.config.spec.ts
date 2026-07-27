@@ -13,7 +13,7 @@ describe('quasar.config', () => {
     const viteConf: Record<string, unknown> = {};
     quasarConfig.build.extendViteConf(viteConf);
 
-    expect(quasarConfig.boot).toEqual(['telegram', 'i18n', 'axios', 'init']);
+    expect(quasarConfig.boot).toEqual(['telegram', 'i18n', 'axios', 'init', 'referral']);
     expect(quasarConfig.build.target).toEqual({
       browser: ['es2022', 'firefox115', 'chrome115', 'safari14'],
       node: 'node20',

@@ -17,7 +17,17 @@ describe('AppPageLoader', () => {
     const layout = readFileSync(layoutPath, 'utf8');
 
     expect(layout).toContain("import AppPageLoader from '@components/ui/AppPageLoader.vue'");
-    expect(layout).toContain('<AppPageLoader :showing="pageLoading" />');
+    expect(layout).toContain('<AppBottomNav v-if="shouldShowNavigation" />');
+    expect(layout).toContain('@hidden="showNavigation"');
+    expect(layout).toContain('const navigationVisible = ref(!pageLoading.value);');
+    expect(layout).toContain('const shouldShowNavigation = computed(');
+    expect(layout).toMatch(
+      /navigationVisible\.value\s+&&\s+!uiStore\.orderSheetOpen\s+&&\s+!uiStore\.moreSheetOpen/,
+    );
+    expect(layout).toContain('watch(pageLoading, (loading) => {');
+    expect(layout).toContain('navigationVisible.value = false;');
+    expect(layout).not.toContain('keyboardInputFocused');
+    expect(layout).not.toContain("document.addEventListener('focusin'");
     expect(layout).toContain('const pageLoading = computed(() => {');
     expect(layout).toContain("case 'home':");
     expect(layout).toContain('return homeStore.loading || !homeStore.loaded;');
@@ -32,6 +42,8 @@ describe('AppPageLoader', () => {
   it('uses the real logo asset and fullscreen overlay styling', () => {
     const loader = readFileSync(loaderPath, 'utf8');
 
+    expect(loader).toContain('<Transition name="app-page-loader" @after-leave="emit(\'hidden\')"');
+    expect(loader).toContain("const emit = defineEmits<{ hidden: [] }>();");
     expect(loader).toContain("import logoUrl from '../../assets/images/logo.PNG'");
     expect(loader).toContain('class="app-page-loader"');
     expect(loader).toContain(':src="logoUrl"');

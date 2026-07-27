@@ -18,26 +18,56 @@ describe('AppBottomNav', () => {
   });
 
   it('keeps the fixed nav inside the mobile screen width', () => {
-    const styles = readFileSync(stylesPath, 'utf8');
+    const component = readFileSync(componentPath, 'utf8');
+    const appStyles = readFileSync(stylesPath, 'utf8');
 
-    expect(styles).toContain('left: 50%');
-    expect(styles).toContain('transform: translateX(-50%)');
-    expect(styles).toContain('width: min(calc(100vw - (var(--antex-space-md) * 2)), 390px)');
-    expect(styles).toContain('bottom: calc(env(safe-area-inset-bottom) + var(--antex-space-md))');
-    expect(styles).not.toContain('.app-layout > .app-bottom-nav,\n.app-layout > .q-dialog');
-    expect(styles).toContain('.app-layout > .app-bottom-nav {\n  z-index: 40;\n}');
+    expect(component).toContain(
+      'app-bottom-nav fixed-bottom row justify-center q-px-sm q-pb-sm z-top',
+    );
+    expect(component).toContain('margin-bottom: env(safe-area-inset-bottom)');
+    expect(component).toContain('max-width: 322px');
+    expect(component).toContain('q-pa-xs');
+    expect(appStyles).toContain('.app-bottom-nav {');
   });
 
-  it('preserves 16px icons in stacked nav buttons', () => {
-    const styles = readFileSync(stylesPath, 'utf8');
+  it('keeps button size compact and delegates visual icon/label emphasis to CSS', () => {
+    const component = readFileSync(componentPath, 'utf8');
+    const appStyles = readFileSync(stylesPath, 'utf8');
 
-    expect(styles).toContain('.app-bottom-nav__item .q-icon {\n  font-size: 16px;\n}');
-    expect(styles).toContain(
-      '.app-bottom-nav__item:not(.app-bottom-nav__item--active) .q-icon {\n  color: var(--antex-text-primary);\n}',
-    );
-    expect(styles).toContain(
-      '.app-bottom-nav__item:not(.app-bottom-nav__item--active) .block {\n  color: var(--antex-text-primary);\n}',
-    );
+    expect(component).toContain('dense');
+    expect(component).toContain('rounded');
+    expect(component).toContain('size="10px"');
+    expect(component).toContain(":text-color=\"isActive(item.name) ? 'primary' : 'white'\"");
+    expect(component).toContain(`:aria-current="isActive(item.name) ? 'page' : undefined"`);
+    expect(component).not.toContain('.q-btn__content');
+    expect(component).not.toContain('.block');
+    expect(appStyles).toContain('.app-bottom-nav__item .q-icon {');
+    expect(appStyles).toContain('font-size: 21px;');
+    expect(appStyles).toContain('.app-bottom-nav__item .q-btn__content > span:not(.q-icon)');
+    expect(appStyles).toContain('font-size: 11.5px;');
+  });
+
+  it('adds premium first-mount reveal, stagger, active focus and reduced motion CSS', () => {
+    const component = readFileSync(componentPath, 'utf8');
+    const appStyles = readFileSync(stylesPath, 'utf8');
+
+    expect(component).toContain('v-for="(item, index) in items"');
+    expect(component).toContain('app-bottom-nav__item col q-py-sm');
+    expect(component).toContain('`${index * 60}ms`');
+    expect(appStyles).toContain('@keyframes app-bottom-nav-velvet-reveal');
+    expect(appStyles).toContain('@keyframes app-bottom-nav-item-reveal');
+    expect(appStyles).toContain('translate3d(0, 22px, 0) scale(0.97)');
+    expect(appStyles).toContain('animation-delay: calc(160ms + var(--bottom-nav-item-delay, 0ms))');
+    expect(appStyles).toContain('.app-bottom-nav__item.bottom-nav__item--active .q-icon');
+    expect(appStyles).toContain('@media (prefers-reduced-motion: reduce)');
+  });
+
+  it('keeps labels reactive and skips navigation to the active route', () => {
+    const component = readFileSync(componentPath, 'utf8');
+
+    expect(component).toContain('const items = computed<NavigationItem[]>');
+    expect(component).toContain('if (route.name === name)');
+    expect(component).toContain('void router.push({ name })');
   });
 
   it('renders the header from the shared layout on every page', () => {

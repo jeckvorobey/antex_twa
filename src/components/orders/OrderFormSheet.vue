@@ -2,47 +2,102 @@
   <q-dialog
     :model-value="modelValue"
     position="bottom"
+    persistent
     class="app-dialog--bottom app-dialog--order"
     @update:model-value="$emit('update:modelValue', $event)"
   >
-    <AppSurface class="app-sheet q-pt-sm q-px-md">
-      <div class="app-sheet-handle" />
-      <AppWarningNotice>
-        {{ t('order.rateNotice') }}
-      </AppWarningNotice>
+    <AppSurface
+      ref="sheetRef"
+      class="app-sheet app-sheet--order q-pt-sm q-px-md"
+      :class="{ 'app-sheet--dragging': sheetDragging }"
+      :style="sheetDragStyle"
+      @touchstart.passive="startSheetDrag"
+      @touchmove="trackSheetDrag"
+      @touchend="finishSheetDrag"
+      @touchcancel="cancelSheetDrag"
+    >
+      <div class="app-sheet__header">
+        <div class="app-sheet-handle" />
+      </div>
 
-      <ExchangeOrderDetails
-        ref="orderDetailsRef"
-        v-model:selected-sell-currency="selectedSellCurrency"
-        v-model:selected-buy-currency="currencyBuy"
-        v-model:amount-sell="amountSell"
-        :amount-buy="amountBuy"
-        v-model:selected-country="selectedCountry"
-        v-model:selected-method="selectedMethod"
-        v-model:selected-city-id="selectedCityId"
-        :sell-options="sellOptions"
-        :buy-options="currencyOptions"
-        :rate-label="currentRateLabel"
-        :country-options="countryOptions"
-        :city-options="cityOptions"
-        :available-methods="currentQuoteMethods"
-      />
+      <div ref="sheetScrollRef" class="app-sheet__scroll">
+        <AppWarningNotice>
+          <template #title class="q-pr-md">{{ t('order.rateNoticeTitle') }}</template>
+          {{ t('order.rateNotice') }}
+        </AppWarningNotice>
 
-      <AppButton block :loading="exchangeStore.submitting" :disable="!canSubmit" @click="submit">
-        {{ t('common.submit') }}
-      </AppButton>
+        <AppOfflineNotice
+          v-if="isManagersOffline"
+          :business-hours="exchangeStore.screen?.managerAvailability.businessHoursText ?? ''"
+        >
+          <template #title>{{ t('order.offlineInlineTitle') }}</template>
+          {{ t('order.offlineInlineNotice') }}
+        </AppOfflineNotice>
+
+        <ExchangeOrderDetails
+          v-model:selected-sell-currency="selectedSellCurrency"
+          v-model:selected-buy-currency="currencyBuy"
+          v-model:amount-sell="amountSell"
+          :amount-buy="amountBuy"
+          v-model:selected-country="selectedCountry"
+          v-model:selected-method="selectedMethod"
+          v-model:selected-city-id="selectedCityId"
+          :sell-options="sellOptions"
+          :buy-options="currencyOptions"
+          :rate-label="currentRateLabel"
+          :country-options="countryOptions"
+          :city-options="cityOptions"
+          :available-methods="currentQuoteMethods"
+        />
+
+        <AppButton
+          block
+          :loading="exchangeStore.submitting || submitFlowPending"
+          :disable="!canSubmit || submitFlowPending"
+          @click="submit"
+        >
+          {{ t('common.submit') }}
+        </AppButton>
+      </div>
+    </AppSurface>
+  </q-dialog>
+
+  <q-dialog v-model="offlineConfirmVisible" persistent class="app-dialog--confirm">
+    <AppSurface class="app-sheet app-sheet--confirm q-pa-md">
+      <div class="text-subtitle1">{{ t('order.offlineTitle') }}</div>
+      <div class="text-body2 text-grey-5 q-mt-sm">{{ t('order.offlineText') }}</div>
+      <div class="text-body2 q-mt-sm">
+        {{ exchangeStore.screen?.managerAvailability.businessHoursText }}
+      </div>
+      <div class="row q-col-gutter-sm q-mt-lg">
+        <div class="col-12 col-sm">
+          <AppButton
+            block
+            :loading="exchangeStore.submitting || submitFlowPending"
+            @click="confirmOffline"
+            >{{ t('common.yes') }}</AppButton
+          >
+        </div>
+        <div class="col-12 col-sm">
+          <AppButton block variant="secondary" @click="cancelOffline">{{
+            t('common.cancel')
+          }}</AppButton>
+        </div>
+      </div>
     </AppSurface>
   </q-dialog>
 </template>
 
 <script setup lang="ts">
 import { Notify } from 'quasar';
-import { computed, nextTick, ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
+import type { ComponentPublicInstance, CSSProperties } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 
 import AppButton from '@components/ui/AppButton.vue';
 import ExchangeOrderDetails from '@components/orders/ExchangeOrderDetails.vue';
+import AppOfflineNotice from '@components/ui/AppOfflineNotice.vue';
 import AppSurface from '@components/ui/AppSurface.vue';
 import AppWarningNotice from '@components/ui/AppWarningNotice.vue';
 import { useExchangeStore } from '@stores/exchange.store';
@@ -87,8 +142,18 @@ const selectedMethod = ref<MiniappReceiveMethod>('qrcode');
 const selectedCityId = ref<number | null>(null);
 const amountSellTouched = ref(false);
 const syncingState = ref(false);
-const shouldFocusAmountSellAfterOpen = ref(false);
-const orderDetailsRef = ref<{ focusAmountSell: () => void } | null>(null);
+const offlineConfirmVisible = ref(false);
+const offlineConfirmed = ref(false);
+const submitFlowPending = ref(false);
+const sheetRef = ref<ComponentPublicInstance | null>(null);
+const sheetScrollRef = ref<HTMLElement | null>(null);
+const sheetDragStartY = ref<number | null>(null);
+const sheetDragDeltaY = ref(0);
+const sheetDragging = ref(false);
+const sheetClosingByDrag = ref(false);
+const sheetDragStyle = computed<CSSProperties>(() => ({
+  transform: `translate3d(0, ${sheetDragDeltaY.value}px, 0)`,
+}));
 
 const sellOptions = computed(() =>
   [
@@ -144,6 +209,9 @@ const currentRateLabel = computed(() => {
 
   return currentQuote.rateText;
 });
+const isManagersOffline = computed(
+  () => exchangeStore.screen?.managerAvailability.status === 'offline',
+);
 
 const preliminaryValidation = computed(() =>
   validatePreliminaryOrderDraft({
@@ -171,6 +239,14 @@ watch(
   () => props.modelValue,
   async (opened) => {
     if (!opened) {
+      offlineConfirmed.value = false;
+      offlineConfirmVisible.value = false;
+      syncingState.value = true;
+      resetFormToDefaults({ clearContext: true });
+      syncingState.value = false;
+      if (!sheetClosingByDrag.value) {
+        resetSheetDrag();
+      }
       return;
     }
 
@@ -178,33 +254,10 @@ watch(
       await exchangeStore.load();
     }
 
-    shouldFocusAmountSellAfterOpen.value = Boolean(uiStore.orderContext);
     syncingState.value = true;
-    selectedSellCurrency.value =
-      uiStore.orderContext?.currencySell ?? exchangeStore.quote?.currencySell ?? 'RUB';
-    amountSell.value =
-      uiStore.orderContext?.amountSell ??
-      exchangeStore.quote?.amountSell ??
-      getDefaultAmountSell(selectedSellCurrency.value);
-    amountBuy.value = null;
-    currencyBuy.value =
-      uiStore.orderContext?.currencyBuy ?? exchangeStore.quote?.currencyBuy ?? 'THB';
-    selectedCountry.value =
-      uiStore.orderContext?.country ??
-      getCountryByCurrency(exchangeStore.screen?.pairs ?? [], currencyBuy.value);
-    selectedCityId.value = uiStore.orderContext?.cityId ?? null;
-    selectedMethod.value = getPreferredReceiveMethod(
-      currentQuoteMethods.value,
-      selectedCityId.value,
-    );
-    amountSellTouched.value = Boolean(uiStore.orderContext?.amountSell);
+    resetFormToDefaults();
     syncingState.value = false;
     refreshQuoteForCurrentState();
-    if (shouldFocusAmountSellAfterOpen.value) {
-      await nextTick();
-      orderDetailsRef.value?.focusAmountSell();
-      shouldFocusAmountSellAfterOpen.value = false;
-    }
   },
   { immediate: true },
 );
@@ -334,11 +387,34 @@ function getDefaultAmountSell(currencySell: string) {
   return currencySell === 'USDT' ? 100 : 5000;
 }
 
+/** Возвращает форму к начальному состоянию с учётом контекста повторной заявки. */
+function resetFormToDefaults(options: { clearContext?: boolean } = {}) {
+  if (options.clearContext) {
+    uiStore.orderContext = null;
+  }
+
+  selectedSellCurrency.value =
+    uiStore.orderContext?.currencySell ?? exchangeStore.quote?.currencySell ?? 'RUB';
+  amountSell.value =
+    uiStore.orderContext?.amountSell ??
+    exchangeStore.quote?.amountSell ??
+    getDefaultAmountSell(selectedSellCurrency.value);
+  amountBuy.value = null;
+  currencyBuy.value =
+    uiStore.orderContext?.currencyBuy ?? exchangeStore.quote?.currencyBuy ?? 'THB';
+  selectedCountry.value =
+    uiStore.orderContext?.country ??
+    getCountryByCurrency(exchangeStore.screen?.pairs ?? [], currencyBuy.value);
+  selectedCityId.value = uiStore.orderContext?.cityId ?? null;
+  selectedMethod.value = getPreferredReceiveMethod(currentQuoteMethods.value, selectedCityId.value);
+  amountSellTouched.value = Boolean(uiStore.orderContext?.amountSell);
+}
+
 /**
  * Отправляет miniapp-заявку и показывает локализованное сообщение по коду ошибки.
  */
 async function submit() {
-  const quote = resolveCurrentQuote();
+  let quote = resolveCurrentQuote();
   if (!amountSell.value || amountSell.value <= 0 || !amountBuy.value || !quote) {
     Notify.create({ type: 'negative', message: t('exchange.quoteUnavailable') });
     return;
@@ -354,7 +430,33 @@ async function submit() {
     return;
   }
 
+  if (submitFlowPending.value) {
+    return;
+  }
+  submitFlowPending.value = true;
+
   try {
+    if ((await shouldConfirmOfflineSubmit()) && !offlineConfirmed.value) {
+      offlineConfirmVisible.value = true;
+      return;
+    }
+    const refreshedValidation = preliminaryValidation.value;
+    if (!refreshedValidation.valid) {
+      Notify.create({
+        type: 'negative',
+        message: t(refreshedValidation.messageKey, refreshedValidation.params),
+      });
+      return;
+    }
+    if (!selectedCountry.value) {
+      return;
+    }
+    quote = resolveCurrentQuote();
+    if (!quote || !amountBuy.value) {
+      Notify.create({ type: 'negative', message: t('exchange.quoteUnavailable') });
+      return;
+    }
+
     const order = await exchangeStore.submitOrder({
       country: selectedCountry.value,
       cityId: selectedMethod.value === 'cash' ? selectedCityId.value : null,
@@ -367,7 +469,13 @@ async function submit() {
     });
 
     ordersStore.prepend(order);
-    Notify.create({ type: 'positive', message: t('order.success') });
+    Notify.create({
+      type: 'positive',
+      message:
+        order.managerAvailability?.status === 'offline'
+          ? t('order.successOffline')
+          : t('order.success'),
+    });
     emit('update:modelValue', false);
     await router.push({ name: 'history' });
   } catch (error: unknown) {
@@ -382,6 +490,123 @@ async function submit() {
         ? t(messageKey, { amount: params.minAmount, currency: params.currency })
         : t(messageKey);
     Notify.create({ type: 'negative', message });
+  } finally {
+    submitFlowPending.value = false;
   }
+}
+
+async function shouldConfirmOfflineSubmit() {
+  try {
+    await exchangeStore.refresh();
+    refreshQuoteForCurrentState();
+  } catch {
+    return exchangeStore.screen?.managerAvailability.status === 'offline';
+  }
+  return exchangeStore.screen?.managerAvailability.status === 'offline';
+}
+
+/** Подтверждает один оффлайн-сценарий в пределах открытой формы. */
+function confirmOffline() {
+  if (exchangeStore.submitting || submitFlowPending.value) return;
+  offlineConfirmed.value = true;
+  offlineConfirmVisible.value = false;
+  void submit();
+}
+
+/** Отменяет off-hours оформление и сбрасывает форму без закрытия sheet. */
+function cancelOffline() {
+  offlineConfirmed.value = false;
+  offlineConfirmVisible.value = false;
+  syncingState.value = true;
+  resetFormToDefaults({ clearContext: true });
+  syncingState.value = false;
+  refreshQuoteForCurrentState();
+}
+
+/** Запоминает начальную точку drag-down жеста на любой области нижнего sheet. */
+function startSheetDrag(event: TouchEvent) {
+  if (
+    sheetClosingByDrag.value ||
+    event.touches.length !== 1 ||
+    (sheetScrollRef.value?.scrollTop ?? 0) > 0
+  ) {
+    sheetDragStartY.value = null;
+    return;
+  }
+
+  sheetDragStartY.value = event.touches[0]?.clientY ?? null;
+  sheetDragDeltaY.value = 0;
+  sheetDragging.value = false;
+}
+
+/** Перемещает sheet вслед за пальцем только при выраженном движении вниз. */
+function trackSheetDrag(event: TouchEvent) {
+  if (sheetDragStartY.value === null || sheetClosingByDrag.value) {
+    return;
+  }
+
+  const deltaY = (event.touches[0]?.clientY ?? sheetDragStartY.value) - sheetDragStartY.value;
+  if (!sheetDragging.value && deltaY < 10) {
+    return;
+  }
+  if (deltaY <= 0) {
+    return;
+  }
+
+  sheetDragging.value = true;
+  sheetDragDeltaY.value = deltaY;
+  if (event.cancelable) {
+    event.preventDefault();
+  }
+}
+
+/** Закрывает sheet, если пользователь явно потянул его вниз. */
+function finishSheetDrag() {
+  if (!sheetDragging.value) {
+    resetSheetDrag();
+    return;
+  }
+
+  if (sheetDragDeltaY.value >= 80) {
+    void animateAndCloseSheet();
+    return;
+  }
+
+  resetSheetDrag();
+}
+
+/** Возвращает sheet на место после отменённого системой touch-жеста. */
+function cancelSheetDrag() {
+  resetSheetDrag();
+}
+
+/** Сбрасывает временное состояние drag-жеста. */
+function resetSheetDrag() {
+  sheetDragStartY.value = null;
+  sheetDragDeltaY.value = 0;
+  sheetDragging.value = false;
+  sheetClosingByDrag.value = false;
+}
+
+/** Плавно уводит sheet ниже экрана перед фактическим закрытием dialog. */
+async function animateAndCloseSheet() {
+  sheetClosingByDrag.value = true;
+  sheetDragging.value = false;
+  const sheetElement = sheetRef.value?.$el as HTMLElement | undefined;
+  sheetDragDeltaY.value = Math.max(window.innerHeight, sheetElement?.offsetHeight ?? 0) + 32;
+  await new Promise((resolve) => window.setTimeout(resolve, 240));
+  resetAndCloseSheet();
+  window.setTimeout(resetSheetDrag, 320);
+}
+
+/** Закрывает sheet после drag-down и возвращает форму к начальному состоянию. */
+function resetAndCloseSheet() {
+  offlineConfirmed.value = false;
+  offlineConfirmVisible.value = false;
+  syncingState.value = true;
+  resetFormToDefaults({ clearContext: true });
+  syncingState.value = false;
+  refreshQuoteForCurrentState();
+  emit('update:modelValue', false);
 }
 </script>

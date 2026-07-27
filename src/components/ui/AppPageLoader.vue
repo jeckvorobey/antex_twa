@@ -1,5 +1,5 @@
 <template>
-  <Transition name="app-page-loader">
+  <Transition name="app-page-loader" @after-leave="emit('hidden')">
     <div v-if="showing" class="app-page-loader" role="status" aria-live="polite" aria-busy="true">
       <div class="app-page-loader__glow app-page-loader__glow--top" />
       <div class="app-page-loader__glow app-page-loader__glow--bottom" />
@@ -37,6 +37,8 @@
 
 <script setup lang="ts">
 import logoUrl from '../../assets/images/logo.PNG';
+
+const emit = defineEmits<{ hidden: [] }>();
 
 defineProps<{
   showing: boolean;

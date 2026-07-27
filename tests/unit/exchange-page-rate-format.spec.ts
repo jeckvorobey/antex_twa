@@ -23,4 +23,39 @@ describe('ExchangePage rate formatting', () => {
     expect(source).toContain('validatePreliminaryOrderDraft');
     expect(source).toContain("Notify.create({ type: 'negative', message: t(validation.messageKey");
   });
+
+  it('refreshes manager availability and confirms offline submit on the dedicated route', () => {
+    const source = readFileSync(exchangePagePath, 'utf8');
+
+    expect(source).toContain('offlineConfirmVisible');
+    expect(source).toContain('<AppOfflineNotice');
+    expect(source).toContain(':business-hours=');
+    expect(source).toContain("{{ t('order.offlineInlineTitle') }}");
+    expect(source).toContain("{{ t('order.offlineInlineNotice') }}");
+    expect(source).toContain('persistent');
+    expect(source).toContain('class="app-dialog--confirm"');
+    expect(source).not.toContain('v-model="offlineConfirmVisible" position="bottom" persistent');
+    expect(source).toContain('shouldConfirmOfflineSubmit');
+    expect(source).toContain('await exchangeStore.refresh()');
+    expect(source).toContain('refreshQuoteForCurrentState();');
+    expect(source).toContain('const refreshedValidation = preliminaryValidation.value;');
+    expect(source).toContain("managerAvailability.status === 'offline'");
+    expect(source).toContain("t('order.successOffline')");
+    expect(source).toContain('if (submitFlowPending.value)');
+    expect(source).toContain(':disable="!canSubmit || submitFlowPending"');
+    expect(source).toContain('@click="cancelOffline"');
+    expect(source).toContain("{{ t('common.yes') }}");
+    expect(source).toContain("{{ t('common.cancel') }}");
+    expect(source).toContain(
+      "catch {\n    return exchangeStore.screen?.managerAvailability.status === 'offline';",
+    );
+  });
+
+  it('uses the create-order availability snapshot for the final success message', () => {
+    const source = readFileSync(exchangePagePath, 'utf8');
+
+    expect(source).toContain('const order = await exchangeStore.submitOrder');
+    expect(source).toContain("order.managerAvailability?.status === 'offline'");
+    expect(source).toContain("t('order.successOffline')");
+  });
 });

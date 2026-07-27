@@ -1,5 +1,6 @@
 <template>
-  <div class="app-header-bar">
+  <div :class="['app-header-bar', { 'app-header-bar--with-back': backRouteName }]">
+    <AppBackButton v-if="backRouteName" @click="navigateBack" />
     <div class="app-header-bar__brand">
       <div class="app-header-bar__logo">
         <q-img
@@ -8,7 +9,7 @@
           fit="cover"
           width="100%"
           height="100%"
-          alt="AntEx logo"
+          :alt="t('common.logoAlt')"
           no-spinner
         />
       </div>
@@ -40,15 +41,24 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
+
+import AppBackButton from '@components/ui/AppBackButton.vue';
 import { useAuthStore } from '@stores/auth.store';
+import { toSafeExternalUrl } from '@utils/safe-external-url';
 import logoImage from '../../assets/images/logo.PNG';
 
 const { t } = useI18n();
+const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
 
-const userPhotoUrl = computed(() => authStore.user?.photo_url ?? null);
+const backRouteName = computed(() => {
+  const target = route.meta.backRouteName;
+  return typeof target === 'string' ? target : null;
+});
+
+const userPhotoUrl = computed(() => toSafeExternalUrl(authStore.user?.photo_url));
 
 const userInitials = computed(() => {
   const user = authStore.user;
@@ -68,7 +78,15 @@ const userInitials = computed(() => {
   return (username ? username[0] : 'A').toUpperCase();
 });
 
+/** Открывает профиль из постоянного правого avatar action. */
 function openProfile() {
   void router.push({ name: 'profile' });
+}
+
+/** Возвращает на объявленный в route meta родительский экран. */
+function navigateBack() {
+  if (backRouteName.value) {
+    void router.push({ name: backRouteName.value });
+  }
 }
 </script>

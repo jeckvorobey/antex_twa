@@ -128,11 +128,33 @@ export interface MiniappCalculatorState {
   amountSell: number;
 }
 
+export interface MiniappManagerAvailability {
+  status: 'working' | 'offline' | 'unknown';
+  scheduleEnabled: boolean;
+  workingDaysUtc: number[];
+  startTimeUtc: string;
+  endTimeUtc: string;
+  currentStartAt: string | null;
+  currentEndAt: string | null;
+  nextStartAt: string | null;
+  businessHoursText: string;
+}
+
+export interface MiniappAexPayoutOption {
+  currencyBuy: 'USDT' | 'RUB';
+  rate: number;
+  rateDisplay: string;
+  rateText: string;
+  availableMethods: string[];
+}
+
 export interface MiniappExchangeScreenResponse {
   calculator: MiniappCalculatorState;
   chips: string[];
   pairs: MiniappRateCard[];
   quote: MiniappQuoteResponse;
+  aexPayoutOptions: MiniappAexPayoutOption[];
+  managerAvailability: MiniappManagerAvailability;
 }
 
 export interface MiniappBankSummary {
@@ -157,6 +179,7 @@ export interface MiniappOrderItem {
   createdAt: string;
   updatedAt: string;
   city: MiniappCity | null;
+  managerAvailability?: MiniappManagerAvailability | null;
 }
 
 export interface MiniappOrdersResponse {
@@ -205,9 +228,94 @@ export interface MiniappProfileResponse {
   user: MiniappProfileSummary;
   menu: MiniappMenuItem[];
   version: string;
+  aex?: AexProfileSection;
+  managerAvailability: MiniappManagerAvailability;
 }
 
 export interface GroupedOrders {
   label: string;
   items: MiniappOrderItem[];
+}
+
+// ── ATXG referral & balance ─────────────────────────────────────────
+
+export interface AexBalance {
+  available: number;
+  reserved: number;
+  totalEarned: number;
+  totalWithdrawn: number;
+}
+
+export interface AexReferralProgramConfig {
+  referralPercent: string;
+  referralMinWithdraw: string;
+  referralMaxWithdraw: string | null;
+  aexRate: string;
+  aexWithdrawLimit: string;
+}
+
+export interface AexReferralInfo {
+  referralCode: string;
+  referralLink: string;
+  totalReferrals: number;
+  programConfig: AexReferralProgramConfig;
+}
+
+export interface AexTransactionItem {
+  id: number;
+  type:
+    | 'referral_reward'
+    | 'withdrawal'
+    | 'bonus'
+    | 'adjustment'
+    | 'reserved'
+    | 'debited'
+    | 'refund';
+  amount: number;
+  balanceAfter: number;
+  description: string;
+  createdAt: string;
+}
+
+export interface AexTransactionsResponse {
+  items: AexTransactionItem[];
+  limit: number;
+  offset: number;
+  total: number;
+  hasMore: boolean;
+}
+
+export interface AexReferralUserItem {
+  id: number;
+  displayName: string;
+  username: string | null;
+  photoUrl: string | null;
+  joinedAt: string;
+  rewardPercent: string;
+}
+
+export interface AexReferralsResponse {
+  items: AexReferralUserItem[];
+  limit: number;
+  offset: number;
+  total: number;
+  hasMore: boolean;
+  totalAccrued: string;
+  rewardPercent: string;
+}
+
+export interface AexProfileSection {
+  balance: AexBalance;
+  referralCode: string;
+}
+
+export interface AexWalletOut {
+  id: number;
+  user_id: number;
+  balance_available: string;
+  balance_reserved: string;
+  balance_total: string;
+  is_exchange_available: boolean;
+  createdAt: string;
+  updatedAt: string;
 }

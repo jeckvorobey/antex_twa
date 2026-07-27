@@ -6,5 +6,7 @@ export const MIN_AMOUNT_BY_METHOD: Record<string, Record<string, number>> = {
 };
 
 export function getMinAmount(method: string, currency: string): number {
-  return MIN_AMOUNT_BY_METHOD[method]?.[currency.toUpperCase()] ?? 0;
+  const normalizedCurrency = currency.toUpperCase();
+  const limitCurrency = normalizedCurrency === 'ATXG' ? 'USDT' : normalizedCurrency;
+  return MIN_AMOUNT_BY_METHOD[method]?.[limitCurrency] ?? 0;
 }

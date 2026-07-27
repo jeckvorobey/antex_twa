@@ -1,0 +1,103 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+
+import { describe, expect, it } from 'vitest';
+
+const servicePath = resolve(process.cwd(), 'src/services/api/miniapp.service.ts');
+const serviceSource = readFileSync(servicePath, 'utf8');
+
+const typesPath = resolve(process.cwd(), 'src/types/miniapp.ts');
+const typesSource = readFileSync(typesPath, 'utf8');
+
+describe('ATXG API service', () => {
+  it('exports fetchAexReferralInfo function', () => {
+    expect(serviceSource).toContain('export async function fetchAexReferralInfo');
+    expect(serviceSource).toContain('/api/miniapp/aex/referral');
+  });
+
+  it('exports fetchAexTransactions with pagination params', () => {
+    expect(serviceSource).toContain('export async function fetchAexTransactions');
+    expect(serviceSource).toContain('/api/miniapp/aex/transactions');
+    expect(serviceSource).toContain('limit');
+    expect(serviceSource).toContain('offset');
+  });
+
+  it('exports fetchAexReferrals with pagination params', () => {
+    expect(serviceSource).toContain('export async function fetchAexReferrals');
+    expect(serviceSource).toContain('/api/miniapp/aex/referrals');
+    expect(serviceSource).toContain('limit');
+    expect(serviceSource).toContain('offset');
+  });
+
+  it('exports applyReferralCode function', () => {
+    expect(serviceSource).toContain('export async function applyReferralCode');
+    expect(serviceSource).toContain('/api/miniapp/aex/referral/apply');
+    expect(serviceSource).toContain('code');
+  });
+});
+
+describe('ATXG types', () => {
+  it('defines AexBalance interface', () => {
+    expect(typesSource).toContain('interface AexBalance');
+    expect(typesSource).toContain('available: number');
+    expect(typesSource).toContain('reserved: number');
+    expect(typesSource).toContain('totalEarned: number');
+    expect(typesSource).toContain('totalWithdrawn: number');
+  });
+
+  it('defines AexReferralInfo interface', () => {
+    expect(typesSource).toContain('interface AexReferralInfo');
+    expect(typesSource).toContain('referralCode: string');
+    expect(typesSource).toContain('referralLink: string');
+    expect(typesSource).toContain('totalReferrals: number');
+    expect(typesSource).toContain('interface AexReferralProgramConfig');
+    expect(typesSource).toContain('programConfig: AexReferralProgramConfig');
+    expect(typesSource).toContain('referralPercent: string');
+    expect(typesSource).toContain('referralMinWithdraw: string');
+    expect(typesSource).toContain('referralMaxWithdraw: string | null');
+    expect(typesSource).toContain('aexRate: string');
+    expect(typesSource).toContain('aexWithdrawLimit: string');
+    expect(typesSource).not.toContain('referrals: AexReferralItem[]');
+  });
+
+  it('defines AexTransactionItem with all operation types', () => {
+    expect(typesSource).toContain('interface AexTransactionItem');
+    expect(typesSource).toContain("'referral_reward'");
+    expect(typesSource).toContain("'withdrawal'");
+    expect(typesSource).toContain("'bonus'");
+    expect(typesSource).toContain("'adjustment'");
+    expect(typesSource).toContain("'reserved'");
+    expect(typesSource).toContain("'debited'");
+    expect(typesSource).toContain("'refund'");
+    expect(typesSource).toContain('balanceAfter: number');
+  });
+
+  it('defines AexTransactionsResponse with pagination', () => {
+    expect(typesSource).toContain('interface AexTransactionsResponse');
+    expect(typesSource).toContain('items: AexTransactionItem[]');
+    expect(typesSource).toContain('total: number');
+    expect(typesSource).toContain('hasMore: boolean');
+  });
+
+  it('defines AexReferralsResponse without per-user earnings', () => {
+    expect(typesSource).toContain('interface AexReferralUserItem');
+    expect(typesSource).toContain('displayName: string');
+    expect(typesSource).toContain('joinedAt: string');
+    expect(typesSource).toContain('rewardPercent: string');
+    expect(typesSource).toContain('interface AexReferralsResponse');
+    expect(typesSource).toContain('totalAccrued: string');
+    expect(typesSource).toContain('items: AexReferralUserItem[]');
+    expect(typesSource).not.toContain('earnedAex:');
+    expect(typesSource).not.toContain('telegramId:');
+  });
+
+  it('defines AexProfileSection for profile page', () => {
+    expect(typesSource).toContain('interface AexProfileSection');
+    expect(typesSource).toContain('balance: AexBalance');
+    expect(typesSource).toContain('referralCode: string');
+  });
+
+  it('includes aex in MiniappProfileResponse', () => {
+    expect(typesSource).toContain('aex?: AexProfileSection');
+  });
+});

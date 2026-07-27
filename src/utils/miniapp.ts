@@ -1,5 +1,5 @@
 import type { GroupedOrders, MiniappOrderItem, MiniappQuoteResponse } from '@types/miniapp';
-import { formatMiniappLongDate } from '@utils/formatters';
+import { groupItemsByDate } from '@utils/date-groups';
 
 type QuoteParams = {
   currencySell: string;
@@ -30,17 +30,7 @@ export function getStatusTone(status: number) {
 }
 
 export function groupOrdersByDate(items: MiniappOrderItem[]) {
-  const groups = new Map<string, MiniappOrderItem[]>();
-
-  items.forEach((item) => {
-    const label = formatMiniappLongDate(item.createdAt, 'ru');
-    groups.set(label, [...(groups.get(label) ?? []), item]);
-  });
-
-  return Array.from(groups.entries()).map<GroupedOrders>(([label, groupedItems]) => ({
-    label,
-    items: groupedItems,
-  }));
+  return groupItemsByDate(items, (item) => item.createdAt, 'ru') as GroupedOrders[];
 }
 
 export function isQuoteCurrent(quote: MiniappQuoteResponse | null, params: QuoteParams) {

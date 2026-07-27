@@ -154,6 +154,35 @@ describe('exchange store', () => {
     expect(store.refreshing).toBe(false);
   });
 
+  it('awaits an in-flight background refresh instead of using stale screen data', async () => {
+    const store = useExchangeStore();
+    let resolveScreenRefresh: ((screen: MiniappExchangeScreenResponse) => void) | null = null;
+    vi.mocked(fetchExchangeScreen)
+      .mockResolvedValueOnce(makeScreen())
+      .mockReturnValueOnce(
+        new Promise((resolve) => {
+          resolveScreenRefresh = resolve;
+        }),
+      );
+    vi.mocked(fetchCities)
+      .mockResolvedValueOnce({ items: makeCities() })
+      .mockResolvedValueOnce({ items: [] });
+
+    await store.load();
+    const firstRefresh = store.refresh();
+    const secondRefresh = store.refresh();
+
+    expect(store.refreshing).toBe(true);
+    expect(fetchExchangeScreen).toHaveBeenCalledTimes(2);
+
+    resolveScreenRefresh?.({ ...makeScreen(), chips: ['USDT'] });
+    await Promise.all([firstRefresh, secondRefresh]);
+
+    expect(store.screen?.chips).toEqual(['USDT']);
+    expect(fetchExchangeScreen).toHaveBeenCalledTimes(2);
+    expect(store.refreshing).toBe(false);
+  });
+
   it('clears quote when local pair is missing', async () => {
     const store = useExchangeStore();
     vi.mocked(fetchExchangeScreen).mockResolvedValue(makeScreen());
