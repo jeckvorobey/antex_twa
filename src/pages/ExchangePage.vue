@@ -54,7 +54,12 @@
         </div>
 
         <div class="q-pt-md app-exchange-submit">
-          <AppButton block type="submit" :loading="exchangeStore.submitting" :disable="!canSubmit">
+          <AppButton
+            block
+            type="submit"
+            :loading="exchangeStore.submitting || submitFlowPending"
+            :disable="!canSubmit || submitFlowPending"
+          >
             {{ t('common.submit') }}
           </AppButton>
         </div>
@@ -70,7 +75,11 @@
         </div>
         <div class="row q-col-gutter-sm q-mt-md">
           <div class="col">
-            <AppButton block :loading="exchangeStore.submitting" @click="confirmOffline">
+            <AppButton
+              block
+              :loading="exchangeStore.submitting || submitFlowPending"
+              @click="confirmOffline"
+            >
               {{ t('order.continue') }}
             </AppButton>
           </div>
@@ -137,6 +146,7 @@ const syncingState = ref(false);
 const aexQuote = ref<MiniappQuoteResponse | null>(null);
 const offlineConfirmVisible = ref(false);
 const offlineConfirmed = ref(false);
+const submitFlowPending = ref(false);
 
 const sellOptions = computed(() => {
   const options = [
@@ -427,12 +437,17 @@ async function submitOrder() {
     return;
   }
 
-  if ((await shouldConfirmOfflineSubmit()) && !offlineConfirmed.value) {
-    offlineConfirmVisible.value = true;
+  if (submitFlowPending.value) {
     return;
   }
+  submitFlowPending.value = true;
 
   try {
+    if ((await shouldConfirmOfflineSubmit()) && !offlineConfirmed.value) {
+      offlineConfirmVisible.value = true;
+      return;
+    }
+
     const order = await exchangeStore.submitOrder({
       country: selectedCountry.value,
       cityId: selectedMethod.value === 'cash' ? selectedCityId.value : null,
@@ -468,6 +483,8 @@ async function submitOrder() {
     const status = (error as { response?: { status?: number } })?.response?.status;
     const messageKey = status === 401 ? 'errors.auth' : getMiniappErrorMessageKey(code);
     Notify.create({ type: 'negative', message: t(messageKey) });
+  } finally {
+    submitFlowPending.value = false;
   }
 }
 
@@ -481,7 +498,7 @@ async function shouldConfirmOfflineSubmit() {
 }
 
 function confirmOffline() {
-  if (exchangeStore.submitting) return;
+  if (exchangeStore.submitting || submitFlowPending.value) return;
   offlineConfirmed.value = true;
   offlineConfirmVisible.value = false;
   void submitOrder();

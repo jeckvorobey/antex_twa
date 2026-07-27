@@ -32,5 +32,7 @@ describe('ExchangePage rate formatting', () => {
     expect(source).toContain('await exchangeStore.refresh()');
     expect(source).toContain("managerAvailability.status === 'offline'");
     expect(source).toContain("t('order.successOffline')");
+    expect(source).toContain('if (submitFlowPending.value)');
+    expect(source).toContain(':disable="!canSubmit || submitFlowPending"');
   });
 });

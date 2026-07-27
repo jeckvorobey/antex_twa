@@ -32,9 +32,8 @@ describe('OrderFormSheet selection sync contract', () => {
   });
 
   it('disables submit button when preliminary validation fails', () => {
-    expect(source).toContain(
-      '<AppButton block :loading="exchangeStore.submitting" :disable="!canSubmit" @click="submit">',
-    );
+    expect(source).toContain(':loading="exchangeStore.submitting || submitFlowPending"');
+    expect(source).toContain(':disable="!canSubmit || submitFlowPending"');
   });
 
   it('repeat opening recalculates quote and focuses the sell amount field', () => {
@@ -51,5 +50,6 @@ describe('OrderFormSheet selection sync contract', () => {
     expect(source).toContain('shouldConfirmOfflineSubmit');
     expect(source).toContain('await exchangeStore.refresh()');
     expect(source).toContain("managerAvailability.status === 'offline'");
+    expect(source).toContain('if (submitFlowPending.value)');
   });
 });
