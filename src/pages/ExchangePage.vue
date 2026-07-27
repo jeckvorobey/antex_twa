@@ -4,16 +4,17 @@
       <q-form class="col column no-wrap" @submit.prevent="submitOrder">
         <div class="app-exchange-content col column q-gutter-md no-wrap">
           <AppWarningNotice>
+            <template #title>{{ t('order.rateNoticeTitle') }}</template>
             {{ t('order.rateNotice') }}
           </AppWarningNotice>
 
-          <div
+          <AppOfflineNotice
             v-if="isManagersOffline"
-            class="app-order-offline-note row no-wrap items-center q-pa-sm"
+            :business-hours="exchangeStore.screen?.managerAvailability.businessHoursText ?? ''"
           >
-            <q-icon name="schedule" size="18px" class="col-auto" />
-            <div class="col text-body2">{{ t('order.offlineInlineNotice') }}</div>
-          </div>
+            <template #title>{{ t('order.offlineInlineTitle') }}</template>
+            {{ t('order.offlineInlineNotice') }}
+          </AppOfflineNotice>
 
           <ExchangeOrderDetails
             v-model:selected-sell-currency="selectedSellCurrency"
@@ -110,6 +111,7 @@ import { useRouter } from 'vue-router';
 
 import ExchangeOrderDetails from '@components/orders/ExchangeOrderDetails.vue';
 import AppButton from '@components/ui/AppButton.vue';
+import AppOfflineNotice from '@components/ui/AppOfflineNotice.vue';
 import AppRateValue from '@components/ui/AppRateValue.vue';
 import AppSectionTitle from '@components/ui/AppSectionTitle.vue';
 import AppSurface from '@components/ui/AppSurface.vue';
