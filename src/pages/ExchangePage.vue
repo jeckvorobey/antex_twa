@@ -54,12 +54,43 @@
         </div>
 
         <div class="q-pt-md app-exchange-submit">
-          <AppButton block type="submit" :loading="exchangeStore.submitting" :disable="!canSubmit">
+          <AppButton
+            block
+            type="submit"
+            :loading="exchangeStore.submitting || submitFlowPending"
+            :disable="!canSubmit || submitFlowPending"
+          >
             {{ t('common.submit') }}
           </AppButton>
         </div>
       </q-form>
     </div>
+
+    <q-dialog v-model="offlineConfirmVisible" position="bottom">
+      <AppSurface class="app-sheet q-pa-md">
+        <div class="text-subtitle1">{{ t('order.offlineTitle') }}</div>
+        <div class="text-body2 text-grey-5 q-mt-sm">{{ t('order.offlineText') }}</div>
+        <div class="text-body2 q-mt-sm">
+          {{ exchangeStore.screen?.managerAvailability.businessHoursText }}
+        </div>
+        <div class="row q-col-gutter-sm q-mt-md">
+          <div class="col">
+            <AppButton
+              block
+              :loading="exchangeStore.submitting || submitFlowPending"
+              @click="confirmOffline"
+            >
+              {{ t('order.continue') }}
+            </AppButton>
+          </div>
+          <div class="col">
+            <AppButton block variant="secondary" @click="offlineConfirmVisible = false">
+              {{ t('order.back') }}
+            </AppButton>
+          </div>
+        </div>
+      </AppSurface>
+    </q-dialog>
   </q-page>
 </template>
 
@@ -113,6 +144,9 @@ const selectedCityId = ref<number | null>(null);
 const amountSellTouched = ref(false);
 const syncingState = ref(false);
 const aexQuote = ref<MiniappQuoteResponse | null>(null);
+const offlineConfirmVisible = ref(false);
+const offlineConfirmed = ref(false);
+const submitFlowPending = ref(false);
 
 const sellOptions = computed(() => {
   const options = [
@@ -388,7 +422,7 @@ function resolveCurrentQuote() {
 }
 
 async function submitOrder() {
-  const quote = resolveCurrentQuote();
+  let quote = resolveCurrentQuote();
   if (!amountSell.value || !amountBuy.value || !quote) {
     return;
   }
@@ -403,7 +437,33 @@ async function submitOrder() {
     return;
   }
 
+  if (submitFlowPending.value) {
+    return;
+  }
+  submitFlowPending.value = true;
+
   try {
+    if ((await shouldConfirmOfflineSubmit()) && !offlineConfirmed.value) {
+      offlineConfirmVisible.value = true;
+      return;
+    }
+    const refreshedValidation = preliminaryValidation.value;
+    if (!refreshedValidation.valid) {
+      Notify.create({
+        type: 'negative',
+        message: t(refreshedValidation.messageKey, refreshedValidation.params),
+      });
+      return;
+    }
+    if (!canSubmit.value || !selectedCountry.value) {
+      return;
+    }
+    quote = resolveCurrentQuote();
+    if (!quote || !amountBuy.value) {
+      Notify.create({ type: 'negative', message: t('exchange.quoteUnavailable') });
+      return;
+    }
+
     const order = await exchangeStore.submitOrder({
       country: selectedCountry.value,
       cityId: selectedMethod.value === 'cash' ? selectedCityId.value : null,
@@ -416,6 +476,13 @@ async function submitOrder() {
     });
 
     ordersStore.prepend(order);
+    Notify.create({
+      type: 'positive',
+      message:
+        order.managerAvailability?.status === 'offline'
+          ? t('order.successOffline')
+          : t('order.success'),
+    });
     syncingState.value = true;
     amountSell.value =
       exchangeStore.screen?.calculator.amountSell ??
@@ -425,12 +492,32 @@ async function submitOrder() {
     syncingState.value = false;
     selectedMethod.value = 'qrcode';
     selectedCityId.value = null;
+    offlineConfirmed.value = false;
     await router.push({ name: 'history' });
   } catch (error: unknown) {
     const code = (error as { response?: { data?: { code?: string } } })?.response?.data?.code;
     const status = (error as { response?: { status?: number } })?.response?.status;
     const messageKey = status === 401 ? 'errors.auth' : getMiniappErrorMessageKey(code);
     Notify.create({ type: 'negative', message: t(messageKey) });
+  } finally {
+    submitFlowPending.value = false;
   }
+}
+
+async function shouldConfirmOfflineSubmit() {
+  try {
+    await exchangeStore.refresh();
+    refreshQuoteForCurrentState();
+  } catch {
+    return exchangeStore.screen?.managerAvailability.status === 'offline';
+  }
+  return exchangeStore.screen?.managerAvailability.status === 'offline';
+}
+
+function confirmOffline() {
+  if (exchangeStore.submitting || submitFlowPending.value) return;
+  offlineConfirmed.value = true;
+  offlineConfirmVisible.value = false;
+  void submitOrder();
 }
 </script>

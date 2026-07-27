@@ -37,4 +37,12 @@ describe('miniapp background refresh on route revisit', () => {
     expect(profilePageSource).toContain('await profileStore.load();');
     expect(profilePageSource).toContain('void profileStore.refresh();');
   });
+
+  it('refreshes manager availability at the next schedule boundary on profile', () => {
+    expect(profilePageSource).toContain('profileStore.data?.managerAvailability');
+    expect(profilePageSource).toContain('availability.currentEndAt');
+    expect(profilePageSource).toContain('availability.nextStartAt');
+    expect(profilePageSource).toContain('window.setTimeout');
+    expect(profilePageSource).toContain('void profileStore.refresh();');
+  });
 });

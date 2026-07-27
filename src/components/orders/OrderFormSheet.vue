@@ -28,7 +28,12 @@
         :available-methods="currentQuoteMethods"
       />
 
-      <AppButton block :loading="exchangeStore.submitting" :disable="!canSubmit" @click="submit">
+      <AppButton
+        block
+        :loading="exchangeStore.submitting || submitFlowPending"
+        :disable="!canSubmit || submitFlowPending"
+        @click="submit"
+      >
         {{ t('common.submit') }}
       </AppButton>
     </AppSurface>
@@ -40,7 +45,7 @@
       <div class="text-body2 text-grey-5 q-mt-sm">{{ t('order.offlineText') }}</div>
       <div class="text-body2 q-mt-sm">{{ exchangeStore.screen?.managerAvailability.businessHoursText }}</div>
       <div class="row q-col-gutter-sm q-mt-md">
-        <div class="col"><AppButton block :loading="exchangeStore.submitting" @click="confirmOffline">{{ t('order.continue') }}</AppButton></div>
+        <div class="col"><AppButton block :loading="exchangeStore.submitting || submitFlowPending" @click="confirmOffline">{{ t('order.continue') }}</AppButton></div>
         <div class="col"><AppButton block variant="secondary" @click="offlineConfirmVisible = false">{{ t('order.back') }}</AppButton></div>
       </div>
     </AppSurface>
@@ -102,6 +107,7 @@ const syncingState = ref(false);
 const shouldFocusAmountSellAfterOpen = ref(false);
 const offlineConfirmVisible = ref(false);
 const offlineConfirmed = ref(false);
+const submitFlowPending = ref(false);
 const orderDetailsRef = ref<{ focusAmountSell: () => void } | null>(null);
 
 const sellOptions = computed(() =>
@@ -353,7 +359,7 @@ function getDefaultAmountSell(currencySell: string) {
  * Отправляет miniapp-заявку и показывает локализованное сообщение по коду ошибки.
  */
 async function submit() {
-  const quote = resolveCurrentQuote();
+  let quote = resolveCurrentQuote();
   if (!amountSell.value || amountSell.value <= 0 || !amountBuy.value || !quote) {
     Notify.create({ type: 'negative', message: t('exchange.quoteUnavailable') });
     return;
@@ -369,12 +375,33 @@ async function submit() {
     return;
   }
 
-  if (exchangeStore.screen?.managerAvailability.status === 'offline' && !offlineConfirmed.value) {
-    offlineConfirmVisible.value = true;
+  if (submitFlowPending.value) {
     return;
   }
+  submitFlowPending.value = true;
 
   try {
+    if ((await shouldConfirmOfflineSubmit()) && !offlineConfirmed.value) {
+      offlineConfirmVisible.value = true;
+      return;
+    }
+    const refreshedValidation = preliminaryValidation.value;
+    if (!refreshedValidation.valid) {
+      Notify.create({
+        type: 'negative',
+        message: t(refreshedValidation.messageKey, refreshedValidation.params),
+      });
+      return;
+    }
+    if (!selectedCountry.value) {
+      return;
+    }
+    quote = resolveCurrentQuote();
+    if (!quote || !amountBuy.value) {
+      Notify.create({ type: 'negative', message: t('exchange.quoteUnavailable') });
+      return;
+    }
+
     const order = await exchangeStore.submitOrder({
       country: selectedCountry.value,
       cityId: selectedMethod.value === 'cash' ? selectedCityId.value : null,
@@ -408,12 +435,24 @@ async function submit() {
         ? t(messageKey, { amount: params.minAmount, currency: params.currency })
         : t(messageKey);
     Notify.create({ type: 'negative', message });
+  } finally {
+    submitFlowPending.value = false;
   }
+}
+
+async function shouldConfirmOfflineSubmit() {
+  try {
+    await exchangeStore.refresh();
+    refreshQuoteForCurrentState();
+  } catch {
+    return exchangeStore.screen?.managerAvailability.status === 'offline';
+  }
+  return exchangeStore.screen?.managerAvailability.status === 'offline';
 }
 
 /** Подтверждает один оффлайн-сценарий в пределах открытой формы. */
 function confirmOffline() {
-  if (exchangeStore.submitting) return;
+  if (exchangeStore.submitting || submitFlowPending.value) return;
   offlineConfirmed.value = true;
   offlineConfirmVisible.value = false;
   void submit();
