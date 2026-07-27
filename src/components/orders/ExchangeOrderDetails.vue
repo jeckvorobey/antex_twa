@@ -32,17 +32,6 @@
           </div>
         </div>
 
-        <div class="app-exchange-calculator__swap">
-          <q-btn
-            round
-            unelevated
-            class="app-exchange-calculator__swap-button"
-            icon="swap_vert"
-            :aria-label="t('common.exchange')"
-            @click="swapCurrencies"
-          />
-        </div>
-
         <div class="app-exchange-calculator__field">
           <div class="app-exchange-calculator__label">{{ t('exchange.receiveCurrency') }}</div>
           <div class="app-exchange-calculator__control">
@@ -280,17 +269,6 @@ watch(
 
 function handleAmountSellInput(value: string | number | null) {
   emit('update:amountSell', parseReadableNumber(value));
-}
-
-/** Меняет местами направление и переносит рассчитанную сумму в поле отправки. */
-function swapCurrencies() {
-  const nextSellCurrency = props.selectedBuyCurrency;
-  const nextBuyCurrency = props.selectedSellCurrency;
-  const nextAmountSell = props.amountBuy ?? props.amountSell;
-
-  emit('update:selectedSellCurrency', nextSellCurrency);
-  emit('update:selectedBuyCurrency', nextBuyCurrency);
-  emit('update:amountSell', nextAmountSell);
 }
 
 /** Текст ошибки валидации суммы отправки (кастомный блок под инпутом). */

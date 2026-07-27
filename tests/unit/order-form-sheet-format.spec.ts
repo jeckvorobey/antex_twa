@@ -74,9 +74,7 @@ describe('OrderFormSheet amount formatting', () => {
     expect(offlineNoticeSource).toContain(
       'grid-template-columns: auto minmax(0, 1fr) auto',
     );
-    expect(offlineNoticeSource).toContain('businessHoursParts');
-    expect(offlineNoticeSource).toContain('app-offline-notice__hours-label');
-    expect(offlineNoticeSource).toContain('app-offline-notice__hours-value');
+    expect(offlineNoticeSource).toContain("replace(/^Ежедневно\\s+/i, '')");
     expect(offlineNoticeSource).toContain('white-space: nowrap');
   });
 });
@@ -101,16 +99,6 @@ describe('ExchangeOrderDetails shared component contract', () => {
     expect(source).toContain("t('exchange.receiveMethod')");
     expect(source).toContain("t('exchange.cashCities')");
     expect(source).not.toContain("t('order.contact')");
-  });
-
-  it('keeps the exchange direction control between calculator fields', () => {
-    const source = readFileSync(detailsComponentPath, 'utf8');
-
-    expect(source).toContain('class="app-exchange-calculator__swap-button"');
-    expect(source).toContain('icon="swap_vert"');
-    expect(source).toContain('@click="swapCurrencies"');
-    expect(source).toContain("emit('update:selectedSellCurrency', nextSellCurrency)");
-    expect(source).toContain("emit('update:selectedBuyCurrency', nextBuyCurrency)");
   });
 
   it('exposes focusAmountSell for repeat order flow', () => {
