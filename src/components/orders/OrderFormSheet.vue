@@ -9,9 +9,9 @@
     <AppSurface class="app-sheet app-sheet--order q-pt-sm q-px-md">
       <div
         class="app-sheet__header"
-        @touchstart.passive="startSheetDrag"
-        @touchmove.passive="trackSheetDrag"
-        @touchend="finishSheetDrag"
+        @touchstart.stop="startSheetDrag"
+        @touchmove.stop.prevent="trackSheetDrag"
+        @touchend.stop="finishSheetDrag"
       >
         <div class="app-sheet-handle" />
       </div>
@@ -21,9 +21,13 @@
           {{ t('order.rateNotice') }}
         </AppWarningNotice>
 
-        <AppWarningNotice v-if="isManagersOffline">
-          {{ t('order.offlineInlineNotice') }}
-        </AppWarningNotice>
+        <div
+          v-if="isManagersOffline"
+          class="app-order-offline-note row no-wrap items-center q-pa-sm"
+        >
+          <q-icon name="schedule" size="18px" class="col-auto" />
+          <div class="col text-body2">{{ t('order.offlineInlineNotice') }}</div>
+        </div>
 
         <ExchangeOrderDetails
           ref="orderDetailsRef"
@@ -41,21 +45,20 @@
           :city-options="cityOptions"
           :available-methods="currentQuoteMethods"
         />
-      </div>
 
-      <AppButton
-        block
-        class="q-mt-md q-mb-md"
-        :loading="exchangeStore.submitting || submitFlowPending"
-        :disable="!canSubmit || submitFlowPending"
-        @click="submit"
-      >
-        {{ t('common.submit') }}
-      </AppButton>
+        <AppButton
+          block
+          :loading="exchangeStore.submitting || submitFlowPending"
+          :disable="!canSubmit || submitFlowPending"
+          @click="submit"
+        >
+          {{ t('common.submit') }}
+        </AppButton>
+      </div>
     </AppSurface>
   </q-dialog>
 
-  <q-dialog v-model="offlineConfirmVisible" position="bottom" persistent>
+  <q-dialog v-model="offlineConfirmVisible" persistent class="app-dialog--confirm">
     <AppSurface class="app-sheet app-sheet--confirm q-pa-md">
       <div class="text-subtitle1">{{ t('order.offlineTitle') }}</div>
       <div class="text-body2 text-grey-5 q-mt-sm">{{ t('order.offlineText') }}</div>
@@ -227,6 +230,9 @@ watch(
     if (!opened) {
       offlineConfirmed.value = false;
       offlineConfirmVisible.value = false;
+      syncingState.value = true;
+      resetFormToDefaults({ clearContext: true });
+      syncingState.value = false;
       resetSheetDrag();
       return;
     }
@@ -375,7 +381,11 @@ function getDefaultAmountSell(currencySell: string) {
 }
 
 /** Возвращает форму к начальному состоянию с учётом контекста повторной заявки. */
-function resetFormToDefaults() {
+function resetFormToDefaults(options: { clearContext?: boolean } = {}) {
+  if (options.clearContext) {
+    uiStore.orderContext = null;
+  }
+
   selectedSellCurrency.value =
     uiStore.orderContext?.currencySell ?? exchangeStore.quote?.currencySell ?? 'RUB';
   amountSell.value =
@@ -501,7 +511,7 @@ function cancelOffline() {
   offlineConfirmed.value = false;
   offlineConfirmVisible.value = false;
   syncingState.value = true;
-  resetFormToDefaults();
+  resetFormToDefaults({ clearContext: true });
   syncingState.value = false;
   refreshQuoteForCurrentState();
 }
@@ -526,7 +536,7 @@ function trackSheetDrag(event: TouchEvent) {
 /** Закрывает sheet, если пользователь явно потянул его вниз. */
 function finishSheetDrag() {
   if (sheetDragDeltaY.value > 80) {
-    emit('update:modelValue', false);
+    resetAndCloseSheet();
   }
   resetSheetDrag();
 }
@@ -535,5 +545,16 @@ function finishSheetDrag() {
 function resetSheetDrag() {
   sheetDragStartY.value = null;
   sheetDragDeltaY.value = 0;
+}
+
+/** Закрывает sheet после drag-down и возвращает форму к начальному состоянию. */
+function resetAndCloseSheet() {
+  offlineConfirmed.value = false;
+  offlineConfirmVisible.value = false;
+  syncingState.value = true;
+  resetFormToDefaults({ clearContext: true });
+  syncingState.value = false;
+  refreshQuoteForCurrentState();
+  emit('update:modelValue', false);
 }
 </script>

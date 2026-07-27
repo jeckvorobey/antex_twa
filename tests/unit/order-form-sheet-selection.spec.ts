@@ -48,27 +48,38 @@ describe('OrderFormSheet selection sync contract', () => {
 
   it('refreshes manager availability before showing offline confirmation', () => {
     expect(source).toContain('shouldConfirmOfflineSubmit');
-    expect(source).toContain('v-if="isManagersOffline"');
+    expect(source).toContain('class="app-order-offline-note row no-wrap items-center q-pa-sm"');
     expect(source).toContain("{{ t('order.offlineInlineNotice') }}");
     expect(source).toContain('persistent');
+    expect(source).toContain('class="app-dialog--confirm"');
+    expect(source).not.toContain('v-model="offlineConfirmVisible" position="bottom" persistent');
     expect(source).toContain('await exchangeStore.refresh()');
     expect(source).toContain('refreshQuoteForCurrentState();');
     expect(source).toContain('const refreshedValidation = preliminaryValidation.value;');
     expect(source).toContain("managerAvailability.status === 'offline'");
     expect(source).toContain('if (submitFlowPending.value)');
     expect(source).toContain('@click="cancelOffline"');
-    expect(source).toContain('resetFormToDefaults();');
+    expect(source).toContain('resetFormToDefaults({ clearContext: true });');
+    expect(source).toContain('uiStore.orderContext = null;');
     expect(source).toContain('class="app-sheet__header"');
     expect(source).toContain('class="app-sheet__scroll"');
-    expect(source).toContain('@touchstart.passive="startSheetDrag"');
-    expect(source).toContain('@touchmove.passive="trackSheetDrag"');
-    expect(source).toContain('@touchend="finishSheetDrag"');
+    expect(source).toContain('@touchstart.stop="startSheetDrag"');
+    expect(source).toContain('@touchmove.stop.prevent="trackSheetDrag"');
+    expect(source).toContain('@touchend.stop="finishSheetDrag"');
     expect(source).toMatch(
-      /<div\s+class="app-sheet__header"\s+@touchstart\.passive="startSheetDrag"\s+@touchmove\.passive="trackSheetDrag"\s+@touchend="finishSheetDrag"/,
+      /<div\s+class="app-sheet__header"\s+@touchstart\.stop="startSheetDrag"\s+@touchmove\.stop\.prevent="trackSheetDrag"\s+@touchend\.stop="finishSheetDrag"/,
     );
     expect(source).not.toMatch(/<AppSurface[^>]+@touchstart\.passive="startSheetDrag"/);
+    expect(source).toContain('resetAndCloseSheet();');
     expect(source).toContain(
       "catch {\n    return exchangeStore.screen?.managerAvailability.status === 'offline';",
     );
+  });
+
+  it('keeps the submit button in the scrollable form flow', () => {
+    expect(source).toMatch(
+      /<div class="app-sheet__scroll">[\s\S]*<ExchangeOrderDetails[\s\S]*<AppButton[\s\S]*{{ t\('common.submit'\) }}[\s\S]*<\/div>\s*<\/AppSurface>/,
+    );
+    expect(source).not.toContain('class="q-mt-md q-mb-md"');
   });
 });

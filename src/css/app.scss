@@ -450,11 +450,17 @@ body.body--dark .q-page {
 }
 
 .app-bottom-nav__item .q-icon {
+  font-size: 21px;
   transform: scale(1);
   transition:
     transform 280ms ease,
     color 280ms ease,
     filter 280ms ease;
+}
+
+.app-bottom-nav__item .q-btn__content > span:not(.q-icon) {
+  font-size: 11.5px;
+  line-height: 1.15;
 }
 
 .app-bottom-nav__item.bottom-nav__item--active {
@@ -1753,7 +1759,7 @@ body.body--light .q-page,
 }
 
 .app-dialog--order .q-dialog__inner {
-  padding: 0 16px;
+  padding: 0 16px calc(88px + env(safe-area-inset-bottom));
 }
 
 .app-dialog--order .q-card {
@@ -1762,14 +1768,27 @@ body.body--light .q-page,
 
 .app-sheet--order {
   display: flex;
-  max-height: min(82dvh, calc(100dvh - 24px));
+  max-height: min(76dvh, calc(100dvh - 112px - env(safe-area-inset-bottom)));
   flex-direction: column;
-  padding-bottom: max(16px, env(keyboard-inset-height, 0px));
-  touch-action: pan-y;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom));
 }
 
 .app-sheet--confirm {
   width: min(100%, 430px);
+  gap: 12px;
+  padding-bottom: 20px;
+}
+
+.app-dialog--confirm .q-dialog__inner {
+  padding: 24px;
+}
+
+.app-order-offline-note {
+  gap: 8px;
+  border: 1px solid rgba(121, 206, 192, 0.2);
+  border-radius: var(--antex-radius-md);
+  background: rgba(121, 206, 192, 0.08);
+  color: var(--antex-text-secondary);
 }
 
 .app-sheet__header {
@@ -1779,6 +1798,7 @@ body.body--light .q-page,
   flex: 0 0 auto;
   padding-bottom: 8px;
   background: inherit;
+  touch-action: none;
 }
 
 .app-sheet__scroll {

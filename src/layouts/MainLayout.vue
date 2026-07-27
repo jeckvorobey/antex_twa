@@ -25,7 +25,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 
 import MoreMenuSheet from '@components/orders/MoreMenuSheet.vue';
@@ -62,8 +62,13 @@ const pageLoading = computed(() => {
 });
 
 const navigationVisible = ref(!pageLoading.value);
+const keyboardInputFocused = ref(false);
 const shouldShowNavigation = computed(
-  () => navigationVisible.value && !uiStore.orderSheetOpen && !uiStore.moreSheetOpen,
+  () =>
+    navigationVisible.value &&
+    !keyboardInputFocused.value &&
+    !uiStore.orderSheetOpen &&
+    !uiStore.moreSheetOpen,
 );
 
 watch(pageLoading, (loading) => {
@@ -77,4 +82,36 @@ function showNavigation(): void {
     navigationVisible.value = true;
   }
 }
+
+function isEditableElement(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) {
+    return false;
+  }
+
+  return Boolean(target.closest('input, textarea, select, [contenteditable="true"]'));
+}
+
+function handleFocusIn(event: FocusEvent): void {
+  keyboardInputFocused.value = isEditableElement(event.target);
+}
+
+function handleFocusOut(event: FocusEvent): void {
+  if (!isEditableElement(event.target)) {
+    return;
+  }
+
+  window.setTimeout(() => {
+    keyboardInputFocused.value = isEditableElement(document.activeElement);
+  }, 0);
+}
+
+onMounted(() => {
+  document.addEventListener('focusin', handleFocusIn);
+  document.addEventListener('focusout', handleFocusOut);
+});
+
+onBeforeUnmount(() => {
+  document.removeEventListener('focusin', handleFocusIn);
+  document.removeEventListener('focusout', handleFocusOut);
+});
 </script>
