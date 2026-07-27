@@ -12,7 +12,12 @@
     </div>
 
     <div class="app-offline-notice__hours col-auto">
-      {{ compactBusinessHours }}
+      <span v-if="businessHoursParts.label" class="app-offline-notice__hours-label">
+        {{ businessHoursParts.label }}
+      </span>
+      <span class="app-offline-notice__hours-value">
+        {{ businessHoursParts.value }}
+      </span>
     </div>
   </div>
 </template>
@@ -24,9 +29,17 @@ const props = defineProps<{
   businessHours: string;
 }>();
 
-const compactBusinessHours = computed(() =>
-  props.businessHours.replace(/^Ежедневно\s+/i, '').trim(),
-);
+const businessHoursParts = computed(() => {
+  const businessHours = props.businessHours.trim();
+  const match = businessHours.match(
+    /^(.*?)[,\s]+(\d{1,2}:\d{2}\s*[–—-]\s*\d{1,2}:\d{2}.*)$/u,
+  );
+
+  return {
+    label: match?.[1]?.trim() ?? '',
+    value: match?.[2]?.trim() ?? businessHours,
+  };
+});
 </script>
 
 <style scoped lang="scss">
@@ -84,20 +97,40 @@ const compactBusinessHours = computed(() =>
 }
 
 .app-offline-notice__hours {
-  padding: clamp(6px, 1.8vw, 8px) clamp(9px, 2.8vw, 12px);
-  border-radius: 999px;
-  background: rgba(36, 107, 84, 0.48);
-  color: rgba(255, 255, 255, 0.88);
-  font-size: clamp(10px, 2.9vw, 12px);
-  font-weight: 500;
-  line-height: 1.2;
+  display: flex;
+  min-width: clamp(78px, 22vw, 96px);
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: clamp(5px, 1.6vw, 7px) clamp(8px, 2.5vw, 11px);
+  border: 1px solid rgba(96, 202, 126, 0.22);
+  border-radius: clamp(9px, 2.8vw, 12px);
+  background: rgba(31, 91, 73, 0.78);
   text-align: center;
   white-space: nowrap;
 }
 
+.app-offline-notice__hours-label {
+  color: rgba(255, 255, 255, 0.58);
+  font-size: clamp(8px, 2.3vw, 10px);
+  font-weight: 500;
+  line-height: 1.1;
+}
+
+.app-offline-notice__hours-value {
+  color: rgba(255, 255, 255, 0.92);
+  font-size: clamp(10px, 2.9vw, 12px);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
 @media (max-width: 340px) {
   .app-offline-notice__hours {
+    min-width: 72px;
     padding-inline: 7px;
+  }
+
+  .app-offline-notice__hours-value {
     font-size: 9.5px;
   }
 }
