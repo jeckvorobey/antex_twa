@@ -1769,7 +1769,7 @@ body.body--light .q-page,
 }
 
 .app-dialog--order .q-dialog__inner {
-  padding: 0 16px calc(88px + env(safe-area-inset-bottom));
+  padding: 0 0 calc(88px + env(safe-area-inset-bottom));
 }
 
 .app-dialog--order .q-card {
@@ -1805,7 +1805,6 @@ body.body--light .q-page,
   top: 0;
   z-index: 1;
   flex: 0 0 auto;
-  padding-bottom: 8px;
   background: inherit;
 }
 
