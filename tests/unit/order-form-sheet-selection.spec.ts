@@ -49,6 +49,7 @@ describe('OrderFormSheet selection sync contract', () => {
   it('refreshes manager availability before showing offline confirmation', () => {
     expect(source).toContain('shouldConfirmOfflineSubmit');
     expect(source).toContain('await exchangeStore.refresh()');
+    expect(source).toContain('refreshQuoteForCurrentState();');
     expect(source).toContain("managerAvailability.status === 'offline'");
     expect(source).toContain('if (submitFlowPending.value)');
     expect(source).toContain("catch {\n    return exchangeStore.screen?.managerAvailability.status === 'offline';");

@@ -359,7 +359,7 @@ function getDefaultAmountSell(currencySell: string) {
  * Отправляет miniapp-заявку и показывает локализованное сообщение по коду ошибки.
  */
 async function submit() {
-  const quote = resolveCurrentQuote();
+  let quote = resolveCurrentQuote();
   if (!amountSell.value || amountSell.value <= 0 || !amountBuy.value || !quote) {
     Notify.create({ type: 'negative', message: t('exchange.quoteUnavailable') });
     return;
@@ -383,6 +383,11 @@ async function submit() {
   try {
     if ((await shouldConfirmOfflineSubmit()) && !offlineConfirmed.value) {
       offlineConfirmVisible.value = true;
+      return;
+    }
+    quote = resolveCurrentQuote();
+    if (!quote || !amountBuy.value) {
+      Notify.create({ type: 'negative', message: t('exchange.quoteUnavailable') });
       return;
     }
 
@@ -427,6 +432,7 @@ async function submit() {
 async function shouldConfirmOfflineSubmit() {
   try {
     await exchangeStore.refresh();
+    refreshQuoteForCurrentState();
   } catch {
     return exchangeStore.screen?.managerAvailability.status === 'offline';
   }

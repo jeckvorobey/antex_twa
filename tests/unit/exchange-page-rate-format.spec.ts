@@ -30,6 +30,7 @@ describe('ExchangePage rate formatting', () => {
     expect(source).toContain('offlineConfirmVisible');
     expect(source).toContain('shouldConfirmOfflineSubmit');
     expect(source).toContain('await exchangeStore.refresh()');
+    expect(source).toContain('refreshQuoteForCurrentState();');
     expect(source).toContain("managerAvailability.status === 'offline'");
     expect(source).toContain("t('order.successOffline')");
     expect(source).toContain('if (submitFlowPending.value)');

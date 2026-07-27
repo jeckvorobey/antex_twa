@@ -422,7 +422,7 @@ function resolveCurrentQuote() {
 }
 
 async function submitOrder() {
-  const quote = resolveCurrentQuote();
+  let quote = resolveCurrentQuote();
   if (!amountSell.value || !amountBuy.value || !quote) {
     return;
   }
@@ -445,6 +445,11 @@ async function submitOrder() {
   try {
     if ((await shouldConfirmOfflineSubmit()) && !offlineConfirmed.value) {
       offlineConfirmVisible.value = true;
+      return;
+    }
+    quote = resolveCurrentQuote();
+    if (!quote || !amountBuy.value) {
+      Notify.create({ type: 'negative', message: t('exchange.quoteUnavailable') });
       return;
     }
 
@@ -491,6 +496,7 @@ async function submitOrder() {
 async function shouldConfirmOfflineSubmit() {
   try {
     await exchangeStore.refresh();
+    refreshQuoteForCurrentState();
   } catch {
     return exchangeStore.screen?.managerAvailability.status === 'offline';
   }
