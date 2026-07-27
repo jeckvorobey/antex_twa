@@ -62,9 +62,7 @@
                   </div>
                 </div>
 
-                <div class="app-referral-tx-item__amount text-warning">
-                  {{ referral.rewardPercent }}%
-                </div>
+                <div class="app-referral-tx-item__amount">{{ referral.rewardPercent }}%</div>
               </div>
             </AppSurface>
           </section>
@@ -96,58 +94,77 @@
   </q-page>
 </template>
 
-<script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
-import { useI18n } from 'vue-i18n';
+<script lang="ts">
+import {
+    computed,
+    onMounted,
+    ref
+} from 'vue';
+import {
+    useI18n
+} from 'vue-i18n';
 
 import AexBalanceCard from '@components/ui/AexBalanceCard.vue';
 import AppSurface from '@components/ui/AppSurface.vue';
-import { useAexStore } from '@stores/aex.store';
-import { groupItemsByDate } from '@utils/date-groups';
-import { formatMiniappTime } from '@utils/formatters';
-import { toSafeExternalUrl } from '@utils/safe-external-url';
+import {
+    useAexStore
+} from '@stores/aex.store';
+import {
+    groupItemsByDate
+} from '@utils/date-groups';
+import {
+    formatMiniappTime
+} from '@utils/formatters';
+import {
+    toSafeExternalUrl
+} from '@utils/safe-external-url';
 
-const { locale, t } = useI18n();
+const {
+    locale,
+    t
+} = useI18n();
 const aexStore = useAexStore();
-const infiniteScrollRef = ref<{ resume: () => void; stop: () => void } | null>(null);
-const scrollRef = ref<HTMLElement | null>(null);
+const infiniteScrollRef = ref < {
+    resume: () => void;stop: () => void
+} | null > (null);
+const scrollRef = ref < HTMLElement | null > (null);
 
-const totalAccrued = computed(() => parseDecimal(aexStore.referralsSummary?.totalAccrued));
+const totalAccrued = computed(() => parseDecimal(aexStore.referralsSummary ? .totalAccrued));
 const referralGroups = computed(() =>
-  groupItemsByDate(aexStore.referrals, (referral) => referral.joinedAt, locale.value),
+    groupItemsByDate(aexStore.referrals, (referral) => referral.joinedAt, locale.value),
 );
 
 onMounted(async () => {
-  if (!aexStore.referralsLoaded || !aexStore.referrals.length) {
-    await aexStore.loadReferralsFirstPage();
-  } else {
-    void aexStore.refreshReferrals();
-  }
+    if (!aexStore.referralsLoaded || !aexStore.referrals.length) {
+        await aexStore.loadReferralsFirstPage();
+    } else {
+        void aexStore.refreshReferrals();
+    }
 });
 
 async function refresh() {
-  await aexStore.refreshReferrals();
-  infiniteScrollRef.value?.resume();
+    await aexStore.refreshReferrals();
+    infiniteScrollRef.value ? .resume();
 }
 
-async function loadMore(_: number, done: (stop?: boolean) => void) {
-  await aexStore.loadReferralsNextPage();
-  done(!aexStore.referralsHasMore);
+async function loadMore(_: number, done: (stop ? : boolean) => void) {
+    await aexStore.loadReferralsNextPage();
+    done(!aexStore.referralsHasMore);
 }
 
 /** Форматирует только время, потому что календарная дата вынесена в заголовок группы. */
 function formatTime(value: string) {
-  return formatMiniappTime(value, locale.value);
+    return formatMiniappTime(value, locale.value);
 }
 
 /** Отбрасывает небезопасную схему URL перед image binding. */
 function safePhotoUrl(value: string | null): string | null {
-  return toSafeExternalUrl(value);
+    return toSafeExternalUrl(value);
 }
 
 /** Безопасно преобразует decimal-строку общей суммы в значение balance card. */
 function parseDecimal(value: string | null | undefined): number {
-  const parsed = Number.parseFloat(value ?? '0');
-  return Number.isFinite(parsed) ? parsed : 0;
+    const parsed = Number.parseFloat(value ? ? '0');
+    return Number.isFinite(parsed) ? parsed : 0;
 }
 </script>
