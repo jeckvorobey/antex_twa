@@ -103,6 +103,10 @@ export default {
     version: 'Версия {version}',
     aexBalance: 'Баланс ATXG',
     referralProgram: 'Реферальная программа',
+    managerHours: 'Режим работы менеджеров',
+    managersWorking: 'Менеджеры сейчас работают',
+    managersOffline: 'Менеджеры сейчас офлайн',
+    nextStart: 'Начало работы: {time}',
   },
   referral: {
     title: 'Реферальная программа',
@@ -183,6 +187,11 @@ export default {
     contact: 'Telegram для связи',
     contactPlaceholder: '@telegram',
     success: 'Заявка создана',
+    successOffline: 'Заявка принята. Менеджер обработает её после начала рабочего дня в порядке очереди.',
+    offlineTitle: 'Менеджеры сейчас офлайн',
+    offlineText: 'Заявку можно оформить прямо сейчас. Мы сохраним её и передадим менеджеру в порядке очереди после начала рабочего дня.',
+    continue: 'Продолжить оформление',
+    back: 'Вернуться назад',
     minAmountHint: 'Мин. {amount} {currency}',
   },
   status: {

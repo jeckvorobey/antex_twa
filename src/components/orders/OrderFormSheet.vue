@@ -33,6 +33,18 @@
       </AppButton>
     </AppSurface>
   </q-dialog>
+
+  <q-dialog v-model="offlineConfirmVisible" position="bottom">
+    <AppSurface class="app-sheet q-pa-md">
+      <div class="text-subtitle1">{{ t('order.offlineTitle') }}</div>
+      <div class="text-body2 text-grey-5 q-mt-sm">{{ t('order.offlineText') }}</div>
+      <div class="text-body2 q-mt-sm">{{ exchangeStore.screen?.managerAvailability.businessHoursText }}</div>
+      <div class="row q-col-gutter-sm q-mt-md">
+        <div class="col"><AppButton block :loading="exchangeStore.submitting" @click="confirmOffline">{{ t('order.continue') }}</AppButton></div>
+        <div class="col"><AppButton block variant="secondary" @click="offlineConfirmVisible = false">{{ t('order.back') }}</AppButton></div>
+      </div>
+    </AppSurface>
+  </q-dialog>
 </template>
 
 <script setup lang="ts">
@@ -88,6 +100,8 @@ const selectedCityId = ref<number | null>(null);
 const amountSellTouched = ref(false);
 const syncingState = ref(false);
 const shouldFocusAmountSellAfterOpen = ref(false);
+const offlineConfirmVisible = ref(false);
+const offlineConfirmed = ref(false);
 const orderDetailsRef = ref<{ focusAmountSell: () => void } | null>(null);
 
 const sellOptions = computed(() =>
@@ -171,6 +185,7 @@ watch(
   () => props.modelValue,
   async (opened) => {
     if (!opened) {
+      offlineConfirmed.value = false;
       return;
     }
 
@@ -354,6 +369,11 @@ async function submit() {
     return;
   }
 
+  if (exchangeStore.screen?.managerAvailability.status === 'offline' && !offlineConfirmed.value) {
+    offlineConfirmVisible.value = true;
+    return;
+  }
+
   try {
     const order = await exchangeStore.submitOrder({
       country: selectedCountry.value,
@@ -367,7 +387,13 @@ async function submit() {
     });
 
     ordersStore.prepend(order);
-    Notify.create({ type: 'positive', message: t('order.success') });
+    Notify.create({
+      type: 'positive',
+      message:
+        order.managerAvailability?.status === 'offline'
+          ? t('order.successOffline')
+          : t('order.success'),
+    });
     emit('update:modelValue', false);
     await router.push({ name: 'history' });
   } catch (error: unknown) {
@@ -383,5 +409,13 @@ async function submit() {
         : t(messageKey);
     Notify.create({ type: 'negative', message });
   }
+}
+
+/** Подтверждает один оффлайн-сценарий в пределах открытой формы. */
+function confirmOffline() {
+  if (exchangeStore.submitting) return;
+  offlineConfirmed.value = true;
+  offlineConfirmVisible.value = false;
+  void submit();
 }
 </script>
