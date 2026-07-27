@@ -65,13 +65,17 @@ describe('OrderFormSheet selection sync contract', () => {
     expect(source).toContain('uiStore.orderContext = null;');
     expect(source).toContain('class="app-sheet__header"');
     expect(source).toContain('class="app-sheet__scroll"');
-    expect(source).toContain('@touchstart.stop="startSheetDrag"');
-    expect(source).toContain('@touchmove.stop.prevent="trackSheetDrag"');
-    expect(source).toContain('@touchend.stop="finishSheetDrag"');
+    expect(source).toContain('@touchstart.passive="startSheetDrag"');
+    expect(source).toContain('@touchmove="trackSheetDrag"');
+    expect(source).toContain('@touchend="finishSheetDrag"');
+    expect(source).toContain('@touchcancel="cancelSheetDrag"');
     expect(source).toMatch(
-      /<div\s+class="app-sheet__header"\s+@touchstart\.stop="startSheetDrag"\s+@touchmove\.stop\.prevent="trackSheetDrag"\s+@touchend\.stop="finishSheetDrag"/,
+      /<AppSurface[\s\S]*@touchstart\.passive="startSheetDrag"[\s\S]*@touchmove="trackSheetDrag"[\s\S]*@touchend="finishSheetDrag"/,
     );
-    expect(source).not.toMatch(/<AppSurface[^>]+@touchstart\.passive="startSheetDrag"/);
+    expect(source).not.toContain('@touchmove.stop.prevent="trackSheetDrag"');
+    expect(source).toContain(':style="sheetDragStyle"');
+    expect(source).toContain("transform: `translate3d(0, ${sheetDragDeltaY.value}px, 0)`");
+    expect(source).toContain('await new Promise((resolve) => window.setTimeout(resolve, 240));');
     expect(source).toContain('resetAndCloseSheet();');
     expect(source).toContain(
       "catch {\n    return exchangeStore.screen?.managerAvailability.status === 'offline';",
