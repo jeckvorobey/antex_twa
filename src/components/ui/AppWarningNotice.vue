@@ -1,5 +1,5 @@
 <template>
-  <div v-if="visible" class="app-warning-notice row no-wrap items-center q-gutter-x-sm" role="alert">
+  <div v-if="visible" class="app-warning-notice row no-wrap items-center q-px-sm q-gutter-x-sm" role="alert">
     <div class="app-warning-notice__icon col-auto">
       <q-icon name="warning" />
     </div>
