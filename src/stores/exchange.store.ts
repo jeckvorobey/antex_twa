@@ -18,6 +18,7 @@ export const useExchangeStore = defineStore('exchange', () => {
   const loaded = ref(false);
   const refreshing = ref(false);
   const submitting = ref(false);
+  let refreshPromise: Promise<void> | null = null;
 
   async function fetchData() {
     const [screenResponse, citiesResponse] = await Promise.all([
@@ -44,16 +45,23 @@ export const useExchangeStore = defineStore('exchange', () => {
   }
 
   async function refresh() {
-    if (loading.value || refreshing.value) {
+    if (loading.value) {
       return;
+    }
+    if (refreshPromise) {
+      return refreshPromise;
     }
 
     refreshing.value = true;
-    try {
-      await fetchData();
-    } finally {
-      refreshing.value = false;
-    }
+    refreshPromise = (async () => {
+      try {
+        await fetchData();
+      } finally {
+        refreshing.value = false;
+        refreshPromise = null;
+      }
+    })();
+    return refreshPromise;
   }
 
   function recalculateQuote(params: {
