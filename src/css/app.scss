@@ -510,6 +510,10 @@ body.body--dark .q-page {
   .app-bottom-nav__item .q-icon {
     transition-duration: 0.01ms !important;
   }
+
+  .app-sheet--order {
+    transition-duration: 0.01ms !important;
+  }
 }
 
 .app-header-bar__brand {
@@ -1771,6 +1775,13 @@ body.body--light .q-page,
   max-height: min(76dvh, calc(100dvh - 112px - env(safe-area-inset-bottom)));
   flex-direction: column;
   padding-bottom: calc(16px + env(safe-area-inset-bottom));
+  transition: transform 240ms cubic-bezier(0.32, 0.72, 0, 1);
+  will-change: transform;
+  touch-action: pan-y;
+}
+
+.app-sheet--order.app-sheet--dragging {
+  transition: none;
 }
 
 .app-sheet--confirm {
@@ -1790,7 +1801,6 @@ body.body--light .q-page,
   flex: 0 0 auto;
   padding-bottom: 8px;
   background: inherit;
-  touch-action: none;
 }
 
 .app-sheet__scroll {
