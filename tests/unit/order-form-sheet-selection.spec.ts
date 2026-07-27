@@ -36,13 +36,10 @@ describe('OrderFormSheet selection sync contract', () => {
     expect(source).toContain(':disable="!canSubmit || submitFlowPending"');
   });
 
-  it('repeat opening recalculates quote and focuses the sell amount field', () => {
-    expect(source).toContain('ref="orderDetailsRef"');
-    expect(source).toContain(
-      'shouldFocusAmountSellAfterOpen.value = Boolean(uiStore.orderContext)',
-    );
-    expect(source).toContain('await nextTick();');
-    expect(source).toContain('orderDetailsRef.value?.focusAmountSell();');
+  it('repeat opening recalculates the quote without focusing the sell amount field', () => {
+    expect(source).not.toContain('ref="orderDetailsRef"');
+    expect(source).not.toContain('shouldFocusAmountSellAfterOpen');
+    expect(source).not.toContain('orderDetailsRef.value?.focusAmountSell();');
     expect(source).not.toContain('amountBuy.value = uiStore.orderContext?.amountBuy');
   });
 
@@ -64,7 +61,7 @@ describe('OrderFormSheet selection sync contract', () => {
     expect(source).toContain('resetFormToDefaults({ clearContext: true });');
     expect(source).toContain('uiStore.orderContext = null;');
     expect(source).toContain('class="app-sheet__header"');
-    expect(source).toContain('class="app-sheet__scroll"');
+    expect(source).toContain('ref="sheetScrollRef" class="app-sheet__scroll"');
     expect(source).toContain('@touchstart.passive="startSheetDrag"');
     expect(source).toContain('@touchmove="trackSheetDrag"');
     expect(source).toContain('@touchend="finishSheetDrag"');
@@ -75,6 +72,7 @@ describe('OrderFormSheet selection sync contract', () => {
     expect(source).not.toContain('@touchmove.stop.prevent="trackSheetDrag"');
     expect(source).toContain(':style="sheetDragStyle"');
     expect(source).toContain("transform: `translate3d(0, ${sheetDragDeltaY.value}px, 0)`");
+    expect(source).toContain('(sheetScrollRef.value?.scrollTop ?? 0) > 0');
     expect(source).toContain('await new Promise((resolve) => window.setTimeout(resolve, 240));');
     expect(source).toContain('resetAndCloseSheet();');
     expect(source).toContain(
@@ -84,7 +82,7 @@ describe('OrderFormSheet selection sync contract', () => {
 
   it('keeps the submit button in the scrollable form flow', () => {
     expect(source).toMatch(
-      /<div class="app-sheet__scroll">[\s\S]*<ExchangeOrderDetails[\s\S]*<AppButton[\s\S]*{{ t\('common.submit'\) }}[\s\S]*<\/div>\s*<\/AppSurface>/,
+      /<div ref="sheetScrollRef" class="app-sheet__scroll">[\s\S]*<ExchangeOrderDetails[\s\S]*<AppButton[\s\S]*{{ t\('common.submit'\) }}[\s\S]*<\/div>\s*<\/AppSurface>/,
     );
     expect(source).not.toContain('class="q-mt-md q-mb-md"');
   });
