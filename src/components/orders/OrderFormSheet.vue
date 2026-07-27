@@ -6,13 +6,17 @@
     class="app-dialog--bottom app-dialog--order"
     @update:model-value="$emit('update:modelValue', $event)"
   >
-    <AppSurface class="app-sheet app-sheet--order q-pt-sm q-px-md">
-      <div
-        class="app-sheet__header"
-        @touchstart.stop="startSheetDrag"
-        @touchmove.stop.prevent="trackSheetDrag"
-        @touchend.stop="finishSheetDrag"
-      >
+    <AppSurface
+      ref="sheetRef"
+      class="app-sheet app-sheet--order q-pt-sm q-px-md"
+      :class="{ 'app-sheet--dragging': sheetDragging }"
+      :style="sheetDragStyle"
+      @touchstart.passive="startSheetDrag"
+      @touchmove="trackSheetDrag"
+      @touchend="finishSheetDrag"
+      @touchcancel="cancelSheetDrag"
+    >
+      <div class="app-sheet__header">
         <div class="app-sheet-handle" />
       </div>
 
@@ -88,6 +92,7 @@
 <script setup lang="ts">
 import { Notify } from 'quasar';
 import { computed, nextTick, ref, watch } from 'vue';
+import type { ComponentPublicInstance, CSSProperties } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 
@@ -143,8 +148,14 @@ const offlineConfirmVisible = ref(false);
 const offlineConfirmed = ref(false);
 const submitFlowPending = ref(false);
 const orderDetailsRef = ref<{ focusAmountSell: () => void } | null>(null);
+const sheetRef = ref<ComponentPublicInstance | null>(null);
 const sheetDragStartY = ref<number | null>(null);
 const sheetDragDeltaY = ref(0);
+const sheetDragging = ref(false);
+const sheetClosingByDrag = ref(false);
+const sheetDragStyle = computed<CSSProperties>(() => ({
+  transform: `translate3d(0, ${sheetDragDeltaY.value}px, 0)`,
+}));
 
 const sellOptions = computed(() =>
   [
@@ -235,7 +246,9 @@ watch(
       syncingState.value = true;
       resetFormToDefaults({ clearContext: true });
       syncingState.value = false;
-      resetSheetDrag();
+      if (!sheetClosingByDrag.value) {
+        resetSheetDrag();
+      }
       return;
     }
 
@@ -518,28 +531,55 @@ function cancelOffline() {
   refreshQuoteForCurrentState();
 }
 
-/** Запоминает начальную точку drag-down жеста закрытия нижнего sheet. */
+/** Запоминает начальную точку drag-down жеста на любой области нижнего sheet. */
 function startSheetDrag(event: TouchEvent) {
-  sheetDragStartY.value = event.touches[0]?.clientY ?? null;
-  sheetDragDeltaY.value = 0;
-}
-
-/** Отслеживает только движение вниз; внешний tap не влияет на состояние dialog. */
-function trackSheetDrag(event: TouchEvent) {
-  if (sheetDragStartY.value === null) {
+  if (sheetClosingByDrag.value || event.touches.length !== 1) {
     return;
   }
-  sheetDragDeltaY.value = Math.max(
-    0,
-    (event.touches[0]?.clientY ?? sheetDragStartY.value) - sheetDragStartY.value,
-  );
+
+  sheetDragStartY.value = event.touches[0]?.clientY ?? null;
+  sheetDragDeltaY.value = 0;
+  sheetDragging.value = false;
+}
+
+/** Перемещает sheet вслед за пальцем только при выраженном движении вниз. */
+function trackSheetDrag(event: TouchEvent) {
+  if (sheetDragStartY.value === null || sheetClosingByDrag.value) {
+    return;
+  }
+
+  const deltaY = (event.touches[0]?.clientY ?? sheetDragStartY.value) - sheetDragStartY.value;
+  if (!sheetDragging.value && deltaY < 10) {
+    return;
+  }
+  if (deltaY <= 0) {
+    return;
+  }
+
+  sheetDragging.value = true;
+  sheetDragDeltaY.value = deltaY;
+  if (event.cancelable) {
+    event.preventDefault();
+  }
 }
 
 /** Закрывает sheet, если пользователь явно потянул его вниз. */
 function finishSheetDrag() {
-  if (sheetDragDeltaY.value > 80) {
-    resetAndCloseSheet();
+  if (!sheetDragging.value) {
+    resetSheetDrag();
+    return;
   }
+
+  if (sheetDragDeltaY.value >= 80) {
+    void animateAndCloseSheet();
+    return;
+  }
+
+  resetSheetDrag();
+}
+
+/** Возвращает sheet на место после отменённого системой touch-жеста. */
+function cancelSheetDrag() {
   resetSheetDrag();
 }
 
@@ -547,6 +587,19 @@ function finishSheetDrag() {
 function resetSheetDrag() {
   sheetDragStartY.value = null;
   sheetDragDeltaY.value = 0;
+  sheetDragging.value = false;
+  sheetClosingByDrag.value = false;
+}
+
+/** Плавно уводит sheet ниже экрана перед фактическим закрытием dialog. */
+async function animateAndCloseSheet() {
+  sheetClosingByDrag.value = true;
+  sheetDragging.value = false;
+  const sheetElement = sheetRef.value?.$el as HTMLElement | undefined;
+  sheetDragDeltaY.value = Math.max(window.innerHeight, sheetElement?.offsetHeight ?? 0) + 32;
+  await new Promise((resolve) => window.setTimeout(resolve, 240));
+  resetAndCloseSheet();
+  window.setTimeout(resetSheetDrag, 320);
 }
 
 /** Закрывает sheet после drag-down и возвращает форму к начальному состоянию. */
