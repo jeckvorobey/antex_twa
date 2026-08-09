@@ -10,10 +10,24 @@ export interface MiniappUser {
   photo_url: string | null;
   is_bot: boolean;
   is_premium: boolean;
+  telegram_write_access: boolean;
   role: MiniappUserRole;
   trusted_contact: string | null;
   trusted_contact_source: string | null;
   trusted_contact_ready: boolean;
+}
+
+export interface TelegramAuthResponse {
+  access_token: string;
+  token_type: string;
+  is_new_user: boolean;
+  telegram_write_access: boolean;
+}
+
+export type TelegramWriteAccessOutcome = 'allowed' | 'cancelled' | 'unsupported';
+
+export interface TelegramWriteAccessResponse {
+  telegram_write_access: boolean;
 }
 
 export interface MiniappCity {

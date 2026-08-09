@@ -7,6 +7,8 @@ export interface TelegramMainButton {
   onClick(fn: () => void): void;
 }
 
+export type TelegramWriteAccessCallback = (allowed: boolean) => void;
+
 export interface TelegramWebApp {
   initData: string;
   initDataUnsafe: {
@@ -18,12 +20,14 @@ export interface TelegramWebApp {
       language_code?: string;
       photo_url?: string;
       is_premium?: boolean;
+      allows_write_to_pm?: boolean;
     };
     start_param?: string;
   };
   ready(): void;
   expand(): void;
   close(): void;
+  requestWriteAccess?: (callback: TelegramWriteAccessCallback) => void;
   MainButton: TelegramMainButton;
 }
 
