@@ -267,17 +267,21 @@ export function calculateLocalQuote(params: LocalQuoteParams): MiniappQuoteRespo
     return null;
   }
 
+  const tokenRateText = pair.rateText?.replaceAll(
+    TOKEN_QUOTE_BASE_CURRENCY,
+    normalizedSellCurrency,
+  );
+
   return {
     currencySell: normalizedSellCurrency,
     currencyBuy: normalizedBuyCurrency,
     amountSell: params.amountSell,
     amountBuy: roundMoney(params.amountSell * rate),
     rate,
-    rateDisplay: isTokenCurrency(normalizedSellCurrency)
-      ? rate.toFixed(2)
-      : (pair.rateDisplay ?? rate.toFixed(2)),
+    rateDisplay: pair.rateDisplay ?? rate.toFixed(2),
     rateText: isTokenCurrency(normalizedSellCurrency)
-      ? `1 ${normalizedSellCurrency} = ${rate.toFixed(2)} ${normalizedBuyCurrency}`
+      ? (tokenRateText ??
+        `1 ${normalizedSellCurrency} = ${rate.toFixed(2)} ${normalizedBuyCurrency}`)
       : (pair.rateText ??
         `1 ${normalizedSellCurrency} = ${rate.toFixed(2)} ${normalizedBuyCurrency}`),
     updatedAt: pair.updatedAt ?? new Date().toISOString(),

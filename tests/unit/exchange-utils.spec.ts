@@ -185,6 +185,28 @@ describe('calculateLocalQuote', () => {
     });
   });
 
+  it('preserves reciprocal server presentation for an external ATXG quote', () => {
+    expect(
+      calculateLocalQuote({
+        pairs: [
+          {
+            ...pairs[2],
+            rateDisplay: '0.0282',
+            rateText: '1 THB = 0.0282 USDT',
+          },
+        ],
+        currencySell: 'ATXG',
+        currencyBuy: 'THB',
+        amountSell: 100,
+      }),
+    ).toMatchObject({
+      amountBuy: 3550,
+      rate: 35.5,
+      rateDisplay: '0.0282',
+      rateText: '1 THB = 0.0282 ATXG',
+    });
+  });
+
   it('calculates internal ATXG payout from backend-driven option', () => {
     expect(
       calculateLocalQuote({
