@@ -26,6 +26,7 @@ vi.mock('@boot/telegram', () => ({
     ready: vi.fn(),
     expand: vi.fn(),
     close: vi.fn(),
+    requestWriteAccess: vi.fn(),
     MainButton: {
       show: vi.fn(),
       hide: vi.fn(),
@@ -44,17 +45,27 @@ import { tg } from '@boot/telegram';
 import { setAppLocale } from '@i18n';
 import { useAuthStore } from '@stores/auth.store';
 
+const requestWriteAccessMock = vi.mocked(tg!.requestWriteAccess!);
+
 describe('auth store', () => {
   beforeEach(() => {
     localStorage.clear();
     setActivePinia(createPinia());
     vi.clearAllMocks();
+    tg!.initData = 'fresh-init-data';
+    tg!.requestWriteAccess = requestWriteAccessMock;
+    requestWriteAccessMock.mockReset();
   });
 
   it('отправляет свежий initData при повторном открытии miniapp даже если token уже сохранён', async () => {
     localStorage.setItem('access_token', 'stale-token');
     vi.mocked(api.post).mockResolvedValue({
-      data: { access_token: 'fresh-token' },
+      data: {
+        access_token: 'fresh-token',
+        token_type: 'bearer',
+        is_new_user: true,
+        telegram_write_access: false,
+      },
     });
     vi.mocked(api.get).mockResolvedValue({
       data: {
@@ -67,6 +78,7 @@ describe('auth store', () => {
         photo_url: 'https://t.me/i/userpic/320/fresh.jpg',
         is_bot: false,
         is_premium: true,
+        telegram_write_access: false,
         role: 9,
         trusted_contact: 'fresh_user',
         trusted_contact_source: 'username',
@@ -109,6 +121,7 @@ describe('auth store', () => {
       photo_url: null,
       is_bot: false,
       is_premium: true,
+      telegram_write_access: false,
       role: 9,
       trusted_contact: null,
       trusted_contact_source: null,
@@ -141,5 +154,126 @@ describe('auth store', () => {
     expect(store.user?.trusted_contact).toBe('fresh_user');
     expect(store.trustedContactReady).toBe(true);
     expect(store.user?.id).not.toBe(9_999_001);
+  });
+
+  it('не открывает native popup при сохранённом write access', async () => {
+    vi.mocked(api.post).mockResolvedValue({
+      data: {
+        access_token: 'cached-token',
+        token_type: 'bearer',
+        is_new_user: false,
+        telegram_write_access: true,
+      },
+    });
+    vi.mocked(api.get).mockResolvedValue({
+      data: {
+        id: 1,
+        username: 'cached',
+        phone: null,
+        first_name: 'Cached',
+        last_name: null,
+        language_code: 'ru',
+        photo_url: null,
+        is_bot: false,
+        is_premium: false,
+        telegram_write_access: true,
+        role: 9,
+        trusted_contact: 'cached',
+        trusted_contact_source: 'username',
+        trusted_contact_ready: true,
+      },
+    });
+
+    const store = useAuthStore();
+    await store.init();
+    await store.requestTelegramWriteAccess();
+
+    expect(tg?.requestWriteAccess).not.toHaveBeenCalled();
+    expect(store.canUseApp).toBe(true);
+  });
+
+  it('сохраняет allowed и открывает приложение только после backend sync', async () => {
+    vi.mocked(tg?.requestWriteAccess).mockImplementation((callback) => callback(true));
+    vi.mocked(api.post).mockResolvedValueOnce({
+      data: { telegram_write_access: true },
+    });
+    const store = useAuthStore();
+    store.token = 'token';
+    store.telegramWriteAccess = false;
+
+    await store.requestTelegramWriteAccess();
+
+    expect(api.post).toHaveBeenCalledWith('/api/users/me/telegram-write-access', {
+      status: 'allowed',
+    });
+    expect(store.telegramWriteAccess).toBe(true);
+    expect(store.canUseApp).toBe(true);
+    expect(store.writeAccessState).toBe('allowed');
+  });
+
+  it('оставляет приложение заблокированным после отказа', async () => {
+    vi.mocked(tg?.requestWriteAccess).mockImplementation((callback) => callback(false));
+    vi.mocked(api.post).mockResolvedValueOnce({
+      data: { telegram_write_access: false },
+    });
+    const store = useAuthStore();
+    store.token = 'token';
+
+    await store.requestTelegramWriteAccess();
+
+    expect(api.post).toHaveBeenCalledWith('/api/users/me/telegram-write-access', {
+      status: 'cancelled',
+    });
+    expect(store.canUseApp).toBe(false);
+    expect(store.writeAccessState).toBe('denied');
+  });
+
+  it('фиксирует unsupported без открытия приложения', async () => {
+    if (tg) {
+      tg.requestWriteAccess = undefined;
+    }
+    vi.mocked(api.post).mockResolvedValueOnce({
+      data: { telegram_write_access: false },
+    });
+    const store = useAuthStore();
+    store.token = 'token';
+
+    await store.requestTelegramWriteAccess();
+
+    expect(api.post).toHaveBeenCalledWith('/api/users/me/telegram-write-access', {
+      status: 'unsupported',
+    });
+    expect(store.canUseApp).toBe(false);
+    expect(store.writeAccessState).toBe('unsupported');
+  });
+
+  it('после allowed повторяет только backend sync без второго popup', async () => {
+    vi.mocked(tg?.requestWriteAccess).mockImplementation((callback) => callback(true));
+    vi.mocked(api.post)
+      .mockRejectedValueOnce(new Error('backend unavailable'))
+      .mockResolvedValueOnce({ data: { telegram_write_access: true } });
+    const store = useAuthStore();
+    store.token = 'token';
+
+    await store.requestTelegramWriteAccess();
+    expect(store.writeAccessState).toBe('sync_error');
+
+    await store.requestTelegramWriteAccess();
+
+    expect(tg?.requestWriteAccess).toHaveBeenCalledTimes(1);
+    expect(api.post).toHaveBeenCalledTimes(2);
+    expect(store.telegramWriteAccess).toBe(true);
+    expect(store.writeAccessState).toBe('allowed');
+  });
+
+  it('не разблокирует Telegram flow через guest fallback при ошибке auth', async () => {
+    vi.mocked(api.post).mockRejectedValueOnce(new Error('invalid initData'));
+    const store = useAuthStore();
+
+    await store.init();
+
+    expect(store.user).toBeNull();
+    expect(store.canUseApp).toBe(false);
+    expect(store.writeAccessState).toBe('auth_error');
   });
 });
