@@ -187,6 +187,8 @@ export interface MiniappOrderItem {
   currencyBuy: string;
   amountBuy: number | null;
   rate: number | null;
+  rateDisplay: string | null;
+  rateText: string | null;
   status: number;
   methodGet: string;
   contactTelegram: string | null;

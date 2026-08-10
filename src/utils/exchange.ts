@@ -227,6 +227,7 @@ function resolveExpectedCountryByBuyCurrency(pairs: ExchangePairLike[], currency
   return normalizeCountryKey(directPair?.country);
 }
 
+/** Строит предварительный quote: считает по прямому курсу, отображает серверный. */
 export function calculateLocalQuote(params: LocalQuoteParams): MiniappQuoteResponse | null {
   if (!params.amountSell || params.amountSell <= 0) {
     return null;
@@ -272,8 +273,13 @@ export function calculateLocalQuote(params: LocalQuoteParams): MiniappQuoteRespo
     amountSell: params.amountSell,
     amountBuy: roundMoney(params.amountSell * rate),
     rate,
-    rateDisplay: rate.toFixed(2),
-    rateText: `1 ${normalizedSellCurrency} = ${rate.toFixed(2)} ${normalizedBuyCurrency}`,
+    rateDisplay: isTokenCurrency(normalizedSellCurrency)
+      ? rate.toFixed(2)
+      : (pair.rateDisplay ?? rate.toFixed(2)),
+    rateText: isTokenCurrency(normalizedSellCurrency)
+      ? `1 ${normalizedSellCurrency} = ${rate.toFixed(2)} ${normalizedBuyCurrency}`
+      : (pair.rateText ??
+        `1 ${normalizedSellCurrency} = ${rate.toFixed(2)} ${normalizedBuyCurrency}`),
     updatedAt: pair.updatedAt ?? new Date().toISOString(),
     availableMethods: pair.availableMethods ?? [],
   };

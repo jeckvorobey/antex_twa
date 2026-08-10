@@ -89,7 +89,7 @@ describe('calculateLocalQuote', () => {
       fromCurrency: 'RUB',
       toCurrency: 'THB',
       rate: 2.51,
-      calculationRate: 0.4,
+      calculationRate: 0.3977,
       rateDisplay: '2.51',
       rateText: '1 THB = 2.51 RUB',
       updatedAt: '2026-03-28T12:00:00+00:00',
@@ -100,7 +100,7 @@ describe('calculateLocalQuote', () => {
       fromCurrency: 'RUB',
       toCurrency: 'GEL',
       rate: 34.36,
-      calculationRate: 0.03,
+      calculationRate: 0.0291,
       rateDisplay: '34.36',
       rateText: '1 GEL = 34.36 RUB',
       updatedAt: '2026-03-28T12:00:00+00:00',
@@ -131,11 +131,27 @@ describe('calculateLocalQuote', () => {
       currencySell: 'RUB',
       currencyBuy: 'THB',
       amountSell: 6000,
-      amountBuy: 2400,
-      rate: 0.4,
-      rateDisplay: '0.40',
-      rateText: '1 RUB = 0.40 THB',
+      amountBuy: 2386.2,
+      rate: 0.3977,
+      rateDisplay: '2.51',
+      rateText: '1 THB = 2.51 RUB',
       availableMethods: ['qrcode', 'cash'],
+    });
+  });
+
+  it('keeps reciprocal presentation while calculating GEL with the exact direct rate', () => {
+    expect(
+      calculateLocalQuote({
+        pairs,
+        currencySell: 'RUB',
+        currencyBuy: 'GEL',
+        amountSell: 15000,
+      }),
+    ).toMatchObject({
+      amountBuy: 436.5,
+      rate: 0.0291,
+      rateDisplay: '34.36',
+      rateText: '1 GEL = 34.36 RUB',
     });
   });
 
