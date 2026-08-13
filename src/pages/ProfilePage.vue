@@ -41,9 +41,6 @@
             <div class="text-body2 q-mt-sm">
               {{ managerStatusText }}
             </div>
-            <div v-if="nextStartText" class="text-caption text-grey-5 q-mt-xs">
-              {{ t('profile.nextStart', { time: nextStartText }) }}
-            </div>
           </div>
         </div>
       </AppSurface>
@@ -85,7 +82,6 @@ import AppSurface from '@components/ui/AppSurface.vue';
 import { useProfileStore } from '@stores/profile.store';
 import { useUiStore } from '@stores/ui.store';
 import type { MiniappMenuItem } from '@types/miniapp';
-import { formatManagerNextStart } from '@utils/manager-working-hours';
 import { openSafeExternalUrl, toSafeExternalUrl } from '@utils/safe-external-url';
 
 const router = useRouter();
@@ -97,10 +93,6 @@ const profilePhotoUrl = computed(() => toSafeExternalUrl(profileStore.data?.user
 const managerStatusText = computed(() => {
   const status = profileStore.data?.managerAvailability?.status;
   return status === 'working' ? t('profile.managersWorking') : t('profile.managersOffline');
-});
-const nextStartText = computed(() => {
-  const value = profileStore.data?.managerAvailability?.nextStartAt;
-  return formatManagerNextStart(value);
 });
 let managerRefreshTimer: ReturnType<typeof window.setTimeout> | null = null;
 

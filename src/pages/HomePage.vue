@@ -176,9 +176,6 @@
               <div class="text-body2 q-mt-sm">
                 {{ managerStatusText }}
               </div>
-              <div v-if="nextStartText" class="text-caption text-grey-5 q-mt-xs">
-                {{ t('profile.nextStart', { time: nextStartText }) }}
-              </div>
             </div>
           </div>
         </AppSurface>
@@ -211,7 +208,6 @@ import {
   resetHomeRateExpansion,
   resolveHomeCountryByCity,
 } from '@utils/home-rates';
-import { formatManagerNextStart } from '@utils/manager-working-hours';
 import { toSafeNavigationUrl } from '@utils/safe-external-url';
 
 const homeStore = useHomeStore();
@@ -309,10 +305,6 @@ const defaultExchangeCard = computed(
 const managerStatusText = computed(() => {
   const status = profileStore.data?.managerAvailability?.status;
   return status === 'working' ? t('profile.managersWorking') : t('profile.managersOffline');
-});
-const nextStartText = computed(() => {
-  const value = profileStore.data?.managerAvailability?.nextStartAt;
-  return formatManagerNextStart(value);
 });
 let managerRefreshTimer: ReturnType<typeof window.setTimeout> | null = null;
 const managerTelegramHref = computed(() => {
