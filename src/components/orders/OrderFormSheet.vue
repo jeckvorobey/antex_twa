@@ -479,7 +479,11 @@ async function submit() {
       methodGet: selectedMethod.value,
     });
 
-    await ordersStore.loadFirstPage();
+    try {
+      await ordersStore.loadFirstPage();
+    } catch {
+      // Экран истории повторит загрузку.
+    }
     Notify.create({
       type: 'positive',
       message: t('order.success'),

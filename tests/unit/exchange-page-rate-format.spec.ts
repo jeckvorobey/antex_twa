@@ -4,6 +4,7 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const exchangePagePath = resolve(process.cwd(), 'src/pages/ExchangePage.vue');
+const orderFormSheetPath = resolve(process.cwd(), 'src/components/orders/OrderFormSheet.vue');
 
 describe('ExchangePage rate formatting', () => {
   it('uses direct submit flow without modal trigger or swap CTA', () => {
@@ -61,5 +62,15 @@ describe('ExchangePage rate formatting', () => {
     expect(source).toContain('await ordersStore.loadFirstPage();');
     expect(source).not.toContain('ordersStore.prepend(order);');
     expect(source).not.toContain('order.managerAvailability?.status');
+  });
+
+  it('keeps successful order creation successful when history reload fails', () => {
+    for (const path of [exchangePagePath, orderFormSheetPath]) {
+      const source = readFileSync(path, 'utf8');
+
+      expect(source).toContain(
+        'try {\n      await ordersStore.loadFirstPage();\n    } catch {\n      // Экран истории повторит загрузку.',
+      );
+    }
   });
 });
