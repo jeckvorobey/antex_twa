@@ -45,8 +45,11 @@ export async function fetchCities() {
   return response.data;
 }
 
-export async function fetchOrders(params: { limit?: number; offset?: number } = {}) {
-  const response = await api.get<MiniappOrdersResponse>('/api/miniapp/orders', { params });
+export async function fetchOrders(
+  params: { limit?: number; offset?: number } = {},
+  config: { signal?: AbortSignal } = {},
+) {
+  const response = await api.get<MiniappOrdersResponse>('/api/miniapp/orders', { params, ...config });
   return response.data;
 }
 

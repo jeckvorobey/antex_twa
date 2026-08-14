@@ -17,6 +17,7 @@ export const useOrdersStore = defineStore('orders', () => {
   const offset = ref(0);
   const total = ref(0);
   let listRequest: Promise<void> | null = null;
+  let listRequestController: AbortController | null = null;
   let latestRequestId = 0;
 
   const groups = computed(() => groupOrdersByDate(items.value));
@@ -27,12 +28,14 @@ export const useOrdersStore = defineStore('orders', () => {
 
   /** Запускает запрос первой страницы; устаревший ответ не меняет состояние списка. */
   async function requestFirstPage(state: 'loading' | 'refreshing') {
+    listRequestController?.abort();
+    const controller = new AbortController();
     const requestId = ++latestRequestId;
     const request = (async () => {
       loading.value = state === 'loading';
       refreshing.value = state === 'refreshing';
       try {
-        const response = await fetchOrders({ limit: PAGE_LIMIT, offset: 0 });
+        const response = await fetchOrders({ limit: PAGE_LIMIT, offset: 0 }, { signal: controller.signal });
         if (requestId !== latestRequestId) {
           return;
         }
@@ -40,6 +43,10 @@ export const useOrdersStore = defineStore('orders', () => {
         offset.value = response.items.length;
         total.value = response.total;
         hasMore.value = response.hasMore;
+      } catch (error) {
+        if (!controller.signal.aborted) {
+          throw error;
+        }
       } finally {
         if (requestId === latestRequestId && state === 'loading') {
           loaded.value = true;
@@ -51,11 +58,15 @@ export const useOrdersStore = defineStore('orders', () => {
       }
     })();
     listRequest = request;
+    listRequestController = controller;
     try {
       await request;
     } finally {
       if (listRequest === request) {
         listRequest = null;
+      }
+      if (listRequestController === controller) {
+        listRequestController = null;
       }
     }
   }
@@ -70,11 +81,15 @@ export const useOrdersStore = defineStore('orders', () => {
       return;
     }
 
+    const controller = new AbortController();
     const requestId = ++latestRequestId;
     const request = (async () => {
       loadingMore.value = true;
       try {
-        const response = await fetchOrders({ limit: PAGE_LIMIT, offset: offset.value });
+        const response = await fetchOrders(
+          { limit: PAGE_LIMIT, offset: offset.value },
+          { signal: controller.signal },
+        );
         if (requestId !== latestRequestId) {
           return;
         }
@@ -84,16 +99,24 @@ export const useOrdersStore = defineStore('orders', () => {
         offset.value += response.items.length;
         total.value = response.total;
         hasMore.value = response.hasMore;
+      } catch (error) {
+        if (!controller.signal.aborted) {
+          throw error;
+        }
       } finally {
         loadingMore.value = false;
       }
     })();
     listRequest = request;
+    listRequestController = controller;
     try {
       await request;
     } finally {
       if (listRequest === request) {
         listRequest = null;
+      }
+      if (listRequestController === controller) {
+        listRequestController = null;
       }
     }
   }

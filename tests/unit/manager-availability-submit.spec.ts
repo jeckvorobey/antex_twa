@@ -249,9 +249,13 @@ describe('ExchangePage manager availability submit flow', () => {
     expect(api.get).toHaveBeenCalledWith('/api/miniapp/exchange/quote', {
       params: { currencySell: 'RUB', currencyBuy: 'GEL', amountSell: 30000 },
     });
-    expect(api.get).toHaveBeenCalledWith('/api/miniapp/orders', {
-      params: { limit: 10, offset: 0 },
-    });
+    expect(api.get).toHaveBeenCalledWith(
+      '/api/miniapp/orders',
+      expect.objectContaining({
+        params: { limit: 10, offset: 0 },
+        signal: expect.any(AbortSignal),
+      }),
+    );
   });
 
   it.each(['qrcode', 'bank_account', 'pay_services'] as const)(
@@ -394,8 +398,12 @@ describe('OrderFormSheet manager availability submit flow', () => {
     expect(api.get).toHaveBeenCalledWith('/api/miniapp/exchange/quote', {
       params: { currencySell: 'RUB', currencyBuy: 'GEL', amountSell: 30000 },
     });
-    expect(api.get).toHaveBeenCalledWith('/api/miniapp/orders', {
-      params: { limit: 10, offset: 0 },
-    });
+    expect(api.get).toHaveBeenCalledWith(
+      '/api/miniapp/orders',
+      expect.objectContaining({
+        params: { limit: 10, offset: 0 },
+        signal: expect.any(AbortSignal),
+      }),
+    );
   });
 });

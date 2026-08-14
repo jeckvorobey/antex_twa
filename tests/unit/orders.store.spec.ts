@@ -56,7 +56,10 @@ describe('orders store pagination', () => {
 
     await store.refresh();
 
-    expect(fetchOrders).toHaveBeenCalledWith({ limit: 10, offset: 0 });
+    expect(fetchOrders).toHaveBeenCalledWith(
+      { limit: 10, offset: 0 },
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    );
     expect(store.items.map((item) => item.id)).toEqual([1, 2]);
     expect(store.offset).toBe(2);
     expect(store.hasMore).toBe(false);
@@ -73,7 +76,11 @@ describe('orders store pagination', () => {
     await store.loadNextPage();
 
     expect(fetchOrders).toHaveBeenCalledTimes(2);
-    expect(fetchOrders).toHaveBeenNthCalledWith(2, { limit: 10, offset: 2 });
+    expect(fetchOrders).toHaveBeenNthCalledWith(
+      2,
+      { limit: 10, offset: 2 },
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    );
     expect(store.items.map((item) => item.id)).toEqual([1, 2, 3]);
     expect(store.hasMore).toBe(false);
   });
@@ -102,7 +109,10 @@ describe('orders store pagination', () => {
     await firstLoad;
 
     expect(fetchOrders).toHaveBeenCalledTimes(2);
-    expect(fetchOrders).toHaveBeenLastCalledWith({ limit: 10, offset: 0 });
+    expect(fetchOrders).toHaveBeenLastCalledWith(
+      { limit: 10, offset: 0 },
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    );
     expect(store.items.map((item) => item.id)).toEqual([2]);
   });
 
@@ -130,8 +140,33 @@ describe('orders store pagination', () => {
     await loadNextPage;
 
     expect(fetchOrders).toHaveBeenCalledTimes(2);
-    expect(fetchOrders).toHaveBeenLastCalledWith({ limit: 10, offset: 0 });
+    expect(fetchOrders).toHaveBeenLastCalledWith(
+      { limit: 10, offset: 0 },
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    );
     expect(store.items.map((item) => item.id)).toEqual([9]);
+  });
+
+  it('refresh cancels active pagination so infinite scroll can complete', async () => {
+    const store = useOrdersStore();
+    let paginationCompleted = false;
+    vi.mocked(fetchOrders)
+      .mockImplementationOnce((_, config) =>
+        new Promise((_, reject) => {
+          config?.signal?.addEventListener('abort', () => reject(new Error('cancelled')));
+        }),
+      )
+      .mockResolvedValueOnce(makeResponse([9], { total: 1, hasMore: false }));
+
+    const loadNextPage = store.loadNextPage().then(() => {
+      paginationCompleted = true;
+    });
+
+    await store.refresh();
+    await Promise.resolve();
+
+    expect(paginationCompleted).toBe(true);
+    await loadNextPage;
   });
 
   it('reloadFirstPage clears an interrupted refresh indicator', async () => {
