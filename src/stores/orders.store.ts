@@ -91,7 +91,8 @@ export const useOrdersStore = defineStore('orders', () => {
 
   async function refresh() {
     if (listRequest) {
-      return listRequest;
+      await reloadFirstPage();
+      return;
     }
 
     const request = (async () => {

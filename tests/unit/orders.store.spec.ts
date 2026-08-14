@@ -100,6 +100,28 @@ describe('orders store pagination', () => {
     expect(store.items.map((item) => item.id)).toEqual([2]);
   });
 
+  it('refresh queues a first-page request after active pagination', async () => {
+    const store = useOrdersStore();
+    let resolveNextPage: ((response: MiniappOrdersResponse) => void) | undefined;
+    const nextPage = new Promise<MiniappOrdersResponse>((resolve) => {
+      resolveNextPage = resolve;
+    });
+    vi.mocked(fetchOrders)
+      .mockReturnValueOnce(nextPage)
+      .mockResolvedValueOnce(makeResponse([9], { total: 1, hasMore: false }));
+
+    const loadNextPage = store.loadNextPage();
+    const refresh = store.refresh();
+    expect(fetchOrders).toHaveBeenCalledTimes(1);
+
+    resolveNextPage!(makeResponse([1], { offset: 0, total: 1, hasMore: false }));
+    await Promise.all([loadNextPage, refresh]);
+
+    expect(fetchOrders).toHaveBeenCalledTimes(2);
+    expect(fetchOrders).toHaveBeenLastCalledWith({ limit: 10, offset: 0 });
+    expect(store.items.map((item) => item.id)).toEqual([9]);
+  });
+
   it('prepend moves existing order to top without increasing total', () => {
     const store = useOrdersStore();
     const first = makeOrder(1);
