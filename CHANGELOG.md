@@ -9,7 +9,7 @@
 
 - Реферальная программа ATXG: страница /referral с балансом, реферальным кодом, копированием, шерингом и инструкцией
 - Компонент AexSellDialog для продажи ATXG: выбор ордера, ввод суммы, валидация, выполнение продажи
-- Глубокая ссылка (deep-link) для приглашений: обработка startapp=ref_<код> через boot/referral.ts
+- Глубокая ссылка (deep-link) для приглашений: обработка startapp=ref\_<код> через boot/referral.ts
 - Хранилище aex.store: управление реферальными данными, балансом ATXG и транзакциями с пагинацией
 - API-интеграция: fetchAexReferralInfo, fetchAexTransactions, applyReferralCode, transferAex
 - Типы данных: AexBalance, AexReferralInfo, AexTransactionItem, AexTransactionsResponse, AexProfileSection

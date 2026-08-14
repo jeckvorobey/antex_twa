@@ -17,6 +17,11 @@ export default defineConfig({
       '@utils': fileURLToPath(new URL('./src/utils', import.meta.url)),
       '@i18n': fileURLToPath(new URL('./src/i18n', import.meta.url)),
       '@constants': fileURLToPath(new URL('./src/constants', import.meta.url)),
+      // Vitest выбирает server-сборку Quasar по condition "node", тогда как
+      // компоненты Mini App выполняются в DOM окружении happy-dom.
+      quasar: fileURLToPath(
+        new URL('./node_modules/quasar/dist/quasar.client.js', import.meta.url),
+      ),
       '#q-app/wrappers': fileURLToPath(new URL('./tests/mocks/q-app-wrappers.ts', import.meta.url)),
     },
   },

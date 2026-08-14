@@ -7,6 +7,7 @@ import type {
   MiniappCitiesResponse,
   MiniappExchangeScreenResponse,
   MiniappHomeResponse,
+  MiniappManagerAvailability,
   MiniappOrderCreate,
   MiniappOrderItem,
   MiniappOrdersResponse,
@@ -20,6 +21,12 @@ export async function fetchHome() {
 
 export async function fetchExchangeScreen() {
   const response = await api.get<MiniappExchangeScreenResponse>('/api/miniapp/exchange');
+  return response.data;
+}
+
+/** Возвращает только актуальный режим работы менеджеров для pre-submit проверки. */
+export async function fetchManagerAvailability() {
+  const response = await api.get<MiniappManagerAvailability>('/api/miniapp/manager-availability');
   return response.data;
 }
 

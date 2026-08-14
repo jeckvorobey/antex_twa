@@ -63,10 +63,7 @@ const pageLoading = computed(() => {
 
 const navigationVisible = ref(!pageLoading.value);
 const shouldShowNavigation = computed(
-  () =>
-    navigationVisible.value &&
-    !uiStore.orderSheetOpen &&
-    !uiStore.moreSheetOpen,
+  () => navigationVisible.value && !uiStore.orderSheetOpen && !uiStore.moreSheetOpen,
 );
 
 watch(pageLoading, (loading) => {
@@ -80,5 +77,4 @@ function showNavigation(): void {
     navigationVisible.value = true;
   }
 }
-
 </script>

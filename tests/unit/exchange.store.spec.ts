@@ -12,9 +12,14 @@ vi.mock('@services/api/miniapp.service', () => ({
   createOrder: vi.fn(),
   fetchCities: vi.fn(),
   fetchExchangeScreen: vi.fn(),
+  fetchManagerAvailability: vi.fn(),
 }));
 
-import { fetchCities, fetchExchangeScreen } from '@services/api/miniapp.service';
+import {
+  fetchCities,
+  fetchExchangeScreen,
+  fetchManagerAvailability,
+} from '@services/api/miniapp.service';
 
 function makeQuote(params: {
   currencySell: string;
@@ -93,6 +98,20 @@ function makeCities(): MiniappCity[] {
       updatedAt: '2026-03-28T12:00:00+00:00',
     },
   ];
+}
+
+function makeManagerAvailability(status: 'working' | 'offline' = 'working') {
+  return {
+    status,
+    scheduleEnabled: true,
+    workingDaysUtc: [1, 2, 3, 4, 5, 6, 7],
+    startTimeUtc: '06:00',
+    endTimeUtc: '18:00',
+    currentStartAt: null,
+    currentEndAt: null,
+    nextStartAt: null,
+    businessHoursText: 'Ежедневно с 09:00 до 21:00 МСК',
+  };
 }
 
 describe('exchange store', () => {
@@ -197,5 +216,37 @@ describe('exchange store', () => {
     });
 
     expect(store.quote).toBeNull();
+  });
+
+  it('refreshes only manager availability and deduplicates concurrent requests', async () => {
+    const store = useExchangeStore();
+    vi.mocked(fetchExchangeScreen).mockResolvedValue(makeScreen());
+    vi.mocked(fetchCities).mockResolvedValue({ items: makeCities() });
+    await store.load();
+
+    const initialScreen = store.screen;
+    const initialQuote = store.quote;
+    const initialCities = [...store.cities];
+    let resolveAvailability: ((value: ReturnType<typeof makeManagerAvailability>) => void) | null =
+      null;
+    vi.mocked(fetchManagerAvailability).mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveAvailability = resolve;
+      }),
+    );
+
+    const firstRefresh = store.refreshManagerAvailability();
+    const secondRefresh = store.refreshManagerAvailability();
+
+    expect(fetchManagerAvailability).toHaveBeenCalledTimes(1);
+    expect(fetchExchangeScreen).toHaveBeenCalledTimes(1);
+    resolveAvailability?.(makeManagerAvailability('offline'));
+    await Promise.all([firstRefresh, secondRefresh]);
+
+    expect(store.screen).toBe(initialScreen);
+    expect(store.screen?.managerAvailability.status).toBe('offline');
+    expect(store.quote).toBe(initialQuote);
+    expect(store.cities).toEqual(initialCities);
+    expect(store.screen?.pairs).toEqual(initialScreen?.pairs);
   });
 });

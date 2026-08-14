@@ -1,7 +1,12 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 
-import { createOrder, fetchCities, fetchExchangeScreen } from '@services/api/miniapp.service';
+import {
+  createOrder,
+  fetchCities,
+  fetchExchangeScreen,
+  fetchManagerAvailability,
+} from '@services/api/miniapp.service';
 import type {
   MiniappCity,
   MiniappExchangeScreenResponse,
@@ -19,6 +24,7 @@ export const useExchangeStore = defineStore('exchange', () => {
   const refreshing = ref(false);
   const submitting = ref(false);
   let refreshPromise: Promise<void> | null = null;
+  let managerAvailabilityRefreshPromise: Promise<void> | null = null;
 
   async function fetchData() {
     const [screenResponse, citiesResponse] = await Promise.all([
@@ -64,6 +70,28 @@ export const useExchangeStore = defineStore('exchange', () => {
     return refreshPromise;
   }
 
+  /**
+   * Обновляет только availability менеджеров, сохраняя текущий draft обмена.
+   * Одновременные pre-submit проверки используют один HTTP-запрос.
+   */
+  async function refreshManagerAvailability() {
+    if (managerAvailabilityRefreshPromise) {
+      return managerAvailabilityRefreshPromise;
+    }
+
+    managerAvailabilityRefreshPromise = (async () => {
+      try {
+        const availability = await fetchManagerAvailability();
+        if (screen.value) {
+          screen.value.managerAvailability = availability;
+        }
+      } finally {
+        managerAvailabilityRefreshPromise = null;
+      }
+    })();
+    return managerAvailabilityRefreshPromise;
+  }
+
   function recalculateQuote(params: {
     currencySell: string;
     currencyBuy: string;
@@ -95,6 +123,7 @@ export const useExchangeStore = defineStore('exchange', () => {
     submitting,
     load,
     refresh,
+    refreshManagerAvailability,
     recalculateQuote,
     submitOrder,
   };

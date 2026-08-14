@@ -497,8 +497,7 @@ async function submit() {
 
 async function shouldConfirmOfflineSubmit() {
   try {
-    await exchangeStore.refresh();
-    refreshQuoteForCurrentState();
+    await exchangeStore.refreshManagerAvailability();
   } catch {
     return exchangeStore.screen?.managerAvailability.status === 'offline';
   }

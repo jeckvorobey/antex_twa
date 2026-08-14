@@ -9,7 +9,9 @@ describe('AexBalanceCard reuse contract', () => {
   it('is used by referral page instead of inline balance markup', () => {
     const referralPage = readProjectFile('src/pages/ReferralPage.vue');
 
-    expect(referralPage).toContain("import AexBalanceCard from '@components/ui/AexBalanceCard.vue'");
+    expect(referralPage).toContain(
+      "import AexBalanceCard from '@components/ui/AexBalanceCard.vue'",
+    );
     expect(referralPage).toContain('<AexBalanceCard');
     expect(referralPage).not.toContain('app-referral-balance">');
   });
