@@ -13,9 +13,11 @@
 ## Capabilities
 
 ### New Capabilities
+
 - `referral-page-simplified-share`: simplified referral UI focused on link + share button.
 
 ### Modified Capabilities
+
 - `referral-page-ui`: сокращается состав видимых элементов на странице рефералок.
 
 ## Impact

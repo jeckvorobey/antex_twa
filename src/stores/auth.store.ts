@@ -103,7 +103,8 @@ export const useAuthStore = defineStore('auth', () => {
           ? 'unsupported'
           : 'denied';
     } catch {
-      writeAccessState.value = status === 'allowed' ? 'sync_error' : status === 'unsupported' ? 'unsupported' : 'denied';
+      writeAccessState.value =
+        status === 'allowed' ? 'sync_error' : status === 'unsupported' ? 'unsupported' : 'denied';
     }
   }
 

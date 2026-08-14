@@ -368,6 +368,7 @@ function selectPair(pair: MiniappRateCard) {
   void refreshQuoteForCurrentState();
 }
 
+/** Пересчитывает локальный preview котировки после изменения полей формы. */
 function refreshQuoteForCurrentState() {
   if (!amountSell.value || amountSell.value <= 0) {
     amountBuy.value = null;
@@ -407,6 +408,20 @@ function refreshQuoteForCurrentState() {
   amountSell.value = quote.amountSell;
   amountBuy.value = quote.amountBuy;
   syncingState.value = false;
+}
+
+/** Запрашивает серверную котировку выбранной пары непосредственно перед POST. */
+async function refreshQuoteBeforeSubmit() {
+  if (isTokenCurrency(selectedSellCurrency.value)) {
+    refreshQuoteForCurrentState();
+    return resolveCurrentQuote();
+  }
+
+  return exchangeStore.refreshQuote({
+    currencySell: selectedSellCurrency.value,
+    currencyBuy: selectedBuyCurrency.value,
+    amountSell: Math.round(amountSell.value ?? 0),
+  });
 }
 
 function getDefaultAmountSell(currencySell: string) {
@@ -487,30 +502,32 @@ async function submitOrder() {
     if (!canSubmit.value || !selectedCountry.value) {
       return;
     }
-    quote = resolveCurrentQuote();
-    if (!quote || !amountBuy.value) {
+    quote = await refreshQuoteBeforeSubmit();
+    if (!quote) {
       Notify.create({ type: 'negative', message: t('exchange.quoteUnavailable') });
       return;
     }
+    amountBuy.value = quote.amountBuy;
 
-    const order = await exchangeStore.submitOrder({
+    await exchangeStore.submitOrder({
       country: selectedCountry.value,
       cityId: selectedMethod.value === 'cash' ? selectedCityId.value : null,
       currencySell: selectedSellCurrency.value,
       currencyBuy: selectedBuyCurrency.value,
       amountSell: Math.round(amountSell.value),
-      amountBuy: amountBuy.value,
+      amountBuy: quote.amountBuy,
       rate: quote.rate,
       methodGet: selectedMethod.value,
     });
 
-    ordersStore.prepend(order);
+    try {
+      await ordersStore.reloadFirstPage();
+    } catch {
+      // Экран истории повторит загрузку.
+    }
     Notify.create({
       type: 'positive',
-      message:
-        order.managerAvailability?.status === 'offline'
-          ? t('order.successOffline')
-          : t('order.success'),
+      message: t('order.success'),
     });
     syncingState.value = true;
     resetFormToDefaults();
@@ -529,12 +546,10 @@ async function submitOrder() {
 
 async function shouldConfirmOfflineSubmit() {
   try {
-    await exchangeStore.refresh();
-    refreshQuoteForCurrentState();
+    return (await exchangeStore.refreshManagerAvailability()).status === 'offline';
   } catch {
     return exchangeStore.screen?.managerAvailability.status === 'offline';
   }
-  return exchangeStore.screen?.managerAvailability.status === 'offline';
 }
 
 function confirmOffline() {

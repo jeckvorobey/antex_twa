@@ -7,10 +7,11 @@ import type {
   MiniappCitiesResponse,
   MiniappExchangeScreenResponse,
   MiniappHomeResponse,
+  MiniappManagerAvailability,
   MiniappOrderCreate,
-  MiniappOrderItem,
   MiniappOrdersResponse,
   MiniappProfileResponse,
+  MiniappQuoteResponse,
 } from '@types/miniapp';
 
 export async function fetchHome() {
@@ -23,19 +24,37 @@ export async function fetchExchangeScreen() {
   return response.data;
 }
 
+/** Возвращает только актуальный режим работы менеджеров для pre-submit проверки. */
+export async function fetchManagerAvailability() {
+  const response = await api.get<MiniappManagerAvailability>('/api/miniapp/manager-availability');
+  return response.data;
+}
+
+/** Рассчитывает актуальную котировку выбранной пары перед созданием заявки. */
+export async function fetchQuote(params: {
+  currencySell: string;
+  currencyBuy: string;
+  amountSell: number;
+}) {
+  const response = await api.get<MiniappQuoteResponse>('/api/miniapp/exchange/quote', { params });
+  return response.data;
+}
+
 export async function fetchCities() {
   const response = await api.get<MiniappCitiesResponse>('/api/miniapp/cities');
   return response.data;
 }
 
-export async function fetchOrders(params: { limit?: number; offset?: number } = {}) {
-  const response = await api.get<MiniappOrdersResponse>('/api/miniapp/orders', { params });
+export async function fetchOrders(
+  params: { limit?: number; offset?: number } = {},
+  config: { signal?: AbortSignal } = {},
+) {
+  const response = await api.get<MiniappOrdersResponse>('/api/miniapp/orders', { params, ...config });
   return response.data;
 }
 
 export async function createOrder(payload: MiniappOrderCreate) {
-  const response = await api.post<MiniappOrderItem>('/api/miniapp/orders', payload);
-  return response.data;
+  await api.post('/api/miniapp/orders', payload);
 }
 
 export async function fetchProfile() {

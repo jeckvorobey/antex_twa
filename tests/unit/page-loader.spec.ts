@@ -43,7 +43,7 @@ describe('AppPageLoader', () => {
     const loader = readFileSync(loaderPath, 'utf8');
 
     expect(loader).toContain('<Transition name="app-page-loader" @after-leave="emit(\'hidden\')"');
-    expect(loader).toContain("const emit = defineEmits<{ hidden: [] }>();");
+    expect(loader).toContain('const emit = defineEmits<{ hidden: [] }>();');
     expect(loader).toContain("import logoUrl from '../../assets/images/logo.PNG'");
     expect(loader).toContain('class="app-page-loader"');
     expect(loader).toContain(':src="logoUrl"');

@@ -126,7 +126,9 @@ export const useAexStore = defineStore('aex', () => {
       ? response.items
       : response.items.filter((item) => !existingIds.has(item.id));
     referrals.value = replace ? nextItems : [...referrals.value, ...nextItems];
-    referralsOffset.value = replace ? response.items.length : referralsOffset.value + response.items.length;
+    referralsOffset.value = replace
+      ? response.items.length
+      : referralsOffset.value + response.items.length;
     referralsTotal.value = response.total;
     referralsHasMore.value = response.hasMore;
     referralsSummary.value = {
@@ -169,10 +171,7 @@ export const useAexStore = defineStore('aex', () => {
 
   const sellLoading = ref(false);
 
-  async function sellAex(
-    orderId: number,
-    amount: number,
-  ): Promise<{ success: boolean }> {
+  async function sellAex(orderId: number, amount: number): Promise<{ success: boolean }> {
     if (sellLoading.value) {
       return { success: false };
     }

@@ -67,7 +67,10 @@ describe('ATXG store transfer action', () => {
   it('sets sellLoading during transfer', async () => {
     let resolveTransfer!: (value: { success: boolean }) => void;
     vi.mocked(transferAex).mockImplementation(
-      () => new Promise((resolve) => { resolveTransfer = resolve; }),
+      () =>
+        new Promise((resolve) => {
+          resolveTransfer = resolve;
+        }),
     );
 
     const store = useAexStore();
