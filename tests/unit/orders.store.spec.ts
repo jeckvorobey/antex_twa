@@ -134,6 +134,28 @@ describe('orders store pagination', () => {
     expect(store.items.map((item) => item.id)).toEqual([9]);
   });
 
+  it('loadFirstPage supersedes early pagination and marks the store as loaded', async () => {
+    const store = useOrdersStore();
+    let resolveNextPage: ((response: MiniappOrdersResponse) => void) | undefined;
+    const nextPage = new Promise<MiniappOrdersResponse>((resolve) => {
+      resolveNextPage = resolve;
+    });
+    vi.mocked(fetchOrders)
+      .mockReturnValueOnce(nextPage)
+      .mockResolvedValueOnce(makeResponse([7], { total: 1, hasMore: false }));
+
+    const loadNextPage = store.loadNextPage();
+    await store.loadFirstPage();
+
+    expect(fetchOrders).toHaveBeenCalledTimes(2);
+    expect(store.loaded).toBe(true);
+    expect(store.items.map((item) => item.id)).toEqual([7]);
+
+    resolveNextPage!(makeResponse([1], { total: 1, hasMore: false }));
+    await loadNextPage;
+    expect(store.items.map((item) => item.id)).toEqual([7]);
+  });
+
   it('prepend moves existing order to top without increasing total', () => {
     const store = useOrdersStore();
     const first = makeOrder(1);

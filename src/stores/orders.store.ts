@@ -22,10 +22,6 @@ export const useOrdersStore = defineStore('orders', () => {
   const groups = computed(() => groupOrdersByDate(items.value));
 
   async function loadFirstPage() {
-    if (listRequest) {
-      return listRequest;
-    }
-
     await requestFirstPage('loading');
   }
 
