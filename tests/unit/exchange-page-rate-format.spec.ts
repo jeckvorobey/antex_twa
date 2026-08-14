@@ -42,7 +42,8 @@ describe('ExchangePage rate formatting', () => {
     );
     expect(source).toContain('const refreshedValidation = preliminaryValidation.value;');
     expect(source).toContain("managerAvailability.status === 'offline'");
-    expect(source).toContain("t('order.successOffline')");
+    expect(source).toContain("t('order.success')");
+    expect(source).not.toContain("t('order.successOffline')");
     expect(source).toContain('if (submitFlowPending.value)');
     expect(source).toContain(':disable="!canSubmit || submitFlowPending"');
     expect(source).toContain('@click="cancelOffline"');
@@ -53,11 +54,12 @@ describe('ExchangePage rate formatting', () => {
     );
   });
 
-  it('uses the create-order availability snapshot for the final success message', () => {
+  it('loads the first history page after a successful order without response availability', () => {
     const source = readFileSync(exchangePagePath, 'utf8');
 
-    expect(source).toContain('const order = await exchangeStore.submitOrder');
-    expect(source).toContain("order.managerAvailability?.status === 'offline'");
-    expect(source).toContain("t('order.successOffline')");
+    expect(source).toContain('await exchangeStore.submitOrder');
+    expect(source).toContain('await ordersStore.loadFirstPage();');
+    expect(source).not.toContain('ordersStore.prepend(order);');
+    expect(source).not.toContain('order.managerAvailability?.status');
   });
 });

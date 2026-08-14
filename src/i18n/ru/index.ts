@@ -226,8 +226,6 @@ export default {
     contact: 'Telegram для связи',
     contactPlaceholder: '@telegram',
     success: 'Заявка создана',
-    successOffline:
-      'Заявка принята. Менеджер обработает её после начала рабочего дня в порядке очереди.',
     offlineTitle: 'Обработаем утром',
     offlineText: 'Заявку можно создать сейчас. Менеджер вернётся к ней после начала рабочего дня.',
     offlineInlineTitle: 'Обработаем утром',

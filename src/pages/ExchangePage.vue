@@ -509,7 +509,7 @@ async function submitOrder() {
     }
     amountBuy.value = quote.amountBuy;
 
-    const order = await exchangeStore.submitOrder({
+    await exchangeStore.submitOrder({
       country: selectedCountry.value,
       cityId: selectedMethod.value === 'cash' ? selectedCityId.value : null,
       currencySell: selectedSellCurrency.value,
@@ -520,13 +520,10 @@ async function submitOrder() {
       methodGet: selectedMethod.value,
     });
 
-    ordersStore.prepend(order);
+    await ordersStore.loadFirstPage();
     Notify.create({
       type: 'positive',
-      message:
-        order.managerAvailability?.status === 'offline'
-          ? t('order.successOffline')
-          : t('order.success'),
+      message: t('order.success'),
     });
     syncingState.value = true;
     resetFormToDefaults();

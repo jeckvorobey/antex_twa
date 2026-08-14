@@ -9,7 +9,6 @@ import type {
   MiniappHomeResponse,
   MiniappManagerAvailability,
   MiniappOrderCreate,
-  MiniappOrderItem,
   MiniappOrdersResponse,
   MiniappProfileResponse,
   MiniappQuoteResponse,
@@ -52,8 +51,7 @@ export async function fetchOrders(params: { limit?: number; offset?: number } = 
 }
 
 export async function createOrder(payload: MiniappOrderCreate) {
-  const response = await api.post<MiniappOrderItem>('/api/miniapp/orders', payload);
-  return response.data;
+  await api.post('/api/miniapp/orders', payload);
 }
 
 export async function fetchProfile() {
