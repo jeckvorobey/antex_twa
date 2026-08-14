@@ -49,6 +49,44 @@ const routes: RouteRecordRaw[] = [
       },
     ],
   },
+  {
+    path: '/manager',
+    component: () => import('@layouts/ManagerLayout.vue'),
+    meta: { managerOnly: true },
+    children: [
+      { path: '', redirect: { name: 'managerChats' } },
+      {
+        path: 'chats',
+        name: 'managerChats',
+        component: () => import('@pages/manager/ManagerChatsPage.vue'),
+        meta: { managerOnly: true, title: 'Чаты' },
+      },
+      {
+        path: 'chats/:conversationId',
+        name: 'managerChat',
+        component: () => import('@pages/manager/ManagerChatPage.vue'),
+        meta: { managerOnly: true, title: 'Диалог' },
+      },
+      {
+        path: 'orders',
+        name: 'managerOrders',
+        component: () => import('@pages/manager/ManagerOrdersPage.vue'),
+        meta: { managerOnly: true, title: 'Заявки' },
+      },
+      {
+        path: 'orders/:orderId',
+        name: 'managerOrder',
+        component: () => import('@pages/manager/ManagerOrderPage.vue'),
+        meta: { managerOnly: true, title: 'Заявка' },
+      },
+      {
+        path: 'profile',
+        name: 'managerProfile',
+        component: () => import('@pages/manager/ManagerProfilePage.vue'),
+        meta: { managerOnly: true, title: 'Профиль' },
+      },
+    ],
+  },
   { path: '/:catchAll(.*)*', redirect: '/' },
 ];
 
