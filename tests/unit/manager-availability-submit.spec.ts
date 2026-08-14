@@ -135,6 +135,9 @@ describe('ExchangePage manager availability submit flow', () => {
       if (url === '/api/miniapp/cities') return { data: { items: [city] } };
       if (url === '/api/miniapp/manager-availability') return { data: availability('offline') };
       if (url === '/api/miniapp/exchange/quote') return { data: refreshedQuote() };
+      if (url === '/api/miniapp/orders') {
+        return { data: { items: [], limit: 10, offset: 0, total: 0, hasMore: false } };
+      }
       if (url === '/api/miniapp/aex/referral') return { data: { programConfig: {} } };
       if (url === '/api/aex/wallet') return { data: { balanceAvailable: 0 } };
       throw new Error(`Unexpected GET ${url}`);
@@ -197,7 +200,7 @@ describe('ExchangePage manager availability submit flow', () => {
             offlineText: 'Подтвердите',
             offlineInlineTitle: 'Офлайн',
             offlineInlineNotice: 'Подтвердите',
-            successOffline: 'Принято',
+            success: 'Заявка создана',
           },
         },
       },
@@ -246,6 +249,13 @@ describe('ExchangePage manager availability submit flow', () => {
     expect(api.get).toHaveBeenCalledWith('/api/miniapp/exchange/quote', {
       params: { currencySell: 'RUB', currencyBuy: 'GEL', amountSell: 30000 },
     });
+    expect(api.get).toHaveBeenCalledWith(
+      '/api/miniapp/orders',
+      expect.objectContaining({
+        params: { limit: 10, offset: 0 },
+        signal: expect.any(AbortSignal),
+      }),
+    );
   });
 
   it.each(['qrcode', 'bank_account', 'pay_services'] as const)(
@@ -319,6 +329,9 @@ describe('OrderFormSheet manager availability submit flow', () => {
       if (url === '/api/miniapp/cities') return { data: { items: [city] } };
       if (url === '/api/miniapp/manager-availability') return { data: availability('offline') };
       if (url === '/api/miniapp/exchange/quote') return { data: refreshedQuote() };
+      if (url === '/api/miniapp/orders') {
+        return { data: { items: [], limit: 10, offset: 0, total: 0, hasMore: false } };
+      }
       throw new Error(`Unexpected GET ${url}`);
     });
     vi.mocked(api.post).mockResolvedValue({ data: {} });
@@ -385,5 +398,12 @@ describe('OrderFormSheet manager availability submit flow', () => {
     expect(api.get).toHaveBeenCalledWith('/api/miniapp/exchange/quote', {
       params: { currencySell: 'RUB', currencyBuy: 'GEL', amountSell: 30000 },
     });
+    expect(api.get).toHaveBeenCalledWith(
+      '/api/miniapp/orders',
+      expect.objectContaining({
+        params: { limit: 10, offset: 0 },
+        signal: expect.any(AbortSignal),
+      }),
+    );
   });
 });

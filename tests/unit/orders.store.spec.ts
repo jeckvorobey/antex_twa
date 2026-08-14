@@ -56,7 +56,10 @@ describe('orders store pagination', () => {
 
     await store.refresh();
 
-    expect(fetchOrders).toHaveBeenCalledWith({ limit: 10, offset: 0 });
+    expect(fetchOrders).toHaveBeenCalledWith(
+      { limit: 10, offset: 0 },
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    );
     expect(store.items.map((item) => item.id)).toEqual([1, 2]);
     expect(store.offset).toBe(2);
     expect(store.hasMore).toBe(false);
@@ -73,9 +76,141 @@ describe('orders store pagination', () => {
     await store.loadNextPage();
 
     expect(fetchOrders).toHaveBeenCalledTimes(2);
-    expect(fetchOrders).toHaveBeenNthCalledWith(2, { limit: 10, offset: 2 });
+    expect(fetchOrders).toHaveBeenNthCalledWith(
+      2,
+      { limit: 10, offset: 2 },
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    );
     expect(store.items.map((item) => item.id)).toEqual([1, 2, 3]);
     expect(store.hasMore).toBe(false);
+  });
+
+  it('reloadFirstPage immediately fetches a fresh page and ignores an older active response', async () => {
+    const store = useOrdersStore();
+    let resolveStaleRequest: ((response: MiniappOrdersResponse) => void) | undefined;
+    let resolveFreshRequest: ((response: MiniappOrdersResponse) => void) | undefined;
+    const staleRequest = new Promise<MiniappOrdersResponse>((resolve) => {
+      resolveStaleRequest = resolve;
+    });
+    const freshRequest = new Promise<MiniappOrdersResponse>((resolve) => {
+      resolveFreshRequest = resolve;
+    });
+    vi.mocked(fetchOrders)
+      .mockReturnValueOnce(staleRequest)
+      .mockReturnValueOnce(freshRequest);
+
+    const firstLoad = store.loadFirstPage();
+    const reload = store.reloadFirstPage();
+    expect(fetchOrders).toHaveBeenCalledTimes(2);
+
+    resolveFreshRequest!(makeResponse([2], { total: 1, hasMore: false }));
+    await reload;
+    resolveStaleRequest!(makeResponse([1], { total: 1, hasMore: false }));
+    await firstLoad;
+
+    expect(fetchOrders).toHaveBeenCalledTimes(2);
+    expect(fetchOrders).toHaveBeenLastCalledWith(
+      { limit: 10, offset: 0 },
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    );
+    expect(store.items.map((item) => item.id)).toEqual([2]);
+  });
+
+  it('refresh immediately requests the first page after active pagination', async () => {
+    const store = useOrdersStore();
+    let resolveNextPage: ((response: MiniappOrdersResponse) => void) | undefined;
+    let resolveFreshPage: ((response: MiniappOrdersResponse) => void) | undefined;
+    const nextPage = new Promise<MiniappOrdersResponse>((resolve) => {
+      resolveNextPage = resolve;
+    });
+    const freshPage = new Promise<MiniappOrdersResponse>((resolve) => {
+      resolveFreshPage = resolve;
+    });
+    vi.mocked(fetchOrders)
+      .mockReturnValueOnce(nextPage)
+      .mockReturnValueOnce(freshPage);
+
+    const loadNextPage = store.loadNextPage();
+    const refresh = store.refresh();
+    expect(fetchOrders).toHaveBeenCalledTimes(2);
+
+    resolveFreshPage!(makeResponse([9], { total: 1, hasMore: false }));
+    await refresh;
+    resolveNextPage!(makeResponse([1], { offset: 0, total: 1, hasMore: false }));
+    await loadNextPage;
+
+    expect(fetchOrders).toHaveBeenCalledTimes(2);
+    expect(fetchOrders).toHaveBeenLastCalledWith(
+      { limit: 10, offset: 0 },
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    );
+    expect(store.items.map((item) => item.id)).toEqual([9]);
+  });
+
+  it('refresh cancels active pagination so infinite scroll can complete', async () => {
+    const store = useOrdersStore();
+    let paginationCompleted = false;
+    vi.mocked(fetchOrders)
+      .mockImplementationOnce((_, config) =>
+        new Promise((_, reject) => {
+          config?.signal?.addEventListener('abort', () => reject(new Error('cancelled')));
+        }),
+      )
+      .mockResolvedValueOnce(makeResponse([9], { total: 1, hasMore: false }));
+
+    const loadNextPage = store.loadNextPage().then(() => {
+      paginationCompleted = true;
+    });
+
+    await store.refresh();
+    await Promise.resolve();
+
+    expect(paginationCompleted).toBe(true);
+    await loadNextPage;
+  });
+
+  it('reloadFirstPage clears an interrupted refresh indicator', async () => {
+    const store = useOrdersStore();
+    let resolveRefresh: ((response: MiniappOrdersResponse) => void) | undefined;
+    const pendingRefresh = new Promise<MiniappOrdersResponse>((resolve) => {
+      resolveRefresh = resolve;
+    });
+    vi.mocked(fetchOrders)
+      .mockReturnValueOnce(pendingRefresh)
+      .mockResolvedValueOnce(makeResponse([8], { total: 1, hasMore: false }));
+
+    const refresh = store.refresh();
+    expect(store.refreshing).toBe(true);
+
+    await store.reloadFirstPage();
+
+    expect(store.refreshing).toBe(false);
+    expect(store.loading).toBe(false);
+
+    resolveRefresh!(makeResponse([1], { total: 1, hasMore: false }));
+    await refresh;
+  });
+
+  it('loadFirstPage supersedes early pagination and marks the store as loaded', async () => {
+    const store = useOrdersStore();
+    let resolveNextPage: ((response: MiniappOrdersResponse) => void) | undefined;
+    const nextPage = new Promise<MiniappOrdersResponse>((resolve) => {
+      resolveNextPage = resolve;
+    });
+    vi.mocked(fetchOrders)
+      .mockReturnValueOnce(nextPage)
+      .mockResolvedValueOnce(makeResponse([7], { total: 1, hasMore: false }));
+
+    const loadNextPage = store.loadNextPage();
+    await store.loadFirstPage();
+
+    expect(fetchOrders).toHaveBeenCalledTimes(2);
+    expect(store.loaded).toBe(true);
+    expect(store.items.map((item) => item.id)).toEqual([7]);
+
+    resolveNextPage!(makeResponse([1], { total: 1, hasMore: false }));
+    await loadNextPage;
+    expect(store.items.map((item) => item.id)).toEqual([7]);
   });
 
   it('prepend moves existing order to top without increasing total', () => {

@@ -468,7 +468,7 @@ async function submit() {
     }
     amountBuy.value = quote.amountBuy;
 
-    const order = await exchangeStore.submitOrder({
+    await exchangeStore.submitOrder({
       country: selectedCountry.value,
       cityId: selectedMethod.value === 'cash' ? selectedCityId.value : null,
       currencySell: selectedSellCurrency.value,
@@ -479,13 +479,14 @@ async function submit() {
       methodGet: selectedMethod.value,
     });
 
-    ordersStore.prepend(order);
+    try {
+      await ordersStore.reloadFirstPage();
+    } catch {
+      // Экран истории повторит загрузку.
+    }
     Notify.create({
       type: 'positive',
-      message:
-        order.managerAvailability?.status === 'offline'
-          ? t('order.successOffline')
-          : t('order.success'),
+      message: t('order.success'),
     });
     emit('update:modelValue', false);
     await router.push({ name: 'history' });

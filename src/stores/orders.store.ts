@@ -16,61 +16,113 @@ export const useOrdersStore = defineStore('orders', () => {
   const hasMore = ref(true);
   const offset = ref(0);
   const total = ref(0);
+  let listRequest: Promise<void> | null = null;
+  let listRequestController: AbortController | null = null;
+  let latestRequestId = 0;
 
   const groups = computed(() => groupOrdersByDate(items.value));
 
   async function loadFirstPage() {
-    if (loading.value) {
-      return;
-    }
+    await requestFirstPage('loading');
+  }
 
-    loading.value = true;
+  /** Запускает запрос первой страницы; устаревший ответ не меняет состояние списка. */
+  async function requestFirstPage(state: 'loading' | 'refreshing') {
+    listRequestController?.abort();
+    const controller = new AbortController();
+    const requestId = ++latestRequestId;
+    const request = (async () => {
+      loading.value = state === 'loading';
+      refreshing.value = state === 'refreshing';
+      try {
+        const response = await fetchOrders({ limit: PAGE_LIMIT, offset: 0 }, { signal: controller.signal });
+        if (requestId !== latestRequestId) {
+          return;
+        }
+        items.value = response.items;
+        offset.value = response.items.length;
+        total.value = response.total;
+        hasMore.value = response.hasMore;
+      } catch (error) {
+        if (!controller.signal.aborted) {
+          throw error;
+        }
+      } finally {
+        if (requestId === latestRequestId && state === 'loading') {
+          loaded.value = true;
+          loading.value = false;
+        }
+        if (requestId === latestRequestId && state === 'refreshing') {
+          refreshing.value = false;
+        }
+      }
+    })();
+    listRequest = request;
+    listRequestController = controller;
     try {
-      const response = await fetchOrders({ limit: PAGE_LIMIT, offset: 0 });
-      items.value = response.items;
-      offset.value = response.items.length;
-      total.value = response.total;
-      hasMore.value = response.hasMore;
+      await request;
     } finally {
-      loaded.value = true;
-      loading.value = false;
+      if (listRequest === request) {
+        listRequest = null;
+      }
+      if (listRequestController === controller) {
+        listRequestController = null;
+      }
     }
   }
 
+  /** Немедленно загружает актуальную первую страницу и вытесняет устаревший запрос списка. */
+  async function reloadFirstPage() {
+    await requestFirstPage('loading');
+  }
+
   async function loadNextPage() {
-    if (loading.value || loadingMore.value || !hasMore.value) {
+    if (listRequest || !hasMore.value) {
       return;
     }
 
-    loadingMore.value = true;
+    const controller = new AbortController();
+    const requestId = ++latestRequestId;
+    const request = (async () => {
+      loadingMore.value = true;
+      try {
+        const response = await fetchOrders(
+          { limit: PAGE_LIMIT, offset: offset.value },
+          { signal: controller.signal },
+        );
+        if (requestId !== latestRequestId) {
+          return;
+        }
+        const existingIds = new Set(items.value.map((item) => item.id));
+        const nextItems = response.items.filter((item) => !existingIds.has(item.id));
+        items.value = [...items.value, ...nextItems];
+        offset.value += response.items.length;
+        total.value = response.total;
+        hasMore.value = response.hasMore;
+      } catch (error) {
+        if (!controller.signal.aborted) {
+          throw error;
+        }
+      } finally {
+        loadingMore.value = false;
+      }
+    })();
+    listRequest = request;
+    listRequestController = controller;
     try {
-      const response = await fetchOrders({ limit: PAGE_LIMIT, offset: offset.value });
-      const existingIds = new Set(items.value.map((item) => item.id));
-      const nextItems = response.items.filter((item) => !existingIds.has(item.id));
-      items.value = [...items.value, ...nextItems];
-      offset.value += response.items.length;
-      total.value = response.total;
-      hasMore.value = response.hasMore;
+      await request;
     } finally {
-      loadingMore.value = false;
+      if (listRequest === request) {
+        listRequest = null;
+      }
+      if (listRequestController === controller) {
+        listRequestController = null;
+      }
     }
   }
 
   async function refresh() {
-    if (loading.value || refreshing.value) {
-      return;
-    }
-
-    refreshing.value = true;
-    try {
-      const response = await fetchOrders({ limit: PAGE_LIMIT, offset: 0 });
-      items.value = response.items;
-      offset.value = response.items.length;
-      total.value = response.total;
-      hasMore.value = response.hasMore;
-    } finally {
-      refreshing.value = false;
-    }
+    await requestFirstPage('refreshing');
   }
 
   function prepend(order: MiniappOrderItem) {
@@ -97,6 +149,7 @@ export const useOrdersStore = defineStore('orders', () => {
     total,
     groups,
     loadFirstPage,
+    reloadFirstPage,
     loadNextPage,
     refresh,
     prepend,
