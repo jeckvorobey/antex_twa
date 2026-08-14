@@ -14,8 +14,7 @@
         v-model="chatStore.query"
         borderless
         dense
-        clearable
-        debounce="250"
+        :debounce="250"
         placeholder="Поиск по имени или @username"
         class="manager-search-input q-px-md"
         @update:model-value="reload"
