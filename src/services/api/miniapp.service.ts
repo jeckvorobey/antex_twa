@@ -12,6 +12,7 @@ import type {
   MiniappOrderItem,
   MiniappOrdersResponse,
   MiniappProfileResponse,
+  MiniappQuoteResponse,
 } from '@types/miniapp';
 
 export async function fetchHome() {
@@ -27,6 +28,16 @@ export async function fetchExchangeScreen() {
 /** Возвращает только актуальный режим работы менеджеров для pre-submit проверки. */
 export async function fetchManagerAvailability() {
   const response = await api.get<MiniappManagerAvailability>('/api/miniapp/manager-availability');
+  return response.data;
+}
+
+/** Рассчитывает актуальную котировку выбранной пары перед созданием заявки. */
+export async function fetchQuote(params: {
+  currencySell: string;
+  currencyBuy: string;
+  amountSell: number;
+}) {
+  const response = await api.get<MiniappQuoteResponse>('/api/miniapp/exchange/quote', { params });
   return response.data;
 }
 

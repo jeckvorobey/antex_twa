@@ -6,6 +6,7 @@ import {
   fetchCities,
   fetchExchangeScreen,
   fetchManagerAvailability,
+  fetchQuote,
 } from '@services/api/miniapp.service';
 import type {
   MiniappCity,
@@ -104,6 +105,16 @@ export const useExchangeStore = defineStore('exchange', () => {
     return quote.value;
   }
 
+  /** Обновляет только quote выбранной пары, не заменяя exchange-screen и draft формы. */
+  async function refreshQuote(params: {
+    currencySell: string;
+    currencyBuy: string;
+    amountSell: number;
+  }) {
+    quote.value = await fetchQuote(params);
+    return quote.value;
+  }
+
   async function submitOrder(payload: MiniappOrderCreate) {
     submitting.value = true;
     try {
@@ -125,6 +136,7 @@ export const useExchangeStore = defineStore('exchange', () => {
     refresh,
     refreshManagerAvailability,
     recalculateQuote,
+    refreshQuote,
     submitOrder,
   };
 });

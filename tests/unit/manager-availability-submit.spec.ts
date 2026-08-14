@@ -98,6 +98,15 @@ const defaultExchangeScreen = () => ({
   },
 });
 
+const refreshedQuote = () => ({
+  ...exchangeScreen().quote,
+  amountBuy: 870,
+  rate: 0.029,
+  rateDisplay: '34.48',
+  rateText: '1 GEL = 34.48 RUB',
+  updatedAt: '2026-08-14T01:00:00+00:00',
+});
+
 const city = {
   id: 7,
   name: 'Tbilisi',
@@ -125,6 +134,7 @@ describe('ExchangePage manager availability submit flow', () => {
       }
       if (url === '/api/miniapp/cities') return { data: { items: [city] } };
       if (url === '/api/miniapp/manager-availability') return { data: availability('offline') };
+      if (url === '/api/miniapp/exchange/quote') return { data: refreshedQuote() };
       if (url === '/api/miniapp/aex/referral') return { data: { programConfig: {} } };
       if (url === '/api/aex/wallet') return { data: { balanceAvailable: 0 } };
       throw new Error(`Unexpected GET ${url}`);
@@ -138,8 +148,8 @@ describe('ExchangePage manager availability submit flow', () => {
         currencySell: 'RUB',
         amountSell: 30000,
         currencyBuy: 'GEL',
-        amountBuy: 900,
-        rate: 0.03,
+        amountBuy: 870,
+        rate: 0.029,
         rateDisplay: '33.33',
         rateText: '1 GEL = 33.33 RUB',
         status: 0,
@@ -229,9 +239,12 @@ describe('ExchangePage manager availability submit flow', () => {
       currencySell: 'RUB',
       currencyBuy: 'GEL',
       amountSell: 30000,
-      amountBuy: 900,
-      rate: 0.03,
+      amountBuy: 870,
+      rate: 0.029,
       methodGet: 'cash',
+    });
+    expect(api.get).toHaveBeenCalledWith('/api/miniapp/exchange/quote', {
+      params: { currencySell: 'RUB', currencyBuy: 'GEL', amountSell: 30000 },
     });
   });
 
@@ -242,6 +255,7 @@ describe('ExchangePage manager availability submit flow', () => {
         if (url === '/api/miniapp/exchange') return { data: exchangeScreen() };
         if (url === '/api/miniapp/cities') return { data: { items: [city] } };
         if (url === '/api/miniapp/manager-availability') return { data: availability('working') };
+        if (url === '/api/miniapp/exchange/quote') return { data: refreshedQuote() };
         if (url === '/api/miniapp/aex/referral') return { data: { programConfig: {} } };
         if (url === '/api/aex/wallet') return { data: { balanceAvailable: 0 } };
         throw new Error(`Unexpected GET ${url}`);
@@ -288,8 +302,8 @@ describe('ExchangePage manager availability submit flow', () => {
         currencySell: 'RUB',
         currencyBuy: 'GEL',
         amountSell: 30000,
-        amountBuy: 900,
-        rate: 0.03,
+        amountBuy: 870,
+        rate: 0.029,
         methodGet: method,
       });
     },
@@ -304,6 +318,7 @@ describe('OrderFormSheet manager availability submit flow', () => {
       if (url === '/api/miniapp/exchange') return { data: exchangeScreen() };
       if (url === '/api/miniapp/cities') return { data: { items: [city] } };
       if (url === '/api/miniapp/manager-availability') return { data: availability('offline') };
+      if (url === '/api/miniapp/exchange/quote') return { data: refreshedQuote() };
       throw new Error(`Unexpected GET ${url}`);
     });
     vi.mocked(api.post).mockResolvedValue({ data: {} });
@@ -363,9 +378,12 @@ describe('OrderFormSheet manager availability submit flow', () => {
       currencySell: 'RUB',
       currencyBuy: 'GEL',
       amountSell: 30000,
-      amountBuy: 900,
-      rate: 0.03,
+      amountBuy: 870,
+      rate: 0.029,
       methodGet: 'cash',
+    });
+    expect(api.get).toHaveBeenCalledWith('/api/miniapp/exchange/quote', {
+      params: { currencySell: 'RUB', currencyBuy: 'GEL', amountSell: 30000 },
     });
   });
 });

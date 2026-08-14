@@ -368,6 +368,7 @@ function selectPair(pair: MiniappRateCard) {
   void refreshQuoteForCurrentState();
 }
 
+/** Пересчитывает локальный preview котировки после изменения полей формы. */
 function refreshQuoteForCurrentState() {
   if (!amountSell.value || amountSell.value <= 0) {
     amountBuy.value = null;
@@ -407,6 +408,21 @@ function refreshQuoteForCurrentState() {
   amountSell.value = quote.amountSell;
   amountBuy.value = quote.amountBuy;
   syncingState.value = false;
+}
+
+/** Запрашивает серверную котировку выбранной пары непосредственно перед POST. */
+async function refreshQuoteBeforeSubmit() {
+  if (isTokenCurrency(selectedSellCurrency.value)) {
+    refreshQuoteForCurrentState();
+    return;
+  }
+
+  const quote = await exchangeStore.refreshQuote({
+    currencySell: selectedSellCurrency.value,
+    currencyBuy: selectedBuyCurrency.value,
+    amountSell: Math.round(amountSell.value ?? 0),
+  });
+  amountBuy.value = quote.amountBuy;
 }
 
 function getDefaultAmountSell(currencySell: string) {
@@ -487,6 +503,7 @@ async function submitOrder() {
     if (!canSubmit.value || !selectedCountry.value) {
       return;
     }
+    await refreshQuoteBeforeSubmit();
     quote = resolveCurrentQuote();
     if (!quote || !amountBuy.value) {
       Notify.create({ type: 'negative', message: t('exchange.quoteUnavailable') });
