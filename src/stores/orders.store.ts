@@ -16,60 +16,103 @@ export const useOrdersStore = defineStore('orders', () => {
   const hasMore = ref(true);
   const offset = ref(0);
   const total = ref(0);
+  let listRequest: Promise<void> | null = null;
 
   const groups = computed(() => groupOrdersByDate(items.value));
 
   async function loadFirstPage() {
-    if (loading.value) {
-      return;
+    if (listRequest) {
+      return listRequest;
     }
 
-    loading.value = true;
+    const request = (async () => {
+      loading.value = true;
+      try {
+        const response = await fetchOrders({ limit: PAGE_LIMIT, offset: 0 });
+        items.value = response.items;
+        offset.value = response.items.length;
+        total.value = response.total;
+        hasMore.value = response.hasMore;
+      } finally {
+        loaded.value = true;
+        loading.value = false;
+      }
+    })();
+    listRequest = request;
     try {
-      const response = await fetchOrders({ limit: PAGE_LIMIT, offset: 0 });
-      items.value = response.items;
-      offset.value = response.items.length;
-      total.value = response.total;
-      hasMore.value = response.hasMore;
+      await request;
     } finally {
-      loaded.value = true;
-      loading.value = false;
+      if (listRequest === request) {
+        listRequest = null;
+      }
     }
   }
 
+  /** Загружает актуальную первую страницу после завершения текущего запроса списка. */
+  async function reloadFirstPage() {
+    while (listRequest) {
+      try {
+        await listRequest;
+      } catch {
+        // Ошибка предыдущей загрузки не должна отменять принудительное обновление.
+      }
+    }
+    await loadFirstPage();
+  }
+
   async function loadNextPage() {
-    if (loading.value || loadingMore.value || !hasMore.value) {
+    if (listRequest || !hasMore.value) {
       return;
     }
 
-    loadingMore.value = true;
+    const request = (async () => {
+      loadingMore.value = true;
+      try {
+        const response = await fetchOrders({ limit: PAGE_LIMIT, offset: offset.value });
+        const existingIds = new Set(items.value.map((item) => item.id));
+        const nextItems = response.items.filter((item) => !existingIds.has(item.id));
+        items.value = [...items.value, ...nextItems];
+        offset.value += response.items.length;
+        total.value = response.total;
+        hasMore.value = response.hasMore;
+      } finally {
+        loadingMore.value = false;
+      }
+    })();
+    listRequest = request;
     try {
-      const response = await fetchOrders({ limit: PAGE_LIMIT, offset: offset.value });
-      const existingIds = new Set(items.value.map((item) => item.id));
-      const nextItems = response.items.filter((item) => !existingIds.has(item.id));
-      items.value = [...items.value, ...nextItems];
-      offset.value += response.items.length;
-      total.value = response.total;
-      hasMore.value = response.hasMore;
+      await request;
     } finally {
-      loadingMore.value = false;
+      if (listRequest === request) {
+        listRequest = null;
+      }
     }
   }
 
   async function refresh() {
-    if (loading.value || refreshing.value) {
-      return;
+    if (listRequest) {
+      return listRequest;
     }
 
-    refreshing.value = true;
+    const request = (async () => {
+      refreshing.value = true;
+      try {
+        const response = await fetchOrders({ limit: PAGE_LIMIT, offset: 0 });
+        items.value = response.items;
+        offset.value = response.items.length;
+        total.value = response.total;
+        hasMore.value = response.hasMore;
+      } finally {
+        refreshing.value = false;
+      }
+    })();
+    listRequest = request;
     try {
-      const response = await fetchOrders({ limit: PAGE_LIMIT, offset: 0 });
-      items.value = response.items;
-      offset.value = response.items.length;
-      total.value = response.total;
-      hasMore.value = response.hasMore;
+      await request;
     } finally {
-      refreshing.value = false;
+      if (listRequest === request) {
+        listRequest = null;
+      }
     }
   }
 
@@ -97,6 +140,7 @@ export const useOrdersStore = defineStore('orders', () => {
     total,
     groups,
     loadFirstPage,
+    reloadFirstPage,
     loadNextPage,
     refresh,
     prepend,

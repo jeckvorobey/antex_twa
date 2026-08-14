@@ -521,7 +521,7 @@ async function submitOrder() {
     });
 
     try {
-      await ordersStore.loadFirstPage();
+      await ordersStore.reloadFirstPage();
     } catch {
       // Экран истории повторит загрузку.
     }

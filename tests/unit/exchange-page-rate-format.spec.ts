@@ -59,7 +59,7 @@ describe('ExchangePage rate formatting', () => {
     const source = readFileSync(exchangePagePath, 'utf8');
 
     expect(source).toContain('await exchangeStore.submitOrder');
-    expect(source).toContain('await ordersStore.loadFirstPage();');
+    expect(source).toContain('await ordersStore.reloadFirstPage();');
     expect(source).not.toContain('ordersStore.prepend(order);');
     expect(source).not.toContain('order.managerAvailability?.status');
   });
@@ -69,7 +69,7 @@ describe('ExchangePage rate formatting', () => {
       const source = readFileSync(path, 'utf8');
 
       expect(source).toContain(
-        'try {\n      await ordersStore.loadFirstPage();\n    } catch {\n      // Экран истории повторит загрузку.',
+        'try {\n      await ordersStore.reloadFirstPage();\n    } catch {\n      // Экран истории повторит загрузку.',
       );
     }
   });

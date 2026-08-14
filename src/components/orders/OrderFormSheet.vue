@@ -480,7 +480,7 @@ async function submit() {
     });
 
     try {
-      await ordersStore.loadFirstPage();
+      await ordersStore.reloadFirstPage();
     } catch {
       // Экран истории повторит загрузку.
     }
