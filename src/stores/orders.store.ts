@@ -17,6 +17,7 @@ export const useOrdersStore = defineStore('orders', () => {
   const offset = ref(0);
   const total = ref(0);
   let listRequest: Promise<void> | null = null;
+  let latestRequestId = 0;
 
   const groups = computed(() => groupOrdersByDate(items.value));
 
@@ -25,17 +26,32 @@ export const useOrdersStore = defineStore('orders', () => {
       return listRequest;
     }
 
+    await requestFirstPage('loading');
+  }
+
+  /** Запускает запрос первой страницы; устаревший ответ не меняет состояние списка. */
+  async function requestFirstPage(state: 'loading' | 'refreshing') {
+    const requestId = ++latestRequestId;
     const request = (async () => {
-      loading.value = true;
+      loading.value = state === 'loading';
+      refreshing.value = state === 'refreshing';
       try {
         const response = await fetchOrders({ limit: PAGE_LIMIT, offset: 0 });
+        if (requestId !== latestRequestId) {
+          return;
+        }
         items.value = response.items;
         offset.value = response.items.length;
         total.value = response.total;
         hasMore.value = response.hasMore;
       } finally {
-        loaded.value = true;
-        loading.value = false;
+        if (requestId === latestRequestId && state === 'loading') {
+          loaded.value = true;
+          loading.value = false;
+        }
+        if (requestId === latestRequestId && state === 'refreshing') {
+          refreshing.value = false;
+        }
       }
     })();
     listRequest = request;
@@ -48,16 +64,9 @@ export const useOrdersStore = defineStore('orders', () => {
     }
   }
 
-  /** Загружает актуальную первую страницу после завершения текущего запроса списка. */
+  /** Немедленно загружает актуальную первую страницу и вытесняет устаревший запрос списка. */
   async function reloadFirstPage() {
-    while (listRequest) {
-      try {
-        await listRequest;
-      } catch {
-        // Ошибка предыдущей загрузки не должна отменять принудительное обновление.
-      }
-    }
-    await loadFirstPage();
+    await requestFirstPage('loading');
   }
 
   async function loadNextPage() {
@@ -65,10 +74,14 @@ export const useOrdersStore = defineStore('orders', () => {
       return;
     }
 
+    const requestId = ++latestRequestId;
     const request = (async () => {
       loadingMore.value = true;
       try {
         const response = await fetchOrders({ limit: PAGE_LIMIT, offset: offset.value });
+        if (requestId !== latestRequestId) {
+          return;
+        }
         const existingIds = new Set(items.value.map((item) => item.id));
         const nextItems = response.items.filter((item) => !existingIds.has(item.id));
         items.value = [...items.value, ...nextItems];
@@ -90,31 +103,7 @@ export const useOrdersStore = defineStore('orders', () => {
   }
 
   async function refresh() {
-    if (listRequest) {
-      await reloadFirstPage();
-      return;
-    }
-
-    const request = (async () => {
-      refreshing.value = true;
-      try {
-        const response = await fetchOrders({ limit: PAGE_LIMIT, offset: 0 });
-        items.value = response.items;
-        offset.value = response.items.length;
-        total.value = response.total;
-        hasMore.value = response.hasMore;
-      } finally {
-        refreshing.value = false;
-      }
-    })();
-    listRequest = request;
-    try {
-      await request;
-    } finally {
-      if (listRequest === request) {
-        listRequest = null;
-      }
-    }
+    await requestFirstPage('refreshing');
   }
 
   function prepend(order: MiniappOrderItem) {

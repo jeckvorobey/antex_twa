@@ -78,44 +78,56 @@ describe('orders store pagination', () => {
     expect(store.hasMore).toBe(false);
   });
 
-  it('reloadFirstPage waits for an active request and then fetches a fresh first page', async () => {
+  it('reloadFirstPage immediately fetches a fresh page and ignores an older active response', async () => {
     const store = useOrdersStore();
-    let resolveActiveRequest: ((response: MiniappOrdersResponse) => void) | undefined;
-    const activeRequest = new Promise<MiniappOrdersResponse>((resolve) => {
-      resolveActiveRequest = resolve;
+    let resolveStaleRequest: ((response: MiniappOrdersResponse) => void) | undefined;
+    let resolveFreshRequest: ((response: MiniappOrdersResponse) => void) | undefined;
+    const staleRequest = new Promise<MiniappOrdersResponse>((resolve) => {
+      resolveStaleRequest = resolve;
+    });
+    const freshRequest = new Promise<MiniappOrdersResponse>((resolve) => {
+      resolveFreshRequest = resolve;
     });
     vi.mocked(fetchOrders)
-      .mockReturnValueOnce(activeRequest)
-      .mockResolvedValueOnce(makeResponse([2], { total: 1, hasMore: false }));
+      .mockReturnValueOnce(staleRequest)
+      .mockReturnValueOnce(freshRequest);
 
     const firstLoad = store.loadFirstPage();
     const reload = store.reloadFirstPage();
-    expect(fetchOrders).toHaveBeenCalledTimes(1);
+    expect(fetchOrders).toHaveBeenCalledTimes(2);
 
-    resolveActiveRequest!(makeResponse([1], { total: 1, hasMore: false }));
-    await Promise.all([firstLoad, reload]);
+    resolveFreshRequest!(makeResponse([2], { total: 1, hasMore: false }));
+    await reload;
+    resolveStaleRequest!(makeResponse([1], { total: 1, hasMore: false }));
+    await firstLoad;
 
     expect(fetchOrders).toHaveBeenCalledTimes(2);
     expect(fetchOrders).toHaveBeenLastCalledWith({ limit: 10, offset: 0 });
     expect(store.items.map((item) => item.id)).toEqual([2]);
   });
 
-  it('refresh queues a first-page request after active pagination', async () => {
+  it('refresh immediately requests the first page after active pagination', async () => {
     const store = useOrdersStore();
     let resolveNextPage: ((response: MiniappOrdersResponse) => void) | undefined;
+    let resolveFreshPage: ((response: MiniappOrdersResponse) => void) | undefined;
     const nextPage = new Promise<MiniappOrdersResponse>((resolve) => {
       resolveNextPage = resolve;
     });
+    const freshPage = new Promise<MiniappOrdersResponse>((resolve) => {
+      resolveFreshPage = resolve;
+    });
     vi.mocked(fetchOrders)
       .mockReturnValueOnce(nextPage)
-      .mockResolvedValueOnce(makeResponse([9], { total: 1, hasMore: false }));
+      .mockReturnValueOnce(freshPage);
 
     const loadNextPage = store.loadNextPage();
     const refresh = store.refresh();
-    expect(fetchOrders).toHaveBeenCalledTimes(1);
+    expect(fetchOrders).toHaveBeenCalledTimes(2);
 
+    resolveFreshPage!(makeResponse([9], { total: 1, hasMore: false }));
+    await refresh;
     resolveNextPage!(makeResponse([1], { offset: 0, total: 1, hasMore: false }));
-    await Promise.all([loadNextPage, refresh]);
+    await loadNextPage;
 
     expect(fetchOrders).toHaveBeenCalledTimes(2);
     expect(fetchOrders).toHaveBeenLastCalledWith({ limit: 10, offset: 0 });
