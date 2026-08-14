@@ -13,12 +13,14 @@ vi.mock('@services/api/miniapp.service', () => ({
   fetchCities: vi.fn(),
   fetchExchangeScreen: vi.fn(),
   fetchManagerAvailability: vi.fn(),
+  fetchQuote: vi.fn(),
 }));
 
 import {
   fetchCities,
   fetchExchangeScreen,
   fetchManagerAvailability,
+  fetchQuote,
 } from '@services/api/miniapp.service';
 
 function makeQuote(params: {
@@ -218,7 +220,7 @@ describe('exchange store', () => {
     expect(store.quote).toBeNull();
   });
 
-  it('refreshes only manager availability and deduplicates concurrent requests', async () => {
+  it('returns manager availability snapshot and deduplicates concurrent requests', async () => {
     const store = useExchangeStore();
     vi.mocked(fetchExchangeScreen).mockResolvedValue(makeScreen());
     vi.mocked(fetchCities).mockResolvedValue({ items: makeCities() });
@@ -241,12 +243,39 @@ describe('exchange store', () => {
     expect(fetchManagerAvailability).toHaveBeenCalledTimes(1);
     expect(fetchExchangeScreen).toHaveBeenCalledTimes(1);
     resolveAvailability?.(makeManagerAvailability('offline'));
-    await Promise.all([firstRefresh, secondRefresh]);
+    const [firstAvailability, secondAvailability] = await Promise.all([
+      firstRefresh,
+      secondRefresh,
+    ]);
 
     expect(store.screen).toBe(initialScreen);
-    expect(store.screen?.managerAvailability.status).toBe('offline');
+    expect(firstAvailability.status).toBe('offline');
+    expect(secondAvailability.status).toBe('offline');
+    expect(store.screen?.managerAvailability).toBeUndefined();
     expect(store.quote).toBe(initialQuote);
     expect(store.cities).toEqual(initialCities);
     expect(store.screen?.pairs).toEqual(initialScreen?.pairs);
+  });
+
+  it('returns server quote snapshot without replacing form quote in the store', async () => {
+    const store = useExchangeStore();
+    vi.mocked(fetchExchangeScreen).mockResolvedValue(makeScreen());
+    vi.mocked(fetchCities).mockResolvedValue({ items: makeCities() });
+    await store.load();
+
+    const initialQuote = store.quote;
+    const freshQuote = makeQuote({
+      currencySell: 'RUB',
+      currencyBuy: 'GEL',
+      amountSell: 30000,
+      amountBuy: 870,
+      rate: 0.029,
+    });
+    vi.mocked(fetchQuote).mockResolvedValue(freshQuote);
+
+    await expect(
+      store.refreshQuote({ currencySell: 'RUB', currencyBuy: 'GEL', amountSell: 30000 }),
+    ).resolves.toEqual(freshQuote);
+    expect(store.quote).toBe(initialQuote);
   });
 });

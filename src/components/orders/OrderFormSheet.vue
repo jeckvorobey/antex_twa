@@ -386,12 +386,11 @@ function refreshQuoteForCurrentState() {
 
 /** Запрашивает серверную котировку выбранной пары непосредственно перед POST. */
 async function refreshQuoteBeforeSubmit() {
-  const quote = await exchangeStore.refreshQuote({
+  return exchangeStore.refreshQuote({
     currencySell: selectedSellCurrency.value,
     currencyBuy: currencyBuy.value,
     amountSell: Math.round(amountSell.value ?? 0),
   });
-  amountBuy.value = quote.amountBuy;
 }
 
 function getDefaultAmountSell(currencySell: string) {
@@ -462,12 +461,12 @@ async function submit() {
     if (!selectedCountry.value) {
       return;
     }
-    await refreshQuoteBeforeSubmit();
-    quote = resolveCurrentQuote();
-    if (!quote || !amountBuy.value) {
+    quote = await refreshQuoteBeforeSubmit();
+    if (!quote) {
       Notify.create({ type: 'negative', message: t('exchange.quoteUnavailable') });
       return;
     }
+    amountBuy.value = quote.amountBuy;
 
     const order = await exchangeStore.submitOrder({
       country: selectedCountry.value,
@@ -475,7 +474,7 @@ async function submit() {
       currencySell: selectedSellCurrency.value,
       currencyBuy: currencyBuy.value,
       amountSell: amountSell.value,
-      amountBuy: amountBuy.value,
+      amountBuy: quote.amountBuy,
       rate: quote.rate,
       methodGet: selectedMethod.value,
     });
@@ -509,11 +508,10 @@ async function submit() {
 
 async function shouldConfirmOfflineSubmit() {
   try {
-    await exchangeStore.refreshManagerAvailability();
+    return (await exchangeStore.refreshManagerAvailability()).status === 'offline';
   } catch {
     return exchangeStore.screen?.managerAvailability.status === 'offline';
   }
-  return exchangeStore.screen?.managerAvailability.status === 'offline';
 }
 
 /** Подтверждает один оффлайн-сценарий в пределах открытой формы. */

@@ -11,6 +11,7 @@ import {
 import type {
   MiniappCity,
   MiniappExchangeScreenResponse,
+  MiniappManagerAvailability,
   MiniappOrderCreate,
   MiniappQuoteResponse,
 } from '@types/miniapp';
@@ -25,7 +26,7 @@ export const useExchangeStore = defineStore('exchange', () => {
   const refreshing = ref(false);
   const submitting = ref(false);
   let refreshPromise: Promise<void> | null = null;
-  let managerAvailabilityRefreshPromise: Promise<void> | null = null;
+  let managerAvailabilityRefreshPromise: Promise<MiniappManagerAvailability> | null = null;
 
   async function fetchData() {
     const [screenResponse, citiesResponse] = await Promise.all([
@@ -72,7 +73,7 @@ export const useExchangeStore = defineStore('exchange', () => {
   }
 
   /**
-   * Обновляет только availability менеджеров, сохраняя текущий draft обмена.
+   * Возвращает snapshot availability менеджеров, сохраняя текущий draft обмена.
    * Одновременные pre-submit проверки используют один HTTP-запрос.
    */
   async function refreshManagerAvailability() {
@@ -82,10 +83,7 @@ export const useExchangeStore = defineStore('exchange', () => {
 
     managerAvailabilityRefreshPromise = (async () => {
       try {
-        const availability = await fetchManagerAvailability();
-        if (screen.value) {
-          screen.value.managerAvailability = availability;
-        }
+        return await fetchManagerAvailability();
       } finally {
         managerAvailabilityRefreshPromise = null;
       }
@@ -105,14 +103,13 @@ export const useExchangeStore = defineStore('exchange', () => {
     return quote.value;
   }
 
-  /** Обновляет только quote выбранной пары, не заменяя exchange-screen и draft формы. */
+  /** Возвращает серверный snapshot quote, не заменяя exchange-screen и draft формы. */
   async function refreshQuote(params: {
     currencySell: string;
     currencyBuy: string;
     amountSell: number;
   }) {
-    quote.value = await fetchQuote(params);
-    return quote.value;
+    return fetchQuote(params);
   }
 
   async function submitOrder(payload: MiniappOrderCreate) {
