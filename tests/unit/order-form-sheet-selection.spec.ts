@@ -52,8 +52,10 @@ describe('OrderFormSheet selection sync contract', () => {
     expect(source).toContain('persistent');
     expect(source).toContain('class="app-dialog--confirm"');
     expect(source).not.toContain('v-model="offlineConfirmVisible" position="bottom" persistent');
-    expect(source).toContain('await exchangeStore.refresh()');
-    expect(source).toContain('refreshQuoteForCurrentState();');
+    expect(source).toContain('await exchangeStore.refreshManagerAvailability()');
+    expect(source).not.toContain(
+      'await exchangeStore.refresh();\n    refreshQuoteForCurrentState();',
+    );
     expect(source).toContain('const refreshedValidation = preliminaryValidation.value;');
     expect(source).toContain("managerAvailability.status === 'offline'");
     expect(source).toContain('if (submitFlowPending.value)');
@@ -71,7 +73,7 @@ describe('OrderFormSheet selection sync contract', () => {
     );
     expect(source).not.toContain('@touchmove.stop.prevent="trackSheetDrag"');
     expect(source).toContain(':style="sheetDragStyle"');
-    expect(source).toContain("transform: `translate3d(0, ${sheetDragDeltaY.value}px, 0)`");
+    expect(source).toContain('transform: `translate3d(0, ${sheetDragDeltaY.value}px, 0)`');
     expect(source).toContain('(sheetScrollRef.value?.scrollTop ?? 0) > 0');
     expect(source).toContain('await new Promise((resolve) => window.setTimeout(resolve, 240));');
     expect(source).toContain('resetAndCloseSheet();');

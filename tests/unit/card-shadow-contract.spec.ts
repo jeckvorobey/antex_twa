@@ -36,7 +36,9 @@ describe('Mini App card shadow contract', () => {
   });
 
   it('does not clip AppSurface shadows on exchange and home screens', () => {
-    expect(exchangePage).not.toContain('app-exchange-content col column q-gutter-md no-wrap overflow-hidden');
+    expect(exchangePage).not.toContain(
+      'app-exchange-content col column q-gutter-md no-wrap overflow-hidden',
+    );
     expect(styles).not.toMatch(/\.app-page--exchange\s*{[^}]*overflow:\s*hidden/s);
     expect(styles).not.toMatch(/\.shadow-radius\s*{[^}]*overflow:\s*hidden/s);
   });

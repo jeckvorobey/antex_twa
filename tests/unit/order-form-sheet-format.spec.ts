@@ -71,9 +71,7 @@ describe('OrderFormSheet amount formatting', () => {
     expect(warningNoticeSource).toContain('grid-template-columns: auto minmax(0, 1fr)');
     expect(warningNoticeSource).toContain('font-size: clamp(');
     expect(warningNoticeSource).toContain('min-width: 26px');
-    expect(offlineNoticeSource).toContain(
-      'grid-template-columns: auto minmax(0, 1fr) auto',
-    );
+    expect(offlineNoticeSource).toContain('grid-template-columns: auto minmax(0, 1fr) auto');
     expect(offlineNoticeSource).toContain("replace(/^Ежедневно\\s+/i, '')");
     expect(offlineNoticeSource).toContain('white-space: nowrap');
   });

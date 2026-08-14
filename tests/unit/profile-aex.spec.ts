@@ -38,7 +38,9 @@ describe('AexBalanceCard shared component', () => {
 
 describe('ProfilePage ATXG integration', () => {
   it('does not render the ATXG balance card on profile page anymore', () => {
-    expect(profileSource).not.toContain("import AexBalanceCard from '@components/ui/AexBalanceCard.vue'");
+    expect(profileSource).not.toContain(
+      "import AexBalanceCard from '@components/ui/AexBalanceCard.vue'",
+    );
     expect(profileSource).not.toContain('<AexBalanceCard');
     expect(profileSource).not.toContain(':balance="aexBalance"');
     expect(profileSource).not.toContain('app-profile-aex-card');
@@ -61,15 +63,19 @@ describe('ProfilePage ATXG integration', () => {
 
 describe('ReferralPage ATXG integration', () => {
   it('uses the same shared AexBalanceCard with the referral balance label', () => {
-    expect(referralSource).toContain("import AexBalanceCard from '@components/ui/AexBalanceCard.vue'");
+    expect(referralSource).toContain(
+      "import AexBalanceCard from '@components/ui/AexBalanceCard.vue'",
+    );
     expect(referralSource).toContain('<AexBalanceCard');
     expect(referralSource).toContain(':balance="availableBalance"');
-    expect(referralSource).toContain(":label=\"t('referral.balanceLabel')\"");
+    expect(referralSource).toContain(':label="t(\'referral.balanceLabel\')"');
     expect(referralSource).not.toContain('app-referral-balance">');
   });
 
   it('adds a top gap between the page header area and the balance card', () => {
-    expect(appStylesSource).toMatch(/\.app-screen--referral\s*{[^}]*padding-top:\s*var\(--antex-space-md\)/s);
+    expect(appStylesSource).toMatch(
+      /\.app-screen--referral\s*{[^}]*padding-top:\s*var\(--antex-space-md\)/s,
+    );
   });
 });
 

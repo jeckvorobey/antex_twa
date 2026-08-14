@@ -382,7 +382,7 @@ function clearManagerRefreshTimer() {
  * Открывает sheet заявки с предзаполнением по выбранной паре.
  */
 function openOrderFromFeatured(card?: MiniappRateCard) {
-  if (!card) { 
+  if (!card) {
     uiStore.openOrderSheet();
     return;
   }

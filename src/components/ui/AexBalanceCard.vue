@@ -12,7 +12,12 @@
           {{ formattedBalance }}
           <span class="app-aex-balance-card__currency">ATXG</span>
         </div>
-        <q-icon v-if="clickable" name="chevron_right" size="20px" class="app-aex-balance-card__chevron" />
+        <q-icon
+          v-if="clickable"
+          name="chevron_right"
+          size="20px"
+          class="app-aex-balance-card__chevron"
+        />
       </div>
     </div>
   </AppSurface>

@@ -1,10 +1,17 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 
-import { createOrder, fetchCities, fetchExchangeScreen } from '@services/api/miniapp.service';
+import {
+  createOrder,
+  fetchCities,
+  fetchExchangeScreen,
+  fetchManagerAvailability,
+  fetchQuote,
+} from '@services/api/miniapp.service';
 import type {
   MiniappCity,
   MiniappExchangeScreenResponse,
+  MiniappManagerAvailability,
   MiniappOrderCreate,
   MiniappQuoteResponse,
 } from '@types/miniapp';
@@ -19,6 +26,7 @@ export const useExchangeStore = defineStore('exchange', () => {
   const refreshing = ref(false);
   const submitting = ref(false);
   let refreshPromise: Promise<void> | null = null;
+  let managerAvailabilityRefreshPromise: Promise<MiniappManagerAvailability> | null = null;
 
   async function fetchData() {
     const [screenResponse, citiesResponse] = await Promise.all([
@@ -64,6 +72,25 @@ export const useExchangeStore = defineStore('exchange', () => {
     return refreshPromise;
   }
 
+  /**
+   * Возвращает snapshot availability менеджеров, сохраняя текущий draft обмена.
+   * Одновременные pre-submit проверки используют один HTTP-запрос.
+   */
+  async function refreshManagerAvailability() {
+    if (managerAvailabilityRefreshPromise) {
+      return managerAvailabilityRefreshPromise;
+    }
+
+    managerAvailabilityRefreshPromise = (async () => {
+      try {
+        return await fetchManagerAvailability();
+      } finally {
+        managerAvailabilityRefreshPromise = null;
+      }
+    })();
+    return managerAvailabilityRefreshPromise;
+  }
+
   function recalculateQuote(params: {
     currencySell: string;
     currencyBuy: string;
@@ -74,6 +101,15 @@ export const useExchangeStore = defineStore('exchange', () => {
       ...params,
     });
     return quote.value;
+  }
+
+  /** Возвращает серверный snapshot quote, не заменяя exchange-screen и draft формы. */
+  async function refreshQuote(params: {
+    currencySell: string;
+    currencyBuy: string;
+    amountSell: number;
+  }) {
+    return fetchQuote(params);
   }
 
   async function submitOrder(payload: MiniappOrderCreate) {
@@ -95,7 +131,9 @@ export const useExchangeStore = defineStore('exchange', () => {
     submitting,
     load,
     refresh,
+    refreshManagerAvailability,
     recalculateQuote,
+    refreshQuote,
     submitOrder,
   };
 });

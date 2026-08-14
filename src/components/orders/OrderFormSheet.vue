@@ -358,6 +358,7 @@ function resolveCurrentQuote() {
   return quote;
 }
 
+/** Пересчитывает локальный preview котировки после изменения полей формы. */
 function refreshQuoteForCurrentState() {
   if (!amountSell.value || amountSell.value <= 0) {
     amountBuy.value = null;
@@ -381,6 +382,15 @@ function refreshQuoteForCurrentState() {
   amountSell.value = quote.amountSell;
   amountBuy.value = quote.amountBuy;
   syncingState.value = false;
+}
+
+/** Запрашивает серверную котировку выбранной пары непосредственно перед POST. */
+async function refreshQuoteBeforeSubmit() {
+  return exchangeStore.refreshQuote({
+    currencySell: selectedSellCurrency.value,
+    currencyBuy: currencyBuy.value,
+    amountSell: Math.round(amountSell.value ?? 0),
+  });
 }
 
 function getDefaultAmountSell(currencySell: string) {
@@ -451,11 +461,12 @@ async function submit() {
     if (!selectedCountry.value) {
       return;
     }
-    quote = resolveCurrentQuote();
-    if (!quote || !amountBuy.value) {
+    quote = await refreshQuoteBeforeSubmit();
+    if (!quote) {
       Notify.create({ type: 'negative', message: t('exchange.quoteUnavailable') });
       return;
     }
+    amountBuy.value = quote.amountBuy;
 
     const order = await exchangeStore.submitOrder({
       country: selectedCountry.value,
@@ -463,7 +474,7 @@ async function submit() {
       currencySell: selectedSellCurrency.value,
       currencyBuy: currencyBuy.value,
       amountSell: amountSell.value,
-      amountBuy: amountBuy.value,
+      amountBuy: quote.amountBuy,
       rate: quote.rate,
       methodGet: selectedMethod.value,
     });
@@ -497,12 +508,10 @@ async function submit() {
 
 async function shouldConfirmOfflineSubmit() {
   try {
-    await exchangeStore.refresh();
-    refreshQuoteForCurrentState();
+    return (await exchangeStore.refreshManagerAvailability()).status === 'offline';
   } catch {
     return exchangeStore.screen?.managerAvailability.status === 'offline';
   }
-  return exchangeStore.screen?.managerAvailability.status === 'offline';
 }
 
 /** Подтверждает один оффлайн-сценарий в пределах открытой формы. */
