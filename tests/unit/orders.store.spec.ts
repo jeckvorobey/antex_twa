@@ -134,6 +134,28 @@ describe('orders store pagination', () => {
     expect(store.items.map((item) => item.id)).toEqual([9]);
   });
 
+  it('reloadFirstPage clears an interrupted refresh indicator', async () => {
+    const store = useOrdersStore();
+    let resolveRefresh: ((response: MiniappOrdersResponse) => void) | undefined;
+    const pendingRefresh = new Promise<MiniappOrdersResponse>((resolve) => {
+      resolveRefresh = resolve;
+    });
+    vi.mocked(fetchOrders)
+      .mockReturnValueOnce(pendingRefresh)
+      .mockResolvedValueOnce(makeResponse([8], { total: 1, hasMore: false }));
+
+    const refresh = store.refresh();
+    expect(store.refreshing).toBe(true);
+
+    await store.reloadFirstPage();
+
+    expect(store.refreshing).toBe(false);
+    expect(store.loading).toBe(false);
+
+    resolveRefresh!(makeResponse([1], { total: 1, hasMore: false }));
+    await refresh;
+  });
+
   it('loadFirstPage supersedes early pagination and marks the store as loaded', async () => {
     const store = useOrdersStore();
     let resolveNextPage: ((response: MiniappOrdersResponse) => void) | undefined;
