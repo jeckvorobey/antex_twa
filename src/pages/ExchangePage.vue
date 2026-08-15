@@ -382,7 +382,11 @@ function selectPair(pair: MiniappRateCard) {
 /** Пересчитывает локальный preview котировки после изменения полей формы. */
 async function refreshQuoteForCurrentState() {
   if (!amountSell.value || amountSell.value <= 0) {
-    exchangeStore.cancelCashDeliveryQuote();
+    if (selectedMethod.value === 'cash') {
+      exchangeStore.invalidateCashDeliveryQuote();
+    } else {
+      exchangeStore.cancelCashDeliveryQuote();
+    }
     amountBuy.value = null;
     aexQuote.value = null;
     return;
@@ -416,7 +420,7 @@ async function refreshQuoteForCurrentState() {
         amountSell: normalizedAmountSell,
       })
     ) {
-      exchangeStore.cancelCashDeliveryQuote();
+      exchangeStore.invalidateCashDeliveryQuote();
       amountBuy.value = null;
       return;
     }

@@ -204,6 +204,41 @@ describe('exchange store', () => {
     expect(store.refreshing).toBe(false);
   });
 
+  it('does not let an older screen refresh replace a newer cash quote', async () => {
+    const store = useExchangeStore();
+    let resolveScreenRefresh: ((screen: MiniappExchangeScreenResponse) => void) | null = null;
+    vi.mocked(fetchExchangeScreen)
+      .mockResolvedValueOnce(makeScreen())
+      .mockReturnValueOnce(
+        new Promise((resolve) => {
+          resolveScreenRefresh = resolve;
+        }),
+      );
+    vi.mocked(fetchCities).mockResolvedValue({ items: makeCities() });
+    await store.load();
+
+    const screenRefresh = store.refresh();
+    const cashQuote = makeQuote({
+      currencySell: 'RUB',
+      currencyBuy: 'THB',
+      amountSell: 25_000,
+      amountBuy: 9_638,
+      rate: 0.38552,
+    });
+    vi.mocked(fetchQuote).mockResolvedValueOnce(cashQuote);
+
+    await store.refreshCashDeliveryQuote({
+      currencySell: 'RUB',
+      currencyBuy: 'THB',
+      amountSell: 25_000,
+    });
+    resolveScreenRefresh?.({ ...makeScreen(), chips: ['RUB'] });
+    await screenRefresh;
+
+    expect(store.screen?.chips).toEqual(['RUB']);
+    expect(store.quote).toEqual(cashQuote);
+  });
+
   it('clears quote when local pair is missing', async () => {
     const store = useExchangeStore();
     vi.mocked(fetchExchangeScreen).mockResolvedValue(makeScreen());
@@ -401,6 +436,17 @@ describe('exchange store', () => {
         amountSell: 5000,
       }),
     ).rejects.toBe(error);
+
+    expect(store.quote).toBeNull();
+  });
+
+  it('invalidates a cash quote when the current form state cannot request one', async () => {
+    const store = useExchangeStore();
+    vi.mocked(fetchExchangeScreen).mockResolvedValue(makeScreen());
+    vi.mocked(fetchCities).mockResolvedValue({ items: makeCities() });
+    await store.load();
+
+    store.invalidateCashDeliveryQuote();
 
     expect(store.quote).toBeNull();
   });

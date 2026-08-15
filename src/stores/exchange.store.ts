@@ -38,13 +38,16 @@ export const useExchangeStore = defineStore('exchange', () => {
   }
 
   async function fetchData() {
+    const quoteVersion = cashQuoteRequestId;
     const [screenResponse, citiesResponse] = await Promise.all([
       fetchExchangeScreen(),
       fetchCities(),
     ]);
     screen.value = screenResponse;
     cities.value = citiesResponse.items;
-    quote.value = screenResponse.quote;
+    if (quoteVersion === cashQuoteRequestId) {
+      quote.value = screenResponse.quote;
+    }
   }
 
   async function load() {
@@ -111,6 +114,12 @@ export const useExchangeStore = defineStore('exchange', () => {
       ...params,
     });
     return quote.value;
+  }
+
+  /** Отменяет cash-запрос и удаляет quote, не соответствующий текущей форме. */
+  function invalidateCashDeliveryQuote() {
+    cancelCashDeliveryQuote();
+    quote.value = null;
   }
 
   /** Возвращает серверный snapshot quote, не заменяя exchange-screen и draft формы. */
@@ -182,6 +191,7 @@ export const useExchangeStore = defineStore('exchange', () => {
     refreshQuote,
     refreshCashDeliveryQuote,
     cancelCashDeliveryQuote,
+    invalidateCashDeliveryQuote,
     submitOrder,
   };
 });
