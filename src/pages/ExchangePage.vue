@@ -121,13 +121,14 @@ import { useAexStore } from '@stores/aex.store';
 import { useExchangeStore } from '@stores/exchange.store';
 import { useOrdersStore } from '@stores/orders.store';
 import type { MiniappQuoteResponse, MiniappRateCard, MiniappReceiveMethod } from '@types/miniapp';
-import { getMiniappErrorMessageKey } from '@utils/api-errors';
+import { getMiniappErrorCode, getMiniappErrorMessageKey } from '@utils/api-errors';
 import { formatMiniappDateTime, formatReadableNumber } from '@utils/formatters';
 import {
   buildCityOptions,
   buildCountryOptions,
   buildBuyCurrencyOptions,
   calculateLocalQuote,
+  canRequestCashDeliveryQuote,
   getCountryByCurrency,
   getCurrencyByCountry,
   getPreferredReceiveMethod,
@@ -196,7 +197,16 @@ const countryOptions = computed(() => {
 
 const cityOptions = computed(() => buildCityOptions(exchangeStore.cities, selectedCountry.value));
 
-const currentQuoteMethods = computed(() => resolveCurrentQuote()?.availableMethods ?? null);
+const currentQuoteMethods = computed(
+  () =>
+    resolveCurrentQuote()?.availableMethods ??
+    exchangeStore.screen?.pairs.find(
+      (pair) =>
+        pair.fromCurrency === selectedSellCurrency.value &&
+        pair.toCurrency === selectedBuyCurrency.value,
+    )?.availableMethods ??
+    null,
+);
 const isManagersOffline = computed(
   () => exchangeStore.screen?.managerAvailability.status === 'offline',
 );
@@ -301,6 +311,7 @@ watch(selectedBuyCurrency, (currencyBuy) => {
 
 watch(selectedMethod, (method) => {
   selectedCityId.value = resetCityForMethod(method, selectedCityId.value);
+  void refreshQuoteForCurrentState();
 });
 
 watch(selectedCountry, () => {
@@ -369,8 +380,13 @@ function selectPair(pair: MiniappRateCard) {
 }
 
 /** Пересчитывает локальный preview котировки после изменения полей формы. */
-function refreshQuoteForCurrentState() {
+async function refreshQuoteForCurrentState() {
   if (!amountSell.value || amountSell.value <= 0) {
+    if (selectedMethod.value === 'cash') {
+      exchangeStore.invalidateCashDeliveryQuote();
+    } else {
+      exchangeStore.cancelCashDeliveryQuote();
+    }
     amountBuy.value = null;
     aexQuote.value = null;
     return;
@@ -391,10 +407,60 @@ function refreshQuoteForCurrentState() {
   }
 
   aexQuote.value = null;
+  const normalizedAmountSell = Math.round(amountSell.value);
+  if (selectedMethod.value === 'cash') {
+    const currencySell = selectedSellCurrency.value;
+    const currencyBuy = selectedBuyCurrency.value;
+    if (
+      !canRequestCashDeliveryQuote({
+        pairs: exchangeStore.screen?.pairs ?? [],
+        methodGet: selectedMethod.value,
+        currencySell,
+        currencyBuy,
+        amountSell: normalizedAmountSell,
+      })
+    ) {
+      exchangeStore.invalidateCashDeliveryQuote();
+      amountBuy.value = null;
+      return;
+    }
+    let quote: MiniappQuoteResponse | null;
+    try {
+      quote = await exchangeStore.refreshCashDeliveryQuote({
+        currencySell,
+        currencyBuy,
+        amountSell: normalizedAmountSell,
+      });
+    } catch (error: unknown) {
+      amountBuy.value = null;
+      const code = getMiniappErrorCode(error);
+      Notify.create({ type: 'negative', message: t(getMiniappErrorMessageKey(code)) });
+      return;
+    }
+    if (
+      selectedMethod.value !== 'cash' ||
+      selectedSellCurrency.value !== currencySell ||
+      selectedBuyCurrency.value !== currencyBuy ||
+      Math.round(amountSell.value ?? 0) !== normalizedAmountSell
+    ) {
+      return;
+    }
+    if (!quote) {
+      amountBuy.value = null;
+      return;
+    }
+
+    syncingState.value = true;
+    amountSell.value = quote.amountSell;
+    amountBuy.value = quote.amountBuy;
+    syncingState.value = false;
+    return;
+  }
+
   const quote = exchangeStore.recalculateQuote({
     currencySell: selectedSellCurrency.value,
     currencyBuy: selectedBuyCurrency.value,
-    amountSell: Math.round(amountSell.value),
+    amountSell: normalizedAmountSell,
   });
 
   if (!quote) {
@@ -421,6 +487,7 @@ async function refreshQuoteBeforeSubmit() {
     currencySell: selectedSellCurrency.value,
     currencyBuy: selectedBuyCurrency.value,
     amountSell: Math.round(amountSell.value ?? 0),
+    methodGet: selectedMethod.value,
   });
 }
 

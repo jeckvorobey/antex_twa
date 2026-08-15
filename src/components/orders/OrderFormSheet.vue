@@ -106,11 +106,12 @@ import { useOrdersStore } from '@stores/orders.store';
 import { useUiStore } from '@stores/ui.store';
 import type { MiniappReceiveMethod } from '@types/miniapp';
 import { getMinAmount } from '@constants/limits';
-import { getMiniappErrorMessageKey } from '@utils/api-errors';
+import { getMiniappErrorCode, getMiniappErrorMessageKey } from '@utils/api-errors';
 import {
   buildCityOptions,
   buildCountryOptions,
   buildBuyCurrencyOptions,
+  canRequestCashDeliveryQuote,
   getCountryByCurrency,
   getCurrencyByCountry,
   getPreferredReceiveMethod,
@@ -199,7 +200,14 @@ const currentQuoteMethods = computed(() => {
     return quote.availableMethods;
   }
 
-  return uiStore.orderContext?.availableMethods ?? null;
+  return (
+    exchangeStore.screen?.pairs.find(
+      (pair) =>
+        pair.fromCurrency === selectedSellCurrency.value && pair.toCurrency === currencyBuy.value,
+    )?.availableMethods ??
+    uiStore.orderContext?.availableMethods ??
+    null
+  );
 });
 const currentRateLabel = computed(() => {
   const currentQuote = resolveCurrentQuote();
@@ -308,6 +316,7 @@ watch(selectedCountry, (country) => {
 
 watch(selectedMethod, (method) => {
   selectedCityId.value = resetCityForMethod(method, selectedCityId.value);
+  void refreshQuoteForCurrentState();
 });
 
 watch(cityOptions, (options) => {
@@ -359,16 +368,71 @@ function resolveCurrentQuote() {
 }
 
 /** Пересчитывает локальный preview котировки после изменения полей формы. */
-function refreshQuoteForCurrentState() {
+async function refreshQuoteForCurrentState() {
   if (!amountSell.value || amountSell.value <= 0) {
+    if (selectedMethod.value === 'cash') {
+      exchangeStore.invalidateCashDeliveryQuote();
+    } else {
+      exchangeStore.cancelCashDeliveryQuote();
+    }
     amountBuy.value = null;
+    return;
+  }
+
+  const normalizedAmountSell = Math.round(amountSell.value);
+  if (selectedMethod.value === 'cash') {
+    const currencySell = selectedSellCurrency.value;
+    const selectedCurrencyBuy = currencyBuy.value;
+    if (
+      !canRequestCashDeliveryQuote({
+        pairs: exchangeStore.screen?.pairs ?? [],
+        methodGet: selectedMethod.value,
+        currencySell,
+        currencyBuy: selectedCurrencyBuy,
+        amountSell: normalizedAmountSell,
+      })
+    ) {
+      exchangeStore.invalidateCashDeliveryQuote();
+      amountBuy.value = null;
+      return;
+    }
+    let quote;
+    try {
+      quote = await exchangeStore.refreshCashDeliveryQuote({
+        currencySell,
+        currencyBuy: selectedCurrencyBuy,
+        amountSell: normalizedAmountSell,
+      });
+    } catch (error: unknown) {
+      amountBuy.value = null;
+      const code = getMiniappErrorCode(error);
+      Notify.create({ type: 'negative', message: t(getMiniappErrorMessageKey(code)) });
+      return;
+    }
+    if (
+      selectedMethod.value !== 'cash' ||
+      selectedSellCurrency.value !== currencySell ||
+      currencyBuy.value !== selectedCurrencyBuy ||
+      Math.round(amountSell.value ?? 0) !== normalizedAmountSell
+    ) {
+      return;
+    }
+    if (!quote) {
+      amountBuy.value = null;
+      return;
+    }
+
+    syncingState.value = true;
+    amountSell.value = quote.amountSell;
+    amountBuy.value = quote.amountBuy;
+    syncingState.value = false;
     return;
   }
 
   const quote = exchangeStore.recalculateQuote({
     currencySell: selectedSellCurrency.value,
     currencyBuy: currencyBuy.value,
-    amountSell: Math.round(amountSell.value),
+    amountSell: normalizedAmountSell,
   });
 
   if (!quote) {
@@ -390,6 +454,7 @@ async function refreshQuoteBeforeSubmit() {
     currencySell: selectedSellCurrency.value,
     currencyBuy: currencyBuy.value,
     amountSell: Math.round(amountSell.value ?? 0),
+    methodGet: selectedMethod.value,
   });
 }
 
