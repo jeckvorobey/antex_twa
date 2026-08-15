@@ -9,6 +9,7 @@ import {
   getCountryByCurrency,
   getDefaultReceiveMethod,
   getReceiveLocationTitleKey,
+  hasExchangePair,
   isInternalAexPayout,
   resetCityForMethod,
   validatePreliminaryOrderDraft,
@@ -79,6 +80,16 @@ describe('buildBuyCurrencyOptions', () => {
         },
       ]),
     ).not.toContainEqual({ label: 'USDT', value: 'USDT' });
+  });
+});
+
+describe('hasExchangePair', () => {
+  const pairs = [{ id: 'rub-thb', fromCurrency: 'RUB', toCurrency: 'THB' }];
+
+  it('accepts only the configured direct sell and buy currencies', () => {
+    expect(hasExchangePair(pairs, 'RUB', 'THB')).toBe(true);
+    expect(hasExchangePair(pairs, 'RUB', 'GEL')).toBe(false);
+    expect(hasExchangePair(pairs, '', 'THB')).toBe(false);
   });
 });
 

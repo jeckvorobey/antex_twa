@@ -131,6 +131,7 @@ import {
   getCountryByCurrency,
   getCurrencyByCountry,
   getPreferredReceiveMethod,
+  hasExchangePair,
   isTokenCurrency,
   isInternalAexPayout,
   resetCityForMethod,
@@ -301,6 +302,7 @@ watch(selectedBuyCurrency, (currencyBuy) => {
 
 watch(selectedMethod, (method) => {
   selectedCityId.value = resetCityForMethod(method, selectedCityId.value);
+  void refreshQuoteForCurrentState();
 });
 
 watch(selectedCountry, () => {
@@ -369,8 +371,9 @@ function selectPair(pair: MiniappRateCard) {
 }
 
 /** Пересчитывает локальный preview котировки после изменения полей формы. */
-function refreshQuoteForCurrentState() {
+async function refreshQuoteForCurrentState() {
   if (!amountSell.value || amountSell.value <= 0) {
+    exchangeStore.cancelCashDeliveryQuote();
     amountBuy.value = null;
     aexQuote.value = null;
     return;
@@ -391,10 +394,44 @@ function refreshQuoteForCurrentState() {
   }
 
   aexQuote.value = null;
+  const normalizedAmountSell = Math.round(amountSell.value);
+  if (selectedMethod.value === 'cash') {
+    const currencySell = selectedSellCurrency.value;
+    const currencyBuy = selectedBuyCurrency.value;
+    if (!hasExchangePair(exchangeStore.screen?.pairs ?? [], currencySell, currencyBuy)) {
+      exchangeStore.cancelCashDeliveryQuote();
+      amountBuy.value = null;
+      return;
+    }
+    const quote = await exchangeStore.refreshCashDeliveryQuote({
+      currencySell,
+      currencyBuy,
+      amountSell: normalizedAmountSell,
+    });
+    if (
+      selectedMethod.value !== 'cash' ||
+      selectedSellCurrency.value !== currencySell ||
+      selectedBuyCurrency.value !== currencyBuy ||
+      Math.round(amountSell.value ?? 0) !== normalizedAmountSell
+    ) {
+      return;
+    }
+    if (!quote) {
+      amountBuy.value = null;
+      return;
+    }
+
+    syncingState.value = true;
+    amountSell.value = quote.amountSell;
+    amountBuy.value = quote.amountBuy;
+    syncingState.value = false;
+    return;
+  }
+
   const quote = exchangeStore.recalculateQuote({
     currencySell: selectedSellCurrency.value,
     currencyBuy: selectedBuyCurrency.value,
-    amountSell: Math.round(amountSell.value),
+    amountSell: normalizedAmountSell,
   });
 
   if (!quote) {
@@ -421,6 +458,7 @@ async function refreshQuoteBeforeSubmit() {
     currencySell: selectedSellCurrency.value,
     currencyBuy: selectedBuyCurrency.value,
     amountSell: Math.round(amountSell.value ?? 0),
+    methodGet: selectedMethod.value,
   });
 }
 

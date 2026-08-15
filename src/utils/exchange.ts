@@ -82,6 +82,24 @@ function parsePairId(id: string) {
   };
 }
 
+export function hasExchangePair(
+  pairs: ExchangePairLike[],
+  currencySell: string,
+  currencyBuy: string,
+) {
+  if (!currencySell || !currencyBuy) {
+    return false;
+  }
+
+  return pairs.some((pair) => {
+    const parsed = parsePairId(pair.id);
+    return (
+      parsed.currencySell === currencySell.toUpperCase() &&
+      parsed.currencyBuy === currencyBuy.toUpperCase()
+    );
+  });
+}
+
 function normalizeCountryKey(value: unknown): string {
   if (!value) {
     return '';
