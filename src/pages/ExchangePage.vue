@@ -121,17 +121,17 @@ import { useAexStore } from '@stores/aex.store';
 import { useExchangeStore } from '@stores/exchange.store';
 import { useOrdersStore } from '@stores/orders.store';
 import type { MiniappQuoteResponse, MiniappRateCard, MiniappReceiveMethod } from '@types/miniapp';
-import { getMiniappErrorMessageKey } from '@utils/api-errors';
+import { getMiniappErrorCode, getMiniappErrorMessageKey } from '@utils/api-errors';
 import { formatMiniappDateTime, formatReadableNumber } from '@utils/formatters';
 import {
   buildCityOptions,
   buildCountryOptions,
   buildBuyCurrencyOptions,
   calculateLocalQuote,
+  canRequestCashDeliveryQuote,
   getCountryByCurrency,
   getCurrencyByCountry,
   getPreferredReceiveMethod,
-  hasExchangePair,
   isTokenCurrency,
   isInternalAexPayout,
   resetCityForMethod,
@@ -197,7 +197,16 @@ const countryOptions = computed(() => {
 
 const cityOptions = computed(() => buildCityOptions(exchangeStore.cities, selectedCountry.value));
 
-const currentQuoteMethods = computed(() => resolveCurrentQuote()?.availableMethods ?? null);
+const currentQuoteMethods = computed(
+  () =>
+    resolveCurrentQuote()?.availableMethods ??
+    exchangeStore.screen?.pairs.find(
+      (pair) =>
+        pair.fromCurrency === selectedSellCurrency.value &&
+        pair.toCurrency === selectedBuyCurrency.value,
+    )?.availableMethods ??
+    null,
+);
 const isManagersOffline = computed(
   () => exchangeStore.screen?.managerAvailability.status === 'offline',
 );
@@ -398,16 +407,32 @@ async function refreshQuoteForCurrentState() {
   if (selectedMethod.value === 'cash') {
     const currencySell = selectedSellCurrency.value;
     const currencyBuy = selectedBuyCurrency.value;
-    if (!hasExchangePair(exchangeStore.screen?.pairs ?? [], currencySell, currencyBuy)) {
+    if (
+      !canRequestCashDeliveryQuote({
+        pairs: exchangeStore.screen?.pairs ?? [],
+        methodGet: selectedMethod.value,
+        currencySell,
+        currencyBuy,
+        amountSell: normalizedAmountSell,
+      })
+    ) {
       exchangeStore.cancelCashDeliveryQuote();
       amountBuy.value = null;
       return;
     }
-    const quote = await exchangeStore.refreshCashDeliveryQuote({
-      currencySell,
-      currencyBuy,
-      amountSell: normalizedAmountSell,
-    });
+    let quote: MiniappQuoteResponse | null;
+    try {
+      quote = await exchangeStore.refreshCashDeliveryQuote({
+        currencySell,
+        currencyBuy,
+        amountSell: normalizedAmountSell,
+      });
+    } catch (error: unknown) {
+      amountBuy.value = null;
+      const code = getMiniappErrorCode(error);
+      Notify.create({ type: 'negative', message: t(getMiniappErrorMessageKey(code)) });
+      return;
+    }
     if (
       selectedMethod.value !== 'cash' ||
       selectedSellCurrency.value !== currencySell ||

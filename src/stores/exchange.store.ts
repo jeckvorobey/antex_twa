@@ -150,7 +150,7 @@ export const useExchangeStore = defineStore('exchange', () => {
         return null;
       }
       quote.value = null;
-      return null;
+      throw error;
     } finally {
       if (requestId === cashQuoteRequestId) {
         cashQuoteAbortController = null;

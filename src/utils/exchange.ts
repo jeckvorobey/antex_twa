@@ -100,6 +100,27 @@ export function hasExchangePair(
   });
 }
 
+/** Проверяет полное состояние формы до серверного запроса cash-котировки. */
+export function canRequestCashDeliveryQuote(params: {
+  pairs: ExchangePairLike[];
+  methodGet: MiniappReceiveMethod;
+  currencySell: string;
+  currencyBuy: string;
+  amountSell: number | null;
+}) {
+  const { pairs, methodGet, currencySell, currencyBuy, amountSell } = params;
+  if (methodGet !== 'cash' || !Number.isFinite(amountSell)) {
+    return false;
+  }
+
+  const minimumAmount = getMinAmount('cash', currencySell);
+  return (
+    amountSell !== null &&
+    amountSell >= minimumAmount &&
+    hasExchangePair(pairs, currencySell, currencyBuy)
+  );
+}
+
 function normalizeCountryKey(value: unknown): string {
   if (!value) {
     return '';

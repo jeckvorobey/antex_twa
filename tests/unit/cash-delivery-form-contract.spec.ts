@@ -13,7 +13,9 @@ describe('cash delivery form contract', () => {
     for (const source of formSources) {
       expect(source).toContain("selectedMethod.value === 'cash'");
       expect(source).toContain('exchangeStore.refreshCashDeliveryQuote');
-      expect(source).toContain('amountSell.value <= 0');
+      expect(source).toContain('canRequestCashDeliveryQuote');
+      expect(source).toContain('getMiniappErrorCode');
+      expect(source).toContain('getMiniappErrorMessageKey');
     }
   });
 

@@ -6,6 +6,7 @@ import {
   buildBuyCurrencyOptions,
   buildReceiveLocationLabel,
   calculateLocalQuote,
+  canRequestCashDeliveryQuote,
   getCountryByCurrency,
   getDefaultReceiveMethod,
   getReceiveLocationTitleKey,
@@ -14,6 +15,54 @@ import {
   resetCityForMethod,
   validatePreliminaryOrderDraft,
 } from '@utils/exchange';
+
+describe('canRequestCashDeliveryQuote', () => {
+  const pairs = [
+    { id: 'rub-thb', fromCurrency: 'RUB', toCurrency: 'THB' },
+    { id: 'usdt-thb', fromCurrency: 'USDT', toCurrency: 'THB' },
+  ];
+
+  it.each([
+    ['RUB', 24_999, false],
+    ['RUB', 25_000, true],
+    ['USDT', 499, false],
+    ['USDT', 500, true],
+  ] as const)(
+    'validates the cash minimum for %s amount %s',
+    (currencySell, amountSell, expected) => {
+      expect(
+        canRequestCashDeliveryQuote({
+          pairs,
+          methodGet: 'cash',
+          currencySell,
+          currencyBuy: 'THB',
+          amountSell,
+        }),
+      ).toBe(expected);
+    },
+  );
+
+  it('rejects non-cash and incomplete pair states', () => {
+    expect(
+      canRequestCashDeliveryQuote({
+        pairs,
+        methodGet: 'qrcode',
+        currencySell: 'RUB',
+        currencyBuy: 'THB',
+        amountSell: 25_000,
+      }),
+    ).toBe(false);
+    expect(
+      canRequestCashDeliveryQuote({
+        pairs,
+        methodGet: 'cash',
+        currencySell: 'RUB',
+        currencyBuy: 'GEL',
+        amountSell: 25_000,
+      }),
+    ).toBe(false);
+  });
+});
 
 describe('buildBuyCurrencyOptions', () => {
   const pairs = [

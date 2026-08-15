@@ -391,7 +391,8 @@ describe('exchange store', () => {
     vi.mocked(fetchExchangeScreen).mockResolvedValue(makeScreen());
     vi.mocked(fetchCities).mockResolvedValue({ items: makeCities() });
     await store.load();
-    vi.mocked(fetchQuote).mockRejectedValueOnce(new Error('network unavailable'));
+    const error = new Error('network unavailable');
+    vi.mocked(fetchQuote).mockRejectedValueOnce(error);
 
     await expect(
       store.refreshCashDeliveryQuote({
@@ -399,7 +400,7 @@ describe('exchange store', () => {
         currencyBuy: 'THB',
         amountSell: 5000,
       }),
-    ).resolves.toBeNull();
+    ).rejects.toBe(error);
 
     expect(store.quote).toBeNull();
   });
