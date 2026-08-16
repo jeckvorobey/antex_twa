@@ -213,11 +213,37 @@ describe('ExchangePage manager availability submit flow', () => {
     await flushPromises();
 
     const details = wrapper.findComponent(ExchangeOrderDetails);
-    await details.vm.$emit('update:selected-method', 'cash');
-    await details.vm.$emit('update:selected-city-id', 7);
-    await details.vm.$emit('update:amount-sell', 30000);
+    expect(
+      api.get.mock.calls.filter(([url]) => url === '/api/miniapp/exchange/quote'),
+    ).toHaveLength(0);
+    await details.vm.$emit('update:selectedMethod', 'cash');
+    await details.vm.$emit('update:selectedCityId', 7);
+    await details.vm.$emit('update:amountSell', 30000);
     await flushPromises();
     await flushPromises();
+
+    expect(api.get).toHaveBeenCalledWith('/api/miniapp/exchange/quote', {
+      params: {
+        currencySell: 'RUB',
+        currencyBuy: 'GEL',
+        amountSell: 30000,
+        methodGet: 'cash',
+      },
+      signal: expect.any(AbortSignal),
+    });
+    expect(details.props('amountBuy')).toBe(870);
+    expect(details.props('rateLabel')).toBe('1 GEL = 34.48 RUB');
+
+    await details.vm.$emit('update:selectedMethod', 'qrcode');
+    await flushPromises();
+    expect(details.props('amountBuy')).toBe(900);
+    expect(details.props('rateLabel')).toBe('1 GEL = 33.33 RUB');
+
+    await details.vm.$emit('update:selectedMethod', 'cash');
+    await details.vm.$emit('update:selectedCityId', 7);
+    await flushPromises();
+    expect(details.props('amountBuy')).toBe(870);
+    expect(details.props('rateLabel')).toBe('1 GEL = 34.48 RUB');
 
     await wrapper.find('form').trigger('submit');
     await flushPromises();
@@ -247,7 +273,12 @@ describe('ExchangePage manager availability submit flow', () => {
       methodGet: 'cash',
     });
     expect(api.get).toHaveBeenCalledWith('/api/miniapp/exchange/quote', {
-      params: { currencySell: 'RUB', currencyBuy: 'GEL', amountSell: 30000 },
+      params: {
+        currencySell: 'RUB',
+        currencyBuy: 'GEL',
+        amountSell: 30000,
+        methodGet: 'cash',
+      },
     });
     expect(api.get).toHaveBeenCalledWith(
       '/api/miniapp/orders',
@@ -299,8 +330,8 @@ describe('ExchangePage manager availability submit flow', () => {
       await flushPromises();
 
       const details = wrapper.findComponent(ExchangeOrderDetails);
-      await details.vm.$emit('update:selected-method', method);
-      await details.vm.$emit('update:amount-sell', 30000);
+      await details.vm.$emit('update:selectedMethod', method);
+      await details.vm.$emit('update:amountSell', 30000);
       await flushPromises();
 
       await wrapper.find('form').trigger('submit');
@@ -360,11 +391,25 @@ describe('OrderFormSheet manager availability submit flow', () => {
     await flushPromises();
 
     const details = wrapper.findComponent(ExchangeOrderDetails);
-    await details.vm.$emit('update:selected-method', 'cash');
-    await details.vm.$emit('update:selected-city-id', 7);
-    await details.vm.$emit('update:amount-sell', 30000);
+    expect(
+      api.get.mock.calls.filter(([url]) => url === '/api/miniapp/exchange/quote'),
+    ).toHaveLength(0);
+    await details.vm.$emit('update:selectedMethod', 'cash');
+    await details.vm.$emit('update:selectedCityId', 7);
+    await details.vm.$emit('update:amountSell', 30000);
     await flushPromises();
     await flushPromises();
+
+    expect(api.get).toHaveBeenCalledWith('/api/miniapp/exchange/quote', {
+      params: {
+        currencySell: 'RUB',
+        currencyBuy: 'GEL',
+        amountSell: 30000,
+        methodGet: 'cash',
+      },
+      signal: expect.any(AbortSignal),
+    });
+    expect(details.props('amountBuy')).toBe(870);
 
     const submitButton = Array.from(document.body.querySelectorAll('button')).find(
       (button) => button.textContent?.trim() === 'Отправить',
@@ -396,7 +441,12 @@ describe('OrderFormSheet manager availability submit flow', () => {
       methodGet: 'cash',
     });
     expect(api.get).toHaveBeenCalledWith('/api/miniapp/exchange/quote', {
-      params: { currencySell: 'RUB', currencyBuy: 'GEL', amountSell: 30000 },
+      params: {
+        currencySell: 'RUB',
+        currencyBuy: 'GEL',
+        amountSell: 30000,
+        methodGet: 'cash',
+      },
     });
     expect(api.get).toHaveBeenCalledWith(
       '/api/miniapp/orders',

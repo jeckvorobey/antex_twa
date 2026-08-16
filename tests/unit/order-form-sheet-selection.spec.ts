@@ -24,10 +24,11 @@ describe('OrderFormSheet selection sync contract', () => {
     );
   });
 
-  it('prefers live quote methods over stale order context methods', () => {
+  it('prefers live quote and pair methods over stale order context methods', () => {
     expect(source).toContain('quote.currencySell === selectedSellCurrency.value');
     expect(source).toContain('quote.currencyBuy === currencyBuy.value');
-    expect(source).toContain('return uiStore.orderContext?.availableMethods ?? null;');
+    expect(source).toContain('exchangeStore.screen?.pairs.find(');
+    expect(source).toContain('uiStore.orderContext?.availableMethods ??');
     expect(source).not.toContain('if (contextMethods?.length) {');
   });
 

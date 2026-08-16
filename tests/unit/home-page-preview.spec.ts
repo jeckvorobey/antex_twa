@@ -131,8 +131,6 @@ describe('HomePage preview rates', () => {
     expect(source).toContain('const managerStatusText = computed(() => {');
     expect(source).toContain("t('profile.managersWorking')");
     expect(source).toContain("t('profile.managersOffline')");
-    expect(source).toContain('const nextStartText = computed(() => {');
-    expect(source).toContain('formatManagerNextStart(value)');
   });
 
   it('keeps the home chips fully rounded through shared chip styles', () => {

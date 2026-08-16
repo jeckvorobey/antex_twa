@@ -145,7 +145,6 @@ export default {
     managerHours: 'Режим работы менеджеров',
     managersWorking: 'Менеджеры сейчас работают',
     managersOffline: 'Менеджеры сейчас офлайн',
-    nextStart: 'Начало работы: {time}',
   },
   referral: {
     title: 'Реферальная программа',

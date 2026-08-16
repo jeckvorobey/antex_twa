@@ -21,3 +21,9 @@ export function getMiniappErrorMessageKey(code?: string | null) {
 
   return MINIAPP_ERROR_KEYS[code] ?? 'errors.generic';
 }
+
+/** Извлекает только безопасный machine-readable код из неизвестной API-ошибки. */
+export function getMiniappErrorCode(error: unknown): string | undefined {
+  const code = (error as { response?: { data?: { code?: unknown } } })?.response?.data?.code;
+  return typeof code === 'string' ? code : undefined;
+}
