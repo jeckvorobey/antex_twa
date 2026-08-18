@@ -12,4 +12,9 @@
 - [x] Add realtime unread/read reducer.
 - [x] Add incoming and outgoing attachment UI.
 - [x] Add role-routing and realtime reducer unit tests.
-- [ ] Run repository lint, unit tests and production build in CI/review environment.
+- [x] Сериализовать ready reconciliation и следующие realtime events.
+- [x] Инвалидировать stale ticket, socket callbacks и transport timers через generation.
+- [x] Отменять stale chat list и active conversation REST-запросы.
+- [x] Сохранять search/unread predicates и исключать terminal заявки в realtime reducer.
+- [x] Добавить behavior regression tests для TWA-1/2/4/6/10/11.
+- [x] Run repository lint, unit tests and production build in CI/review environment.

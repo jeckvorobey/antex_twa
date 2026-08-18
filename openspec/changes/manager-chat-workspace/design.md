@@ -14,6 +14,17 @@
 - `manager-realtime.store.ts`: socket ticket, WebSocket lifecycle, heartbeat, reconnect and event forwarding.
 - Reconnect always calls REST reconciliation.
 
+### Race safety
+
+- `realtime.ready` reconciliation и следующие socket events обрабатываются одной
+  последовательной очередью; ready payload не перезаписывает авторитетный REST unread snapshot.
+- Каждый start/stop realtime transport создаёт новую connection generation. Ticket,
+  socket callbacks, reconnect и heartbeat от прошлой generation игнорируются.
+- Запросы списка чатов и active conversation используют `AbortSignal` и request generation,
+  поэтому поздний ответ после смены фильтра или route lifecycle не меняет store.
+- Realtime upsert применяет текущие `query` и `unreadOnly`; terminal заявки не входят в
+  active orders list, но detail snapshot активной заявки остаётся актуальным.
+
 ## Components
 
 Reusable primitives:

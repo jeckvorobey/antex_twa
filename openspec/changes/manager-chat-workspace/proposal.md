@@ -13,6 +13,11 @@
 - Использовать общие manager UI-компоненты вместо page-local копий.
 - Сохранить текущую AntEx deep-green/gold дизайн-систему.
 
+## Capabilities
+
+- `manager-chat-workspace` — отдельный manager shell, REST/realtime state и устойчивые к
+  гонкам lifecycle contracts Mini App.
+
 ## Source of truth
 
 Полная межрепозиторная спецификация и визуальный design board находятся в `jeckvorobey/antex_product`, change `manager-chat-workspace`.
