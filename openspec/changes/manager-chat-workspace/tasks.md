@@ -17,4 +17,9 @@
 - [x] Отменять stale chat list и active conversation REST-запросы.
 - [x] Сохранять search/unread predicates и исключать terminal заявки в realtime reducer.
 - [x] Добавить behavior regression tests для TWA-1/2/4/6/10/11.
+- [x] Отменять in-flight ready reconciliation после stop/start.
+- [x] Защитить active orders от stale REST после realtime status.
+- [x] Подключить list cancellation к `ManagerChatsPage` unmount.
+- [x] Синхронизировать realtime search predicate с backend ILIKE fields.
+- [x] Игнорировать late `markRead` после lifecycle/unread revision change.
 - [x] Run repository lint, unit tests and production build in CI/review environment.

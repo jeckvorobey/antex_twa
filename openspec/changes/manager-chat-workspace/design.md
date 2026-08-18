@@ -19,11 +19,16 @@
 - `realtime.ready` reconciliation и следующие socket events обрабатываются одной
   последовательной очередью; ready payload не перезаписывает авторитетный REST unread snapshot.
 - Каждый start/stop realtime transport создаёт новую connection generation. Ticket,
-  socket callbacks, reconnect и heartbeat от прошлой generation игнорируются.
+  socket callbacks, reconnect, heartbeat и уже начатая REST reconciliation от прошлой
+  generation отменяются и игнорируются.
 - Запросы списка чатов и active conversation используют `AbortSignal` и request generation,
   поэтому поздний ответ после смены фильтра или route lifecycle не меняет store.
-- Realtime upsert применяет текущие `query` и `unreadOnly`; terminal заявки не входят в
-  active orders list, но detail snapshot активной заявки остаётся актуальным.
+- Страница списка отменяет свой запрос при unmount; late `markRead` дополнительно проверяет
+  active generation и unread revision.
+- Realtime upsert применяет `query` отдельно к username/firstName/lastName, как backend
+  `ILIKE`, и текущий `unreadOnly`.
+- Active orders REST использует request/state generation: realtime terminal update отменяет
+  старый snapshot. Terminal заявки не входят в active list, но detail остаётся актуальным.
 
 ## Components
 

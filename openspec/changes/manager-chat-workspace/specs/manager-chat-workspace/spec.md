@@ -10,7 +10,8 @@ socket callbacks, heartbeat и reconnect timer прошлой generation не м
 
 - **WHEN** manager workspace остановлен и запущен снова до завершения старого ticket request
 - **THEN** Mini App MUST открыть socket только по ticket текущей generation
-- **AND** callbacks и timers старой generation MUST быть проигнорированы
+- **AND** callbacks, timers и уже начатая REST reconciliation старой generation MUST быть
+  отменены или проигнорированы
 
 ### Requirement: Последовательная reconciliation после realtime ready
 
@@ -45,17 +46,30 @@ Chat list и active conversation requests MUST использовать request 
 - **WHEN** предыдущий filtered chat list response завершается после нового
 - **THEN** conversations MUST соответствовать последней request generation
 
+#### Scenario: Страница списка закрыта до ответа
+
+- **WHEN** `ManagerChatsPage` unmount происходит до завершения filtered list request
+- **THEN** request MUST быть отменён
+- **AND** поздний response MUST NOT менять conversations
+
 #### Scenario: Reconciliation совпадает с открытием другого диалога
 
 - **WHEN** reconnect reconciliation начинается во время `openConversation` нового route
 - **THEN** route request MUST иметь приоритет над refresh предыдущего active snapshot
 - **AND** новый active conversation MUST NOT быть отменён reconciliation
 
+#### Scenario: Mark read завершается после смены active lifecycle
+
+- **WHEN** старый `markRead` response приходит после route leave, switch или нового unread event
+- **THEN** response MUST NOT менять active conversation, conversation unread или global unread
+
 ### Requirement: Realtime reducers сохраняют текущий список
 
 Realtime conversation upsert MUST применять фактические `query` и `unreadOnly` filters.
-Заявка с terminal status MUST отсутствовать в active orders list и MUST NOT вставляться
-туда новым событием.
+Search MUST повторять backend semantics: case-insensitive substring проверяется отдельно в
+username, firstName и lastName, без добавления `@` и без объединения границ полей. Заявка с
+terminal status MUST отсутствовать в active orders list и MUST NOT вставляться туда новым
+событием. Late active-orders REST snapshot MUST NOT отменять более новый realtime status.
 
 #### Scenario: Realtime update не соответствует фильтру
 
@@ -67,3 +81,4 @@ Realtime conversation upsert MUST применять фактические `que
 - **WHEN** `chat.order.updated` переводит заявку в completed или cancelled status
 - **THEN** заявка MUST быть удалена из active orders list
 - **AND** terminal заявка, которой не было в списке, MUST NOT быть вставлена
+- **AND** ранее запущенный REST response MUST NOT вернуть её в active list
