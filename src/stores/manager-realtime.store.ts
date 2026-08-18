@@ -20,6 +20,8 @@ export const useManagerRealtimeStore = defineStore('manager-realtime', () => {
   let heartbeatTimer: number | null = null;
   let reconnectTimer: number | null = null;
   let reconnectAttempt = 0;
+  let connectionGeneration = 0;
+  let eventQueue: Promise<void> = Promise.resolve();
 
   const online = computed(() => state.value === 'online');
 
@@ -47,14 +49,28 @@ export const useManagerRealtimeStore = defineStore('manager-realtime', () => {
     send({ type: 'viewing', conversationId: currentConversationId.value });
   }
 
-  function startHeartbeat(): void {
+  /** Запускает heartbeat только для текущего manager workspace lifecycle. */
+  function startHeartbeat(generation: number): void {
     clearHeartbeat();
     heartbeatTimer = window.setInterval(() => {
+      if (generation !== connectionGeneration) {
+        return;
+      }
       send({ type: 'ping' });
     }, HEARTBEAT_MS);
   }
 
-  async function handleMessage(raw: MessageEvent<string>): Promise<void> {
+  /** Проверяет, что callback принадлежит активным generation и socket. */
+  function isCurrentSocket(generation: number, source: WebSocket): boolean {
+    return enabled && generation === connectionGeneration && socket === source;
+  }
+
+  /** Обрабатывает один envelope; ready REST snapshot остаётся source of truth. */
+  async function handleMessage(
+    raw: MessageEvent<string>,
+    generation: number,
+    source: WebSocket,
+  ): Promise<void> {
     let event: ManagerRealtimeEnvelope;
     try {
       event = JSON.parse(raw.data) as ManagerRealtimeEnvelope;
@@ -62,21 +78,49 @@ export const useManagerRealtimeStore = defineStore('manager-realtime', () => {
       return;
     }
 
+    if (!isCurrentSocket(generation, source)) {
+      return;
+    }
     const chatStore = useManagerChatStore();
     if (event.type === 'realtime.ready') {
       state.value = 'online';
       reconnectAttempt = 0;
       lastError.value = null;
       lastConnectedAt.value = new Date().toISOString();
-      startHeartbeat();
+      startHeartbeat(generation);
       sendViewing();
       await chatStore.reconcile();
+      return;
+    }
+    if (!isCurrentSocket(generation, source)) {
+      return;
     }
     await chatStore.handleRealtimeEvent(event);
   }
 
-  function scheduleReconnect(): void {
-    if (!enabled || reconnectTimer !== null) {
+  /** Сериализует socket events, чтобы following event ждал ready reconciliation. */
+  function queueSocketMessage(
+    raw: MessageEvent<string>,
+    generation: number,
+    source: WebSocket,
+  ): void {
+    eventQueue = eventQueue
+      .then(async () => {
+        if (!isCurrentSocket(generation, source)) {
+          return;
+        }
+        await handleMessage(raw, generation, source);
+      })
+      .catch((error: unknown) => {
+        if (isCurrentSocket(generation, source)) {
+          lastError.value = error instanceof Error ? error.message : 'Realtime недоступен';
+        }
+      });
+  }
+
+  /** Планирует reconnect в той же generation и не оживляет остановленный lifecycle. */
+  function scheduleReconnect(generation: number): void {
+    if (!enabled || generation !== connectionGeneration || reconnectTimer !== null) {
       return;
     }
     reconnectAttempt += 1;
@@ -84,62 +128,84 @@ export const useManagerRealtimeStore = defineStore('manager-realtime', () => {
     const delay = Math.min(500 * 2 ** Math.min(reconnectAttempt - 1, 5), MAX_RECONNECT_MS);
     reconnectTimer = window.setTimeout(() => {
       reconnectTimer = null;
-      void connect();
+      if (enabled && generation === connectionGeneration) {
+        void connect(generation);
+      }
     }, delay);
   }
 
-  async function connect(): Promise<void> {
-    if (!enabled || socket?.readyState === WebSocket.OPEN || socket?.readyState === WebSocket.CONNECTING) {
+  /** Выпускает ticket и создаёт socket только для актуальной connection generation. */
+  async function connect(generation: number): Promise<void> {
+    if (
+      !enabled ||
+      generation !== connectionGeneration ||
+      socket?.readyState === WebSocket.OPEN ||
+      socket?.readyState === WebSocket.CONNECTING
+    ) {
       return;
     }
     clearReconnect();
     state.value = reconnectAttempt > 0 ? 'reconnecting' : 'connecting';
     try {
       const ticket = await issueManagerSocketTicket();
-      if (!enabled) {
+      if (!enabled || generation !== connectionGeneration) {
         return;
       }
       const nextSocket = new WebSocket(buildManagerSocketUrl(ticket.ticket));
       socket = nextSocket;
       nextSocket.onmessage = (event) => {
-        void handleMessage(event);
+        queueSocketMessage(event, generation, nextSocket);
       };
       nextSocket.onerror = () => {
-        lastError.value = 'Не удалось подключить realtime';
+        if (isCurrentSocket(generation, nextSocket)) {
+          lastError.value = 'Не удалось подключить realtime';
+        }
       };
       nextSocket.onclose = () => {
-        if (socket === nextSocket) {
-          socket = null;
+        if (!isCurrentSocket(generation, nextSocket)) {
+          return;
         }
+        socket = null;
         clearHeartbeat();
-        if (enabled) {
-          scheduleReconnect();
+        if (enabled && generation === connectionGeneration) {
+          scheduleReconnect(generation);
         } else {
           state.value = 'offline';
         }
       };
     } catch (error) {
+      if (!enabled || generation !== connectionGeneration) {
+        return;
+      }
       lastError.value = error instanceof Error ? error.message : 'Realtime недоступен';
-      scheduleReconnect();
+      scheduleReconnect(generation);
     }
   }
 
+  /** Открывает единственный transport lifecycle для mounted ManagerLayout. */
   function start(): void {
     if (enabled) {
       return;
     }
     enabled = true;
     reconnectAttempt = 0;
-    void connect();
+    const generation = ++connectionGeneration;
+    eventQueue = Promise.resolve();
+    void connect(generation);
   }
 
+  /** Инвалидирует ticket, socket callbacks, event queue и timers текущей generation. */
   function stop(): void {
     enabled = false;
+    connectionGeneration += 1;
+    eventQueue = Promise.resolve();
     clearHeartbeat();
     clearReconnect();
     const currentSocket = socket;
     socket = null;
     if (currentSocket) {
+      currentSocket.onmessage = null;
+      currentSocket.onerror = null;
       currentSocket.onclose = null;
       currentSocket.close(1000, 'manager workspace closed');
     }

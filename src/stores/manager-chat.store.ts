@@ -21,6 +21,8 @@ import type {
   ManagerRealtimeEnvelope,
 } from '@types/manager-chat';
 
+const TERMINAL_ORDER_STATUSES = new Set([3, 4]);
+
 function sortConversations(items: ManagerConversation[]): ManagerConversation[] {
   return [...items].sort((left, right) => {
     const leftTime = left.lastMessageAt ? Date.parse(left.lastMessageAt) : 0;
@@ -55,10 +57,48 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
   const ordersLoading = ref(false);
   const activeOrder = ref<ManagerOrderSummary | null>(null);
 
+  let chatsRequestController: AbortController | null = null;
+  let chatsRequestGeneration = 0;
+  let activeConversationRequestController: AbortController | null = null;
+  let earlierMessagesRequestController: AbortController | null = null;
+  let activeConversationGeneration = 0;
+
   const activeConversationId = computed(() => activeConversation.value?.id ?? null);
 
+  /** Проверяет DTO диалога по фактическим search/unread фильтрам на момент события. */
+  function matchesCurrentConversationFilters(conversation: ManagerConversation): boolean {
+    if (unreadOnly.value && conversation.unreadCount === 0) {
+      return false;
+    }
+    const search = query.value.trim().toLocaleLowerCase('ru-RU');
+    if (!search) {
+      return true;
+    }
+    const user = conversation.user;
+    const searchable = [
+      user.firstName,
+      user.lastName,
+      user.username,
+      user.username ? `@${user.username}` : null,
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .toLocaleLowerCase('ru-RU');
+    return searchable.includes(search);
+  }
+
+  /** Обновляет active conversation всегда, а список — только по его текущему predicate. */
   function upsertConversation(conversation: ManagerConversation): void {
+    if (activeConversation.value?.id === conversation.id) {
+      activeConversation.value = conversation;
+    }
     const index = conversations.value.findIndex((item) => item.id === conversation.id);
+    if (!matchesCurrentConversationFilters(conversation)) {
+      if (index !== -1) {
+        conversations.value = conversations.value.filter((item) => item.id !== conversation.id);
+      }
+      return;
+    }
     if (index === -1) {
       conversations.value = sortConversations([conversation, ...conversations.value]);
     } else {
@@ -66,18 +106,16 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
       next[index] = conversation;
       conversations.value = sortConversations(next);
     }
-    if (activeConversation.value?.id === conversation.id) {
-      activeConversation.value = conversation;
-    }
   }
 
+  /** Применяет unread update и повторно проверяет unread-only predicate списка. */
   function updateConversationUnread(conversationId: number, unreadCount: number): void {
     const conversation = conversations.value.find((item) => item.id === conversationId);
     if (conversation) {
-      conversation.unreadCount = unreadCount;
+      upsertConversation({ ...conversation, unreadCount });
     }
     if (activeConversation.value?.id === conversationId) {
-      activeConversation.value.unreadCount = unreadCount;
+      activeConversation.value = { ...activeConversation.value, unreadCount };
     }
   }
 
@@ -99,17 +137,24 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
     }
   }
 
+  /** Сохраняет detail snapshot, но исключает terminal заявки из active списка. */
   function upsertOrder(order: ManagerOrderSummary): void {
+    if (activeOrder.value?.id === order.id) {
+      activeOrder.value = order;
+    }
     const index = orders.value.findIndex((item) => item.id === order.id);
+    if (TERMINAL_ORDER_STATUSES.has(order.status)) {
+      if (index !== -1) {
+        orders.value = orders.value.filter((item) => item.id !== order.id);
+      }
+      return;
+    }
     if (index === -1) {
       orders.value = [order, ...orders.value];
     } else {
       const next = orders.value.slice();
       next[index] = order;
       orders.value = next;
-    }
-    if (activeOrder.value?.id === order.id) {
-      activeOrder.value = order;
     }
   }
 
@@ -123,45 +168,122 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
     }
   }
 
+  /** Загружает список по snapshot фильтров и применяет только последнюю generation. */
   async function loadChats(): Promise<void> {
+    chatsRequestController?.abort();
+    const controller = new AbortController();
+    const generation = ++chatsRequestGeneration;
+    chatsRequestController = controller;
     loadingChats.value = true;
     try {
-      const response = await fetchManagerChats({
-        unreadOnly: unreadOnly.value,
-        query: query.value.trim() || undefined,
-        limit: 100,
-        offset: 0,
-      });
+      const search = query.value.trim();
+      const response = await fetchManagerChats(
+        {
+          unreadOnly: unreadOnly.value,
+          limit: 100,
+          offset: 0,
+          ...(search ? { query: search } : {}),
+        },
+        { signal: controller.signal },
+      );
+      if (generation !== chatsRequestGeneration || controller.signal.aborted) {
+        return;
+      }
       conversations.value = sortConversations(response.items);
       total.value = response.total;
       unreadTotal.value = response.unreadTotal;
       chatsLoaded.value = true;
+    } catch (error) {
+      if (!controller.signal.aborted) {
+        throw error;
+      }
     } finally {
-      loadingChats.value = false;
+      if (generation === chatsRequestGeneration) {
+        loadingChats.value = false;
+      }
+      if (chatsRequestController === controller) {
+        chatsRequestController = null;
+      }
     }
   }
 
+  /** Инвалидирует filtered list request при уходе со страницы списка. */
+  function cancelChatsLoad(): void {
+    chatsRequestGeneration += 1;
+    chatsRequestController?.abort();
+    chatsRequestController = null;
+    loadingChats.value = false;
+  }
+
+  /** Создаёт новую generation active conversation и отменяет её старые REST-запросы. */
+  function beginActiveConversationRequest(): {
+    controller: AbortController;
+    generation: number;
+  } {
+    activeConversationRequestController?.abort();
+    earlierMessagesRequestController?.abort();
+    earlierMessagesRequestController = null;
+    const controller = new AbortController();
+    const generation = ++activeConversationGeneration;
+    activeConversationRequestController = controller;
+    return { controller, generation };
+  }
+
+  /** Отменяет active conversation lifecycle и запрещает позднее применение результатов. */
+  function cancelActiveConversationRequests(): void {
+    activeConversationGeneration += 1;
+    activeConversationRequestController?.abort();
+    earlierMessagesRequestController?.abort();
+    activeConversationRequestController = null;
+    earlierMessagesRequestController = null;
+    messagesLoading.value = false;
+  }
+
+  /** Сверяет REST state после reconnect, не позволяя route leave вернуть старый диалог. */
   async function reconcile(): Promise<void> {
     await Promise.all([loadChats(), loadOrders()]);
     if (activeConversation.value) {
       const conversationId = activeConversation.value.id;
-      const [conversation, response] = await Promise.all([
-        fetchManagerChat(conversationId),
-        fetchManagerChatMessages(conversationId, { limit: 50 }),
-      ]);
-      activeConversation.value = conversation;
-      messages.value = response.items;
-      hasMoreMessages.value = response.hasMore;
+      const { controller, generation } = beginActiveConversationRequest();
+      try {
+        const [conversation, response] = await Promise.all([
+          fetchManagerChat(conversationId, { signal: controller.signal }),
+          fetchManagerChatMessages(conversationId, { limit: 50 }, { signal: controller.signal }),
+        ]);
+        if (
+          generation !== activeConversationGeneration ||
+          controller.signal.aborted ||
+          activeConversation.value?.id !== conversationId
+        ) {
+          return;
+        }
+        activeConversation.value = conversation;
+        messages.value = response.items;
+        hasMoreMessages.value = response.hasMore;
+      } catch (error) {
+        if (!controller.signal.aborted) {
+          throw error;
+        }
+      } finally {
+        if (activeConversationRequestController === controller) {
+          activeConversationRequestController = null;
+        }
+      }
     }
   }
 
+  /** Открывает диалог только если его request generation всё ещё принадлежит текущему route. */
   async function openConversation(conversationId: number): Promise<void> {
+    const { controller, generation } = beginActiveConversationRequest();
     messagesLoading.value = true;
     try {
       const [conversation, response] = await Promise.all([
-        fetchManagerChat(conversationId),
-        fetchManagerChatMessages(conversationId, { limit: 50 }),
+        fetchManagerChat(conversationId, { signal: controller.signal }),
+        fetchManagerChatMessages(conversationId, { limit: 50 }, { signal: controller.signal }),
       ]);
+      if (generation !== activeConversationGeneration || controller.signal.aborted) {
+        return;
+      }
       activeConversation.value = conversation;
       messages.value = response.items;
       hasMoreMessages.value = response.hasMore;
@@ -169,11 +291,21 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
       if (conversation.unreadCount > 0) {
         await markRead(conversationId);
       }
+    } catch (error) {
+      if (!controller.signal.aborted) {
+        throw error;
+      }
     } finally {
-      messagesLoading.value = false;
+      if (generation === activeConversationGeneration) {
+        messagesLoading.value = false;
+      }
+      if (activeConversationRequestController === controller) {
+        activeConversationRequestController = null;
+      }
     }
   }
 
+  /** Добавляет раннюю страницу сообщений только в тот же active conversation lifecycle. */
   async function loadEarlierMessages(): Promise<void> {
     if (!activeConversation.value || !hasMoreMessages.value || messagesLoading.value) {
       return;
@@ -182,20 +314,42 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
     if (!firstId) {
       return;
     }
+    earlierMessagesRequestController?.abort();
+    const controller = new AbortController();
+    const generation = activeConversationGeneration;
+    const conversationId = activeConversation.value.id;
+    earlierMessagesRequestController = controller;
     messagesLoading.value = true;
     try {
-      const response = await fetchManagerChatMessages(activeConversation.value.id, {
-        limit: 50,
-        beforeId: firstId,
-      });
+      const response = await fetchManagerChatMessages(
+        conversationId,
+        { limit: 50, beforeId: firstId },
+        { signal: controller.signal },
+      );
+      if (
+        generation !== activeConversationGeneration ||
+        controller.signal.aborted ||
+        activeConversation.value?.id !== conversationId
+      ) {
+        return;
+      }
       const existing = new Set(messages.value.map((item) => item.id));
       messages.value = [
         ...response.items.filter((item) => !existing.has(item.id)),
         ...messages.value,
       ];
       hasMoreMessages.value = response.hasMore;
+    } catch (error) {
+      if (!controller.signal.aborted) {
+        throw error;
+      }
     } finally {
-      messagesLoading.value = false;
+      if (generation === activeConversationGeneration) {
+        messagesLoading.value = false;
+      }
+      if (earlierMessagesRequestController === controller) {
+        earlierMessagesRequestController = null;
+      }
     }
   }
 
@@ -290,7 +444,9 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
       }
       case 'chat.message.created': {
         const message = event.payload.message as unknown as ManagerChatMessage | undefined;
-        const conversation = event.payload.conversation as unknown as ManagerConversation | undefined;
+        const conversation = event.payload.conversation as unknown as
+          | ManagerConversation
+          | undefined;
         const nextUnread = event.payload.unreadTotal;
         if (conversation) {
           upsertConversation(conversation);
@@ -329,7 +485,9 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
         return;
       }
       case 'chat.conversation.updated': {
-        const conversation = event.payload.conversation as unknown as ManagerConversation | undefined;
+        const conversation = event.payload.conversation as unknown as
+          | ManagerConversation
+          | undefined;
         if (conversation) {
           upsertConversation(conversation);
         }
@@ -354,7 +512,9 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
     }
   }
 
+  /** Сбрасывает route state и инвалидирует все поздние active conversation ответы. */
   function resetActiveConversation(): void {
+    cancelActiveConversationRequests();
     activeConversation.value = null;
     messages.value = [];
     hasMoreMessages.value = false;
@@ -378,6 +538,7 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
     ordersLoading,
     activeOrder,
     loadChats,
+    cancelChatsLoad,
     reconcile,
     openConversation,
     loadEarlierMessages,

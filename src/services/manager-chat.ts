@@ -19,23 +19,39 @@ export interface FetchManagerChatsParams {
 
 const MAX_MANAGER_ATTACHMENT_BYTES = 20 * 1024 * 1024;
 
-export async function fetchManagerChats(params: FetchManagerChatsParams = {}) {
-  const response = await api.get<ManagerChatListResponse>('/api/manager/chats', { params });
+/** Загружает список диалогов и позволяет store отменить устаревший фильтрованный запрос. */
+export async function fetchManagerChats(
+  params: FetchManagerChatsParams = {},
+  config: { signal?: AbortSignal } = {},
+) {
+  const response = await api.get<ManagerChatListResponse>('/api/manager/chats', {
+    params,
+    ...config,
+  });
   return response.data;
 }
 
-export async function fetchManagerChat(conversationId: number) {
-  const response = await api.get<ManagerConversation>(`/api/manager/chats/${conversationId}`);
+/** Загружает карточку диалога с поддержкой route-lifecycle cancellation. */
+export async function fetchManagerChat(
+  conversationId: number,
+  config: { signal?: AbortSignal } = {},
+) {
+  const response = await api.get<ManagerConversation>(
+    `/api/manager/chats/${conversationId}`,
+    config,
+  );
   return response.data;
 }
 
+/** Загружает страницу сообщений и не удерживает завершившийся route request. */
 export async function fetchManagerChatMessages(
   conversationId: number,
   params: { limit?: number; beforeId?: number } = {},
+  config: { signal?: AbortSignal } = {},
 ) {
   const response = await api.get<ManagerChatMessagesResponse>(
     `/api/manager/chats/${conversationId}/messages`,
-    { params },
+    { params, ...config },
   );
   return response.data;
 }
