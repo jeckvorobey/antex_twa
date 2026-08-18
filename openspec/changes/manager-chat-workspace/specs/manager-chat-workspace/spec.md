@@ -45,6 +45,12 @@ Chat list и active conversation requests MUST использовать request 
 - **WHEN** предыдущий filtered chat list response завершается после нового
 - **THEN** conversations MUST соответствовать последней request generation
 
+#### Scenario: Reconciliation совпадает с открытием другого диалога
+
+- **WHEN** reconnect reconciliation начинается во время `openConversation` нового route
+- **THEN** route request MUST иметь приоритет над refresh предыдущего active snapshot
+- **AND** новый active conversation MUST NOT быть отменён reconciliation
+
 ### Requirement: Realtime reducers сохраняют текущий список
 
 Realtime conversation upsert MUST применять фактические `query` и `unreadOnly` filters.

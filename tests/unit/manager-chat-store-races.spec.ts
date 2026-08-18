@@ -140,6 +140,32 @@ describe('manager chat store request races', () => {
     );
   });
 
+  it('TWA-2 reconciliation не отменяет открытие нового active conversation', async () => {
+    const store = useManagerChatStore();
+    const nextConversation = deferred<ManagerConversation>();
+    const nextMessages = deferred<ManagerChatMessagesResponse>();
+    vi.mocked(fetchManagerChat)
+      .mockResolvedValueOnce(makeConversation(10))
+      .mockReturnValueOnce(nextConversation.promise)
+      .mockResolvedValueOnce(makeConversation(10));
+    vi.mocked(fetchManagerChatMessages)
+      .mockResolvedValueOnce({ items: [], hasMore: false })
+      .mockReturnValueOnce(nextMessages.promise)
+      .mockResolvedValueOnce({ items: [], hasMore: false });
+    vi.mocked(fetchManagerChats).mockResolvedValueOnce(makeChatList([]));
+    vi.mocked(fetchManagerOrders).mockResolvedValueOnce({ items: [] });
+    await store.openConversation(10);
+
+    const opening = store.openConversation(11);
+    await store.reconcile();
+    nextConversation.resolve(makeConversation(11));
+    nextMessages.resolve({ items: [makeMessage(110, 11)], hasMore: false });
+    await opening;
+
+    expect(store.activeConversation?.id).toBe(11);
+    expect(store.messages.map((item) => item.id)).toEqual([110]);
+  });
+
   it('TWA-4 применяет только последний ответ для текущего search-фильтра', async () => {
     const store = useManagerChatStore();
     const staleRequest = deferred<ManagerChatListResponse>();

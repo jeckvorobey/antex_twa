@@ -242,6 +242,10 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
   /** Сверяет REST state после reconnect, не позволяя route leave вернуть старый диалог. */
   async function reconcile(): Promise<void> {
     await Promise.all([loadChats(), loadOrders()]);
+    // Route request новее отображаемого active snapshot и имеет приоритет над reconnect refresh.
+    if (activeConversationRequestController) {
+      return;
+    }
     if (activeConversation.value) {
       const conversationId = activeConversation.value.id;
       const { controller, generation } = beginActiveConversationRequest();
