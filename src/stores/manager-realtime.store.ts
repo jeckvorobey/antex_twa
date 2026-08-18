@@ -22,6 +22,7 @@ export const useManagerRealtimeStore = defineStore('manager-realtime', () => {
   let reconnectAttempt = 0;
   let connectionGeneration = 0;
   let eventQueue: Promise<void> = Promise.resolve();
+  let reconciliationController: AbortController | null = null;
 
   const online = computed(() => state.value === 'online');
 
@@ -37,6 +38,12 @@ export const useManagerRealtimeStore = defineStore('manager-realtime', () => {
       window.clearTimeout(reconnectTimer);
       reconnectTimer = null;
     }
+  }
+
+  /** Отменяет REST reconciliation, принадлежащую старому socket lifecycle. */
+  function cancelReconciliation(): void {
+    reconciliationController?.abort();
+    reconciliationController = null;
   }
 
   function send(payload: Record<string, unknown>): void {
@@ -89,7 +96,16 @@ export const useManagerRealtimeStore = defineStore('manager-realtime', () => {
       lastConnectedAt.value = new Date().toISOString();
       startHeartbeat(generation);
       sendViewing();
-      await chatStore.reconcile();
+      cancelReconciliation();
+      const controller = new AbortController();
+      reconciliationController = controller;
+      try {
+        await chatStore.reconcile({ signal: controller.signal });
+      } finally {
+        if (reconciliationController === controller) {
+          reconciliationController = null;
+        }
+      }
       return;
     }
     if (!isCurrentSocket(generation, source)) {
@@ -166,6 +182,7 @@ export const useManagerRealtimeStore = defineStore('manager-realtime', () => {
           return;
         }
         socket = null;
+        cancelReconciliation();
         clearHeartbeat();
         if (enabled && generation === connectionGeneration) {
           scheduleReconnect(generation);
@@ -199,6 +216,7 @@ export const useManagerRealtimeStore = defineStore('manager-realtime', () => {
     enabled = false;
     connectionGeneration += 1;
     eventQueue = Promise.resolve();
+    cancelReconciliation();
     clearHeartbeat();
     clearReconnect();
     const currentSocket = socket;

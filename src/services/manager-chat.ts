@@ -104,9 +104,15 @@ export async function sendManagerChatAttachment(
   return response.data;
 }
 
-export async function markManagerChatRead(conversationId: number) {
+/** Фиксирует read state и позволяет route lifecycle отменить ожидание ответа. */
+export async function markManagerChatRead(
+  conversationId: number,
+  config: { signal?: AbortSignal } = {},
+) {
   const response = await api.post<ManagerChatReadResponse>(
     `/api/manager/chats/${conversationId}/read`,
+    undefined,
+    config,
   );
   return response.data;
 }
@@ -118,8 +124,9 @@ export async function closeManagerChat(conversationId: number) {
   return response.data;
 }
 
-export async function fetchManagerOrders() {
-  const response = await api.get<ManagerOrderListResponse>('/api/manager/orders');
+/** Загружает active заявки с поддержкой cancellation для reconciliation/page lifecycle. */
+export async function fetchManagerOrders(config: { signal?: AbortSignal } = {}) {
+  const response = await api.get<ManagerOrderListResponse>('/api/manager/orders', config);
   return response.data;
 }
 

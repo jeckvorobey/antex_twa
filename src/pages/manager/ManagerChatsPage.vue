@@ -2,7 +2,9 @@
   <q-page class="manager-page">
     <ManagerPageHeader
       title="Чаты"
-      :subtitle="chatStore.unreadTotal ? `Непрочитанных: ${chatStore.unreadTotal}` : 'Все обращения клиентов'"
+      :subtitle="
+        chatStore.unreadTotal ? `Непрочитанных: ${chatStore.unreadTotal}` : 'Все обращения клиентов'
+      "
     >
       <template #trailing>
         <ConnectionStatePill :state="realtimeStore.state" />
@@ -47,7 +49,11 @@
     <EmptyStateCard
       v-else-if="!chatStore.conversations.length"
       title="Новых диалогов нет"
-      :text="chatStore.unreadOnly ? 'Все сообщения уже прочитаны.' : 'Новый клиент появится здесь сразу после сообщения боту.'"
+      :text="
+        chatStore.unreadOnly
+          ? 'Все сообщения уже прочитаны.'
+          : 'Новый клиент появится здесь сразу после сообщения боту.'
+      "
       icon="forum"
     />
     <div v-else class="manager-conversation-list">
@@ -62,7 +68,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue';
+import { onBeforeUnmount, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 
 import ConnectionStatePill from '@components/manager/ConnectionStatePill.vue';
@@ -78,6 +84,10 @@ const realtimeStore = useManagerRealtimeStore();
 
 onMounted(() => {
   void chatStore.loadChats();
+});
+
+onBeforeUnmount(() => {
+  chatStore.cancelChatsLoad();
 });
 
 function reload(): void {

@@ -30,6 +30,7 @@ import {
   fetchManagerChatMessages,
   fetchManagerChats,
   fetchManagerOrders,
+  markManagerChatRead,
 } from '@services/manager-chat';
 
 interface Deferred<T> {
@@ -68,7 +69,12 @@ function makeMessage(id: number, conversationId: number): ManagerChatMessage {
 /** Собирает полный DTO диалога, меняя только значимые для сценария поля. */
 function makeConversation(
   id: number,
-  params: { firstName?: string; username?: string; unreadCount?: number } = {},
+  params: {
+    firstName?: string;
+    lastName?: string;
+    username?: string;
+    unreadCount?: number;
+  } = {},
 ): ManagerConversation {
   const message = makeMessage(id, id);
   return {
@@ -81,7 +87,7 @@ function makeConversation(
       telegramId: 1000 + id,
       username: params.username ?? `user${id}`,
       firstName: params.firstName ?? `Клиент ${id}`,
-      lastName: null,
+      lastName: params.lastName ?? null,
       photoUrl: null,
     },
     lastMessage: message,
@@ -116,7 +122,7 @@ function makeChatList(items: ManagerConversation[]): ManagerChatListResponse {
 describe('manager chat store request races', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
-    vi.clearAllMocks();
+    vi.resetAllMocks();
   });
 
   it('TWA-2 не применяет ответ active conversation после ухода с маршрута', async () => {
@@ -166,6 +172,60 @@ describe('manager chat store request races', () => {
     expect(store.messages.map((item) => item.id)).toEqual([110]);
   });
 
+  it('P2-5 поздний markRead после route leave не перезаписывает realtime unread', async () => {
+    const store = useManagerChatStore();
+    const readRequest = deferred<{
+      conversationId: number;
+      unreadCount: number;
+      unreadTotal: number;
+    }>();
+    vi.mocked(fetchManagerChat).mockResolvedValueOnce(makeConversation(12, { unreadCount: 1 }));
+    vi.mocked(fetchManagerChatMessages).mockResolvedValueOnce({ items: [], hasMore: false });
+    vi.mocked(markManagerChatRead).mockReturnValueOnce(readRequest.promise);
+
+    const opening = store.openConversation(12);
+    await vi.waitFor(() => expect(markManagerChatRead).toHaveBeenCalledTimes(1));
+    store.resetActiveConversation();
+    await store.handleRealtimeEvent({
+      type: 'chat.unread.updated',
+      payload: { conversationId: 12, unreadCount: 2, unreadTotal: 2 },
+    });
+    readRequest.resolve({ conversationId: 12, unreadCount: 0, unreadTotal: 0 });
+    await opening;
+
+    expect(store.activeConversation).toBeNull();
+    expect(store.conversations[0]?.unreadCount).toBe(2);
+    expect(store.unreadTotal).toBe(2);
+  });
+
+  it('P2-5 поздний markRead старого диалога не перезаписывает unread после switch', async () => {
+    const store = useManagerChatStore();
+    const readRequest = deferred<{
+      conversationId: number;
+      unreadCount: number;
+      unreadTotal: number;
+    }>();
+    vi.mocked(fetchManagerChat)
+      .mockResolvedValueOnce(makeConversation(13, { unreadCount: 1 }))
+      .mockResolvedValueOnce(makeConversation(14));
+    vi.mocked(fetchManagerChatMessages).mockResolvedValue({ items: [], hasMore: false });
+    vi.mocked(markManagerChatRead).mockReturnValueOnce(readRequest.promise);
+
+    const firstOpening = store.openConversation(13);
+    await vi.waitFor(() => expect(markManagerChatRead).toHaveBeenCalledTimes(1));
+    await store.openConversation(14);
+    await store.handleRealtimeEvent({
+      type: 'chat.unread.updated',
+      payload: { conversationId: 14, unreadCount: 3, unreadTotal: 4 },
+    });
+    readRequest.resolve({ conversationId: 13, unreadCount: 0, unreadTotal: 0 });
+    await firstOpening;
+
+    expect(store.activeConversation?.id).toBe(14);
+    expect(store.activeConversation?.unreadCount).toBe(3);
+    expect(store.unreadTotal).toBe(4);
+  });
+
   it('TWA-4 применяет только последний ответ для текущего search-фильтра', async () => {
     const store = useManagerChatStore();
     const staleRequest = deferred<ManagerChatListResponse>();
@@ -208,7 +268,7 @@ describe('manager chat store request races', () => {
 describe('manager chat store realtime filters', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
-    vi.clearAllMocks();
+    vi.resetAllMocks();
   });
 
   it('TWA-6 не вставляет realtime-диалог мимо текущего search predicate', async () => {
@@ -221,6 +281,43 @@ describe('manager chat store realtime filters', () => {
     });
 
     expect(store.conversations).toEqual([]);
+  });
+
+  it('P2-4 не считает @ частью backend username search', async () => {
+    const store = useManagerChatStore();
+    store.query = '@ivan';
+
+    await store.handleRealtimeEvent({
+      type: 'chat.conversation.updated',
+      payload: {
+        conversation: makeConversation(15, { firstName: 'Пётр', username: 'ivan' }),
+      },
+    });
+
+    expect(store.conversations).toEqual([]);
+  });
+
+  it('P2-4 ищет substring отдельно в firstName, lastName и username', async () => {
+    const store = useManagerChatStore();
+    const conversation = makeConversation(16, {
+      firstName: 'Иван',
+      lastName: 'Иванов',
+      username: 'petrov',
+    });
+    store.query = 'ан ива';
+
+    await store.handleRealtimeEvent({
+      type: 'chat.conversation.updated',
+      payload: { conversation },
+    });
+    expect(store.conversations).toEqual([]);
+
+    store.query = 'ИВА';
+    await store.handleRealtimeEvent({
+      type: 'chat.conversation.updated',
+      payload: { conversation },
+    });
+    expect(store.conversations.map((item) => item.id)).toEqual([16]);
   });
 
   it('TWA-6 удаляет прочитанный realtime-диалог из unread-only списка', async () => {
@@ -255,7 +352,7 @@ describe('manager chat store realtime filters', () => {
 describe('manager active orders realtime reducer', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
-    vi.clearAllMocks();
+    vi.resetAllMocks();
   });
 
   it('TWA-11 удаляет существующую заявку после terminal status event', async () => {
@@ -279,6 +376,25 @@ describe('manager active orders realtime reducer', () => {
       type: 'chat.order.updated',
       payload: { order: makeOrder(8, 4) },
     });
+
+    expect(store.orders).toEqual([]);
+  });
+
+  it('P1-2 медленный orders response не откатывает terminal realtime update', async () => {
+    const store = useManagerChatStore();
+    const staleOrders = deferred<ManagerOrderListResponse>();
+    vi.mocked(fetchManagerOrders)
+      .mockResolvedValueOnce({ items: [makeOrder(9, 2)] })
+      .mockReturnValueOnce(staleOrders.promise);
+    await store.loadOrders();
+
+    const loading = store.loadOrders();
+    await store.handleRealtimeEvent({
+      type: 'chat.order.updated',
+      payload: { order: makeOrder(9, 3) },
+    });
+    staleOrders.resolve({ items: [makeOrder(9, 2)] });
+    await loading;
 
     expect(store.orders).toEqual([]);
   });

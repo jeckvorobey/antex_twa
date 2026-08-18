@@ -200,6 +200,45 @@ describe('manager realtime ordering and connection generation', () => {
     expect(chatStore.unreadTotal).toBe(4);
   });
 
+  it('P1-1 old ready reconciliation не меняет store после stop/start', async () => {
+    const realtimeStore = useManagerRealtimeStore();
+    const chatStore = useManagerChatStore();
+    const oldChats = deferred<ManagerChatListResponse>();
+    const oldOrders = deferred<{ items: [] }>();
+    vi.mocked(issueManagerSocketTicket)
+      .mockResolvedValueOnce({ ticket: 'old-ready', expiresInSeconds: 30 })
+      .mockResolvedValueOnce({ ticket: 'new-session', expiresInSeconds: 30 });
+    vi.mocked(fetchManagerChats).mockReturnValueOnce(oldChats.promise);
+    vi.mocked(fetchManagerOrders).mockReturnValueOnce(oldOrders.promise);
+
+    realtimeStore.start();
+    await flushSocketWork();
+    FakeWebSocket.instances[0]!.emitMessage({
+      type: 'realtime.ready',
+      payload: { unreadTotal: 0 },
+    });
+    await Promise.resolve();
+    realtimeStore.stop();
+    realtimeStore.start();
+    await flushSocketWork();
+    const currentConversation = makeConversation(21);
+    await chatStore.handleRealtimeEvent({
+      type: 'chat.conversation.updated',
+      payload: { conversation: currentConversation },
+    });
+    await chatStore.handleRealtimeEvent({
+      type: 'chat.unread.updated',
+      payload: { conversationId: 21, unreadCount: 5, unreadTotal: 5 },
+    });
+
+    oldChats.resolve({ items: [makeConversation(22)], total: 1, unreadTotal: 1 });
+    oldOrders.resolve({ items: [] });
+    await flushSocketWork();
+
+    expect(chatStore.conversations.map((item) => item.id)).toEqual([21]);
+    expect(chatStore.unreadTotal).toBe(5);
+  });
+
   it('TWA-10 игнорирует старый ticket после stop/start generation', async () => {
     const realtimeStore = useManagerRealtimeStore();
     const staleTicket = deferred<ManagerSocketTicketResponse>();
