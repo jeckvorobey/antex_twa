@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { getMiniappErrorMessageKey } from '@utils/api-errors';
+import { getMiniappErrorCode, getMiniappErrorMessageKey } from '@utils/api-errors';
 
 describe('miniapp api errors', () => {
   it('maps backend codes to localized error keys only', () => {
@@ -21,5 +21,12 @@ describe('miniapp api errors', () => {
   it('falls back to generic key for unknown or missing codes', () => {
     expect(getMiniappErrorMessageKey('UNKNOWN')).toBe('errors.generic');
     expect(getMiniappErrorMessageKey()).toBe('errors.generic');
+  });
+
+  it('extracts only a machine-readable backend code from unknown errors', () => {
+    expect(getMiniappErrorCode({ response: { data: { code: 'RATE_UNAVAILABLE' } } })).toBe(
+      'RATE_UNAVAILABLE',
+    );
+    expect(getMiniappErrorCode(new Error('internal details'))).toBeUndefined();
   });
 });

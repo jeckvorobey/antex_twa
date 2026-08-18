@@ -6,13 +6,63 @@ import {
   buildBuyCurrencyOptions,
   buildReceiveLocationLabel,
   calculateLocalQuote,
+  canRequestCashDeliveryQuote,
   getCountryByCurrency,
   getDefaultReceiveMethod,
   getReceiveLocationTitleKey,
+  hasExchangePair,
   isInternalAexPayout,
   resetCityForMethod,
   validatePreliminaryOrderDraft,
 } from '@utils/exchange';
+
+describe('canRequestCashDeliveryQuote', () => {
+  const pairs = [
+    { id: 'rub-thb', fromCurrency: 'RUB', toCurrency: 'THB' },
+    { id: 'usdt-thb', fromCurrency: 'USDT', toCurrency: 'THB' },
+  ];
+
+  it.each([
+    ['RUB', 24_999, false],
+    ['RUB', 25_000, true],
+    ['USDT', 499, false],
+    ['USDT', 500, true],
+  ] as const)(
+    'validates the cash minimum for %s amount %s',
+    (currencySell, amountSell, expected) => {
+      expect(
+        canRequestCashDeliveryQuote({
+          pairs,
+          methodGet: 'cash',
+          currencySell,
+          currencyBuy: 'THB',
+          amountSell,
+        }),
+      ).toBe(expected);
+    },
+  );
+
+  it('rejects non-cash and incomplete pair states', () => {
+    expect(
+      canRequestCashDeliveryQuote({
+        pairs,
+        methodGet: 'qrcode',
+        currencySell: 'RUB',
+        currencyBuy: 'THB',
+        amountSell: 25_000,
+      }),
+    ).toBe(false);
+    expect(
+      canRequestCashDeliveryQuote({
+        pairs,
+        methodGet: 'cash',
+        currencySell: 'RUB',
+        currencyBuy: 'GEL',
+        amountSell: 25_000,
+      }),
+    ).toBe(false);
+  });
+});
 
 describe('buildBuyCurrencyOptions', () => {
   const pairs = [
@@ -79,6 +129,16 @@ describe('buildBuyCurrencyOptions', () => {
         },
       ]),
     ).not.toContainEqual({ label: 'USDT', value: 'USDT' });
+  });
+});
+
+describe('hasExchangePair', () => {
+  const pairs = [{ id: 'rub-thb', fromCurrency: 'RUB', toCurrency: 'THB' }];
+
+  it('accepts only the configured direct sell and buy currencies', () => {
+    expect(hasExchangePair(pairs, 'RUB', 'THB')).toBe(true);
+    expect(hasExchangePair(pairs, 'RUB', 'GEL')).toBe(false);
+    expect(hasExchangePair(pairs, '', 'THB')).toBe(false);
   });
 });
 

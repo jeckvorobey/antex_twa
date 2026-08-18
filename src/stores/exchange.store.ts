@@ -14,6 +14,7 @@ import type {
   MiniappManagerAvailability,
   MiniappOrderCreate,
   MiniappQuoteResponse,
+  MiniappReceiveMethod,
 } from '@types/miniapp';
 import { calculateLocalQuote } from '@utils/exchange';
 
@@ -27,15 +28,26 @@ export const useExchangeStore = defineStore('exchange', () => {
   const submitting = ref(false);
   let refreshPromise: Promise<void> | null = null;
   let managerAvailabilityRefreshPromise: Promise<MiniappManagerAvailability> | null = null;
+  let cashQuoteRequestId = 0;
+  let cashQuoteAbortController: AbortController | null = null;
+
+  function cancelCashDeliveryQuote() {
+    cashQuoteRequestId += 1;
+    cashQuoteAbortController?.abort();
+    cashQuoteAbortController = null;
+  }
 
   async function fetchData() {
+    const quoteVersion = cashQuoteRequestId;
     const [screenResponse, citiesResponse] = await Promise.all([
       fetchExchangeScreen(),
       fetchCities(),
     ]);
     screen.value = screenResponse;
     cities.value = citiesResponse.items;
-    quote.value = screenResponse.quote;
+    if (quoteVersion === cashQuoteRequestId) {
+      quote.value = screenResponse.quote;
+    }
   }
 
   async function load() {
@@ -96,6 +108,7 @@ export const useExchangeStore = defineStore('exchange', () => {
     currencyBuy: string;
     amountSell: number;
   }) {
+    cancelCashDeliveryQuote();
     quote.value = calculateLocalQuote({
       pairs: screen.value?.pairs ?? [],
       ...params,
@@ -103,13 +116,55 @@ export const useExchangeStore = defineStore('exchange', () => {
     return quote.value;
   }
 
+  /** Отменяет cash-запрос и удаляет quote, не соответствующий текущей форме. */
+  function invalidateCashDeliveryQuote() {
+    cancelCashDeliveryQuote();
+    quote.value = null;
+  }
+
   /** Возвращает серверный snapshot quote, не заменяя exchange-screen и draft формы. */
   async function refreshQuote(params: {
     currencySell: string;
     currencyBuy: string;
     amountSell: number;
+    methodGet?: MiniappReceiveMethod;
   }) {
     return fetchQuote(params);
+  }
+
+  /** Применяет только последнюю серверную котировку для доставки наличных. */
+  async function refreshCashDeliveryQuote(params: {
+    currencySell: string;
+    currencyBuy: string;
+    amountSell: number;
+  }) {
+    cancelCashDeliveryQuote();
+    const requestId = cashQuoteRequestId;
+    const controller = new AbortController();
+    cashQuoteAbortController = controller;
+
+    try {
+      const freshQuote = await fetchQuote(
+        { ...params, methodGet: 'cash' },
+        { signal: controller.signal },
+      );
+      if (controller.signal.aborted || requestId !== cashQuoteRequestId) {
+        return null;
+      }
+
+      quote.value = freshQuote;
+      return freshQuote;
+    } catch (error) {
+      if (controller.signal.aborted || requestId !== cashQuoteRequestId) {
+        return null;
+      }
+      quote.value = null;
+      throw error;
+    } finally {
+      if (requestId === cashQuoteRequestId) {
+        cashQuoteAbortController = null;
+      }
+    }
   }
 
   async function submitOrder(payload: MiniappOrderCreate) {
@@ -134,6 +189,9 @@ export const useExchangeStore = defineStore('exchange', () => {
     refreshManagerAvailability,
     recalculateQuote,
     refreshQuote,
+    refreshCashDeliveryQuote,
+    cancelCashDeliveryQuote,
+    invalidateCashDeliveryQuote,
     submitOrder,
   };
 });

@@ -204,6 +204,41 @@ describe('exchange store', () => {
     expect(store.refreshing).toBe(false);
   });
 
+  it('does not let an older screen refresh replace a newer cash quote', async () => {
+    const store = useExchangeStore();
+    let resolveScreenRefresh: ((screen: MiniappExchangeScreenResponse) => void) | null = null;
+    vi.mocked(fetchExchangeScreen)
+      .mockResolvedValueOnce(makeScreen())
+      .mockReturnValueOnce(
+        new Promise((resolve) => {
+          resolveScreenRefresh = resolve;
+        }),
+      );
+    vi.mocked(fetchCities).mockResolvedValue({ items: makeCities() });
+    await store.load();
+
+    const screenRefresh = store.refresh();
+    const cashQuote = makeQuote({
+      currencySell: 'RUB',
+      currencyBuy: 'THB',
+      amountSell: 25_000,
+      amountBuy: 9_638,
+      rate: 0.38552,
+    });
+    vi.mocked(fetchQuote).mockResolvedValueOnce(cashQuote);
+
+    await store.refreshCashDeliveryQuote({
+      currencySell: 'RUB',
+      currencyBuy: 'THB',
+      amountSell: 25_000,
+    });
+    resolveScreenRefresh?.({ ...makeScreen(), chips: ['RUB'] });
+    await screenRefresh;
+
+    expect(store.screen?.chips).toEqual(['RUB']);
+    expect(store.quote).toEqual(cashQuote);
+  });
+
   it('clears quote when local pair is missing', async () => {
     const store = useExchangeStore();
     vi.mocked(fetchExchangeScreen).mockResolvedValue(makeScreen());
@@ -277,5 +312,142 @@ describe('exchange store', () => {
       store.refreshQuote({ currencySell: 'RUB', currencyBuy: 'GEL', amountSell: 30000 }),
     ).resolves.toEqual(freshQuote);
     expect(store.quote).toBe(initialQuote);
+  });
+
+  it('applies only the latest cash delivery quote and aborts the displaced request', async () => {
+    const store = useExchangeStore();
+    vi.mocked(fetchExchangeScreen).mockResolvedValue(makeScreen());
+    vi.mocked(fetchCities).mockResolvedValue({ items: makeCities() });
+    await store.load();
+
+    let resolveFirst: ((quote: MiniappQuoteResponse) => void) | null = null;
+    let resolveSecond: ((quote: MiniappQuoteResponse) => void) | null = null;
+    vi.mocked(fetchQuote)
+      .mockReturnValueOnce(
+        new Promise((resolve) => {
+          resolveFirst = resolve;
+        }),
+      )
+      .mockReturnValueOnce(
+        new Promise((resolve) => {
+          resolveSecond = resolve;
+        }),
+      );
+
+    const firstRefresh = store.refreshCashDeliveryQuote({
+      currencySell: 'RUB',
+      currencyBuy: 'THB',
+      amountSell: 5000,
+    });
+    const firstSignal = vi.mocked(fetchQuote).mock.calls[0]?.[1]?.signal;
+    const secondRefresh = store.refreshCashDeliveryQuote({
+      currencySell: 'RUB',
+      currencyBuy: 'THB',
+      amountSell: 6000,
+    });
+    const latestQuote = makeQuote({
+      currencySell: 'RUB',
+      currencyBuy: 'THB',
+      amountSell: 6000,
+      amountBuy: 2375,
+      rate: 0.395833,
+    });
+
+    expect(firstSignal?.aborted).toBe(true);
+    expect(fetchQuote).toHaveBeenNthCalledWith(
+      2,
+      {
+        currencySell: 'RUB',
+        currencyBuy: 'THB',
+        amountSell: 6000,
+        methodGet: 'cash',
+      },
+      { signal: expect.any(AbortSignal) },
+    );
+
+    resolveSecond?.(latestQuote);
+    await expect(secondRefresh).resolves.toEqual(latestQuote);
+    expect(store.quote).toEqual(latestQuote);
+
+    resolveFirst?.(
+      makeQuote({
+        currencySell: 'RUB',
+        currencyBuy: 'THB',
+        amountSell: 5000,
+        amountBuy: 1975,
+      }),
+    );
+    await expect(firstRefresh).resolves.toBeNull();
+    expect(store.quote).toEqual(latestQuote);
+  });
+
+  it('keeps the ordinary local quote when cash delivery refresh is cancelled', async () => {
+    const store = useExchangeStore();
+    vi.mocked(fetchExchangeScreen).mockResolvedValue(makeScreen());
+    vi.mocked(fetchCities).mockResolvedValue({ items: makeCities() });
+    await store.load();
+
+    let resolveCashQuote: ((quote: MiniappQuoteResponse) => void) | null = null;
+    vi.mocked(fetchQuote).mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveCashQuote = resolve;
+      }),
+    );
+
+    const cashRefresh = store.refreshCashDeliveryQuote({
+      currencySell: 'RUB',
+      currencyBuy: 'THB',
+      amountSell: 5000,
+    });
+    const signal = vi.mocked(fetchQuote).mock.calls[0]?.[1]?.signal;
+    const localQuote = store.recalculateQuote({
+      currencySell: 'RUB',
+      currencyBuy: 'THB',
+      amountSell: 7000,
+    });
+
+    expect(signal?.aborted).toBe(true);
+    expect(store.quote).toEqual(localQuote);
+
+    resolveCashQuote?.(
+      makeQuote({
+        currencySell: 'RUB',
+        currencyBuy: 'THB',
+        amountSell: 5000,
+        amountBuy: 1975,
+      }),
+    );
+    await expect(cashRefresh).resolves.toBeNull();
+    expect(store.quote).toEqual(localQuote);
+  });
+
+  it('clears the stale quote when the latest cash delivery request fails', async () => {
+    const store = useExchangeStore();
+    vi.mocked(fetchExchangeScreen).mockResolvedValue(makeScreen());
+    vi.mocked(fetchCities).mockResolvedValue({ items: makeCities() });
+    await store.load();
+    const error = new Error('network unavailable');
+    vi.mocked(fetchQuote).mockRejectedValueOnce(error);
+
+    await expect(
+      store.refreshCashDeliveryQuote({
+        currencySell: 'RUB',
+        currencyBuy: 'THB',
+        amountSell: 5000,
+      }),
+    ).rejects.toBe(error);
+
+    expect(store.quote).toBeNull();
+  });
+
+  it('invalidates a cash quote when the current form state cannot request one', async () => {
+    const store = useExchangeStore();
+    vi.mocked(fetchExchangeScreen).mockResolvedValue(makeScreen());
+    vi.mocked(fetchCities).mockResolvedValue({ items: makeCities() });
+    await store.load();
+
+    store.invalidateCashDeliveryQuote();
+
+    expect(store.quote).toBeNull();
   });
 });
