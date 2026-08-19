@@ -20,6 +20,9 @@ export default {
     history: 'История',
     profile: 'Профиль',
     more: 'Еще',
+    managerChats: 'Чаты',
+    managerOrders: 'Заявки',
+    managerProfile: 'Профиль',
   },
   writeAccess: {
     idle: {

@@ -3,14 +3,14 @@
     <q-page-container>
       <router-view />
     </q-page-container>
-    <ManagerBottomNav />
+    <AppBottomNav />
   </q-layout>
 </template>
 
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted } from 'vue';
 
-import ManagerBottomNav from '@components/manager/ManagerBottomNav.vue';
+import AppBottomNav from '@components/ui/AppBottomNav.vue';
 import { useManagerChatStore } from '@stores/manager-chat.store';
 import { useManagerRealtimeStore } from '@stores/manager-realtime.store';
 

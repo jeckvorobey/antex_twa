@@ -31,45 +31,6 @@
   padding-bottom: calc(176px + env(safe-area-inset-bottom));
 }
 
-.manager-bottom-nav {
-  position: fixed;
-  z-index: 80;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  display: flex;
-  justify-content: center;
-  padding: 8px 16px calc(10px + env(safe-area-inset-bottom));
-  pointer-events: none;
-}
-
-.manager-bottom-nav__shell {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  width: min(100%, 430px);
-  padding: 5px;
-  border: 1px solid var(--antex-gold-border);
-  border-radius: 34px;
-  background: color-mix(in srgb, var(--antex-bg-card) 92%, transparent);
-  box-shadow: var(--antex-shadow-card);
-  backdrop-filter: blur(20px);
-  pointer-events: auto;
-}
-
-.manager-bottom-nav__item {
-  min-height: 58px;
-  border-radius: 28px;
-  color: var(--antex-text-muted);
-  font-size: 11px;
-  letter-spacing: 0.03em;
-}
-
-.manager-bottom-nav__item--active {
-  color: var(--antex-gold-base);
-  background: var(--antex-gold-soft);
-}
-
-.manager-bottom-nav__badge,
 .manager-unread-badge {
   display: inline-flex;
   align-items: center;

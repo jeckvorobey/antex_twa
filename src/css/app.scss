@@ -472,6 +472,24 @@ body.body--dark .q-page {
   filter: drop-shadow(0 0 8px rgba(242, 210, 122, 0.42));
 }
 
+.app-bottom-nav__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  color: var(--antex-bg-deep, #071916);
+  background: var(--antex-gold-gradient, linear-gradient(135deg, #f2d27a 0%, #d4af37 100%));
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
+  box-shadow: 0 0 12px rgba(212, 175, 55, 0.35);
+  top: 2px;
+  right: 2px;
+}
+
 @keyframes app-bottom-nav-velvet-reveal {
   from {
     opacity: 0;

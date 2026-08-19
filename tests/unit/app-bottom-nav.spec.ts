@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 const componentPath = resolve(process.cwd(), 'src/components/ui/AppBottomNav.vue');
 const homePagePath = resolve(process.cwd(), 'src/pages/HomePage.vue');
 const mainLayoutPath = resolve(process.cwd(), 'src/layouts/MainLayout.vue');
+const managerLayoutPath = resolve(process.cwd(), 'src/layouts/ManagerLayout.vue');
 const stylesPath = resolve(process.cwd(), 'src/css/app.scss');
 
 describe('AppBottomNav', () => {
@@ -88,5 +89,16 @@ describe('AppBottomNav', () => {
     );
     expect(styles).toContain('width: min(calc(100vw - (var(--antex-space-md) * 2)), 390px)');
     expect(styles).toContain('transform: none;');
+  });
+
+  it('reuses AppBottomNav in ManagerLayout without duplicating component code', () => {
+    const managerLayout = readFileSync(managerLayoutPath, 'utf8');
+    const component = readFileSync(componentPath, 'utf8');
+
+    expect(managerLayout).toContain("import AppBottomNav from '@components/ui/AppBottomNav.vue'");
+    expect(managerLayout).toContain('<AppBottomNav />');
+    expect(managerLayout).not.toContain('ManagerBottomNav');
+    expect(component).toContain('resolveBadge(item)');
+    expect(component).toContain('class="app-bottom-nav__badge"');
   });
 });
