@@ -95,6 +95,12 @@ describe('auth store', () => {
     expect(api.get).toHaveBeenCalledWith('/api/users/me');
     expect(localStorage.getItem('access_token')).toBe('fresh-token');
     expect(store.user?.username).toBe('fresh_user');
+    expect(store.navigation.map((item) => item.name)).toEqual([
+      'home',
+      'exchange',
+      'history',
+      'profile',
+    ]);
     expect(store.trustedContactReady).toBe(true);
     expect(setAppLocale).toHaveBeenCalledWith('ru');
   });

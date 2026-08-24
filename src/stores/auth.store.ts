@@ -48,7 +48,7 @@ export const useAuthStore = defineStore('auth', () => {
   );
   const canUseApp = computed(() => !requiresTelegramWriteAccess.value);
   const navigation = computed<MiniappNavigationItem[]>(() => {
-    return user.value?.navigation ?? [];
+    return user.value?.navigation ?? DEFAULT_USER_NAVIGATION;
   });
 
   async function init() {

@@ -29,6 +29,7 @@ import {
   fetchManagerChat,
   fetchManagerChatMessages,
   fetchManagerChats,
+  fetchManagerOrder,
   fetchManagerOrders,
   markManagerChatRead,
 } from '@services/manager-chat';
@@ -391,6 +392,24 @@ describe('manager active orders realtime reducer', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     vi.resetAllMocks();
+  });
+
+  it('не применяет медленный detail response после перехода к другой заявке', async () => {
+    const store = useManagerChatStore();
+    const firstOrder = deferred<ManagerOrderSummary>();
+    const secondOrder = deferred<ManagerOrderSummary>();
+    vi.mocked(fetchManagerOrder)
+      .mockReturnValueOnce(firstOrder.promise)
+      .mockReturnValueOnce(secondOrder.promise);
+
+    const firstLoad = store.loadOrder(1);
+    const secondLoad = store.loadOrder(2);
+    secondOrder.resolve(makeOrder(2, 2));
+    await secondLoad;
+    firstOrder.resolve(makeOrder(1, 2));
+    await firstLoad;
+
+    expect(store.activeOrder?.id).toBe(2);
   });
 
   it('TWA-11 удаляет существующую заявку после terminal status event', async () => {

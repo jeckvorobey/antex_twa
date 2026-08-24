@@ -75,7 +75,7 @@ describe('AntexBottomNav', () => {
 
     expect(authStore).not.toContain('DEFAULT_MANAGER_NAVIGATION');
     expect(authStore).not.toContain("if (user.value?.role === 2)");
-    expect(authStore).toContain('return user.value?.navigation ?? []');
+    expect(authStore).toContain('return user.value?.navigation ?? DEFAULT_USER_NAVIGATION');
   });
 
   it('renders the header from the shared layout on every page', () => {

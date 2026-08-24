@@ -88,6 +88,7 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
   let activeConversationGeneration = 0;
   let ordersRequestController: AbortController | null = null;
   let ordersRequestGeneration = 0;
+  let activeOrderRequestGeneration = 0;
   let unreadStateRevision = 0;
 
   const activeConversationId = computed(() => activeConversation.value?.id ?? null);
@@ -516,13 +517,19 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
   }
 
   async function loadOrder(orderId: number): Promise<void> {
+    const generation = ++activeOrderRequestGeneration;
     activeOrder.value = null;
     activeOrderError.value = null;
     try {
-      activeOrder.value = await fetchManagerOrder(orderId);
+      const order = await fetchManagerOrder(orderId);
+      if (generation === activeOrderRequestGeneration) {
+        activeOrder.value = order;
+      }
     } catch (error) {
-      activeOrderError.value = 'load_failed';
-      throw error;
+      if (generation === activeOrderRequestGeneration) {
+        activeOrderError.value = 'load_failed';
+        throw error;
+      }
     }
   }
 
