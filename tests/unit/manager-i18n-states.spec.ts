@@ -196,4 +196,14 @@ describe('manager localized states', () => {
     expect(composer.get('[aria-label="Прикрепить файл"]').exists()).toBe(true);
     expect(composer.get('[aria-label="Отправить сообщение"]').exists()).toBe(true);
   });
+
+  it('keeps the message draft until the parent confirms a successful send', async () => {
+    const composer = mount(ChatComposer, { global: globalOptions() });
+    await composer.get('textarea').setValue('Важный черновик');
+
+    await composer.get('[aria-label="Отправить сообщение"]').trigger('click');
+
+    expect(composer.emitted('send')).toEqual([['Важный черновик']]);
+    expect((composer.get('textarea').element as HTMLTextAreaElement).value).toBe('Важный черновик');
+  });
 });

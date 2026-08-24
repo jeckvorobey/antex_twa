@@ -61,6 +61,7 @@
       </div>
 
       <ChatComposer
+        v-model="draftText"
         :sending="chatStore.sending"
         @send="sendText"
         @send-file="sendFile"
@@ -71,7 +72,7 @@
 
 <script setup lang="ts">
 import { useAntexNotify } from '@/composables/useAntexNotify';
-import { computed, nextTick, onBeforeUnmount, onMounted, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 
@@ -85,7 +86,7 @@ import OrderCard from '@components/orders/OrderCard.vue';
 import { useManagerChatStore } from '@stores/manager-chat.store';
 import { useManagerRealtimeStore } from '@stores/manager-realtime.store';
 import type { ManagerChatMessage } from '@types/manager-chat';
-import { managerUserFullName } from '@utils/manager-chat';
+import { managerUserFullName, shouldAutoScrollMessages } from '@utils/manager-chat';
 import { localDateKey } from '@utils/date-groups';
 
 interface DateTimelineItem {
@@ -109,6 +110,7 @@ const realtimeStore = useManagerRealtimeStore();
 const { locale, t } = useI18n();
 const { notify } = useAntexNotify();
 const conversationId = computed(() => Number(route.params.conversationId));
+const draftText = ref('');
 
 const conversationTitle = computed(() =>
   chatStore.activeConversation
@@ -173,9 +175,11 @@ onBeforeUnmount(() => {
 });
 
 watch(
-  () => chatStore.messages.length,
-  () => {
-    void scrollToBottom();
+  () => chatStore.messages.at(-1)?.id ?? null,
+  (nextLatestId, previousLatestId) => {
+    if (shouldAutoScrollMessages(previousLatestId, nextLatestId)) {
+      void scrollToBottom();
+    }
   },
 );
 
@@ -203,6 +207,9 @@ async function loadEarlierMessages(): Promise<void> {
 async function sendText(text: string): Promise<void> {
   try {
     await chatStore.sendMessage(text);
+    if (draftText.value.trim() === text) {
+      draftText.value = '';
+    }
     await scrollToBottom();
   } catch {
     notify('negative', t('manager.chat.notifications.messageError'));

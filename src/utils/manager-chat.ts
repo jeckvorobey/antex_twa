@@ -110,3 +110,10 @@ export function formatFileSize(
   }
   return `${(size / 1024 / 1024).toFixed(size < 10 * 1024 * 1024 ? 1 : 0)} ${units.megabyte}`;
 }
+
+export function shouldAutoScrollMessages(
+  previousLatestId: number | null,
+  nextLatestId: number | null,
+): boolean {
+  return nextLatestId !== null && nextLatestId !== previousLatestId;
+}

@@ -49,7 +49,7 @@ const emit = defineEmits<{
   sendFile: [file: File];
 }>();
 
-const text = ref('');
+const text = defineModel<string>({ default: '' });
 const fileInput = ref<HTMLInputElement | null>(null);
 
 function submit(): void {
@@ -58,7 +58,6 @@ function submit(): void {
     return;
   }
   emit('send', value);
-  text.value = '';
 }
 
 function onFileChange(event: Event): void {
