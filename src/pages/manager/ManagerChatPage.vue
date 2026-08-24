@@ -86,6 +86,7 @@ import { useManagerChatStore } from '@stores/manager-chat.store';
 import { useManagerRealtimeStore } from '@stores/manager-realtime.store';
 import type { ManagerChatMessage } from '@types/manager-chat';
 import { managerUserFullName } from '@utils/manager-chat';
+import { localDateKey } from '@utils/date-groups';
 
 interface DateTimelineItem {
   kind: 'date';
@@ -128,7 +129,7 @@ const timelineItems = computed<TimelineItem[]>(() => {
   let lastDay = '';
   for (const message of chatStore.messages) {
     const date = new Date(message.createdAt);
-    const day = date.toISOString().slice(0, 10);
+    const day = localDateKey(date);
     if (day !== lastDay) {
       result.push({ kind: 'date', key: `date-${day}`, label: formatDay(date) });
       lastDay = day;
@@ -144,6 +145,16 @@ onMounted(() => {
     return;
   }
   realtimeStore.setViewing(conversationId.value);
+  void loadConversation();
+});
+
+watch(conversationId, (nextId, previousId) => {
+  if (nextId === previousId) return;
+  if (!Number.isFinite(nextId)) {
+    goBack();
+    return;
+  }
+  realtimeStore.setViewing(nextId);
   void loadConversation();
 });
 

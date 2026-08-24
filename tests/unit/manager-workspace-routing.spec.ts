@@ -15,6 +15,10 @@ describe('manager workspace routing', () => {
     expect(resolveWorkspaceRedirect(2, '/manager/chats/12')).toBeNull();
   });
 
+  it('keeps a legacy administrator with manager API access inside manager workspace', () => {
+    expect(resolveWorkspaceRedirect(1, '/manager/chats/12')).toBeNull();
+  });
+
   it('redirects regular user away from manager workspace', () => {
     expect(resolveWorkspaceRedirect(9, '/manager/chats')).toBe('/');
   });

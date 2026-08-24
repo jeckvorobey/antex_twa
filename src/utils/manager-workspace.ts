@@ -1,8 +1,9 @@
 export const MANAGER_ROLE = 2;
+export const LEGACY_MANAGER_ROLE = 1;
 export const MANAGER_DEFAULT_PATH = '/manager/dashboard';
 
 export function isManagerRole(role: number | null | undefined): boolean {
-  return role === MANAGER_ROLE;
+  return role === MANAGER_ROLE || role === LEGACY_MANAGER_ROLE;
 }
 
 export function resolveWorkspaceRedirect(

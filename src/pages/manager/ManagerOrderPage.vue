@@ -72,7 +72,7 @@
 
 <script setup lang="ts">
 import { Dialog } from 'quasar';
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 
@@ -95,6 +95,15 @@ const order = computed(() => chatStore.activeOrder);
 
 onMounted(() => {
   if (!Number.isFinite(orderId.value)) {
+    goBack();
+    return;
+  }
+  void loadOrder();
+});
+
+watch(orderId, (nextId, previousId) => {
+  if (nextId === previousId) return;
+  if (!Number.isFinite(nextId)) {
     goBack();
     return;
   }

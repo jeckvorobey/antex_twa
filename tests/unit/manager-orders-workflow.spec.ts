@@ -17,12 +17,19 @@ const managerOrdersSource = readFileSync(
   'utf8',
 );
 
-const { routerPush } = vi.hoisted(() => ({ routerPush: vi.fn() }));
-
-vi.mock('vue-router', () => ({
-  useRouter: () => ({ push: routerPush }),
-  useRoute: () => ({ params: { orderId: '1' } }),
+const { routerPush, routeHarness } = vi.hoisted(() => ({
+  routerPush: vi.fn(),
+  routeHarness: {} as { route?: { params: { orderId: string } } },
 }));
+
+vi.mock('vue-router', async () => {
+  const { reactive } = await import('vue');
+  routeHarness.route = reactive({ params: { orderId: '1' } });
+  return {
+    useRouter: () => ({ push: routerPush }),
+    useRoute: () => routeHarness.route,
+  };
+});
 
 vi.mock('@services/manager-chat', () => ({
   closeManagerChat: vi.fn(),
@@ -87,6 +94,19 @@ describe('manager orders workflow state', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     vi.resetAllMocks();
+    routeHarness.route!.params.orderId = '1';
+  });
+
+  it('reloads order details when Vue reuses the page for another route id', async () => {
+    const pinia = createPinia();
+    setActivePinia(pinia);
+    vi.mocked(fetchManagerOrder).mockImplementation(async (id) => makeOrder({ id }));
+
+    mount(ManagerOrderPage, { global: managerPageGlobal(pinia) });
+    await vi.waitFor(() => expect(fetchManagerOrder).toHaveBeenCalledWith(1));
+
+    routeHarness.route!.params.orderId = '2';
+    await vi.waitFor(() => expect(fetchManagerOrder).toHaveBeenCalledWith(2));
   });
 
   it('uses shared skeletons, busy semantics and shared empty states', () => {

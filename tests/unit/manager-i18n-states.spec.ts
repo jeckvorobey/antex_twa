@@ -12,12 +12,19 @@ import ManagerChatPage from '@pages/manager/ManagerChatPage.vue';
 import ManagerChatsPage from '@pages/manager/ManagerChatsPage.vue';
 import { useManagerChatStore } from '@stores/manager-chat.store';
 
-const { routerPush } = vi.hoisted(() => ({ routerPush: vi.fn() }));
-
-vi.mock('vue-router', () => ({
-  useRouter: () => ({ push: routerPush }),
-  useRoute: () => ({ params: { conversationId: '7' } }),
+const { routerPush, routeHarness } = vi.hoisted(() => ({
+  routerPush: vi.fn(),
+  routeHarness: {} as { route?: { params: { conversationId: string } } },
 }));
+
+vi.mock('vue-router', async () => {
+  const { reactive } = await import('vue');
+  routeHarness.route = reactive({ params: { conversationId: '7' } });
+  return {
+    useRouter: () => ({ push: routerPush }),
+    useRoute: () => routeHarness.route,
+  };
+});
 
 vi.mock('@services/manager-chat', () => ({
   closeManagerChat: vi.fn(),
@@ -64,6 +71,24 @@ describe('manager localized states', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     vi.resetAllMocks();
+    routeHarness.route!.params.conversationId = '7';
+  });
+
+  it('reloads the conversation when Vue reuses the page for another route id', async () => {
+    const pinia = createPinia();
+    setActivePinia(pinia);
+    vi.mocked(fetchManagerChat).mockResolvedValue({
+      id: 7, status: 'open', unreadCount: 0, lastMessageAt: null,
+      user: { id: 41, telegramId: 900_041, username: null, firstName: null, lastName: null, photoUrl: null },
+      lastMessage: null, latestOrder: null,
+    });
+    vi.mocked(fetchManagerChatMessages).mockResolvedValue({ items: [], hasMore: false });
+
+    mount(ManagerChatPage, { global: globalOptions(pinia) });
+    await vi.waitFor(() => expect(fetchManagerChat).toHaveBeenCalledWith(7, expect.anything()));
+
+    routeHarness.route!.params.conversationId = '8';
+    await vi.waitFor(() => expect(fetchManagerChat).toHaveBeenCalledWith(8, expect.anything()));
   });
 
   it('tracks a failed chat list separately from an empty successful result', async () => {
