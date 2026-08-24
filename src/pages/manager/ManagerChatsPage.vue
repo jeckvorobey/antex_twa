@@ -1,9 +1,11 @@
 <template>
   <q-page class="manager-page">
     <ManagerPageHeader
-      title="Чаты"
+      :title="t('manager.chats.title')"
       :subtitle="
-        chatStore.unreadTotal ? `Непрочитанных: ${chatStore.unreadTotal}` : 'Все обращения клиентов'
+        chatStore.unreadTotal
+          ? t('manager.chats.unreadSummary', { count: chatStore.unreadTotal })
+          : t('manager.chats.subtitle')
       "
     >
       <template #trailing>
@@ -17,8 +19,8 @@
         borderless
         dense
         :debounce="250"
-        placeholder="Поиск по имени или @username"
-        class="manager-search-input q-px-md"
+        :placeholder="t('manager.chats.searchPlaceholder')"
+        class="manager-search-input antex-border-gold--muted q-px-md"
         @update:model-value="reload"
       >
         <template #prepend><q-icon name="search" size="20px" /></template>
@@ -30,7 +32,7 @@
           :class="{ 'manager-filter-pill--active': !chatStore.unreadOnly }"
           @click="setUnreadOnly(false)"
         >
-          Все
+          {{ t('manager.chats.filters.all') }}
         </button>
         <button
           type="button"
@@ -38,7 +40,7 @@
           :class="{ 'manager-filter-pill--active': chatStore.unreadOnly }"
           @click="setUnreadOnly(true)"
         >
-          Непрочитанные
+          {{ t('manager.chats.filters.unread') }}
         </button>
       </div>
     </div>
@@ -47,12 +49,20 @@
       <q-spinner size="36px" color="primary" />
     </div>
     <EmptyStateCard
+      v-else-if="chatStore.chatsError"
+      :title="t('manager.chats.error.title')"
+      :text="t('manager.chats.error.text')"
+      :action-label="t('common.retry')"
+      icon="cloud_off"
+      @action="loadChats"
+    />
+    <EmptyStateCard
       v-else-if="!chatStore.conversations.length"
-      title="Новых диалогов нет"
+      :title="t('manager.chats.empty.title')"
       :text="
         chatStore.unreadOnly
-          ? 'Все сообщения уже прочитаны.'
-          : 'Новый клиент появится здесь сразу после сообщения боту.'
+          ? t('manager.chats.empty.unreadText')
+          : t('manager.chats.empty.text')
       "
       icon="forum"
     />
@@ -69,6 +79,7 @@
 
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 
 import ConnectionStatePill from '@components/manager/ConnectionStatePill.vue';
@@ -81,9 +92,10 @@ import { useManagerRealtimeStore } from '@stores/manager-realtime.store';
 const router = useRouter();
 const chatStore = useManagerChatStore();
 const realtimeStore = useManagerRealtimeStore();
+const { t } = useI18n();
 
 onMounted(() => {
-  void chatStore.loadChats();
+  void loadChats();
 });
 
 onBeforeUnmount(() => {
@@ -91,7 +103,7 @@ onBeforeUnmount(() => {
 });
 
 function reload(): void {
-  void chatStore.loadChats();
+  void loadChats();
 }
 
 function setUnreadOnly(value: boolean): void {
@@ -99,7 +111,15 @@ function setUnreadOnly(value: boolean): void {
     return;
   }
   chatStore.unreadOnly = value;
-  void chatStore.loadChats();
+  void loadChats();
+}
+
+async function loadChats(): Promise<void> {
+  try {
+    await chatStore.loadChats();
+  } catch {
+    // Ошибка представлена отдельным retryable state из store.
+  }
 }
 
 function openConversation(conversationId: number): void {

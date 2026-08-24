@@ -1,12 +1,26 @@
 <template>
   <q-page class="manager-page">
-    <ManagerPageHeader title="Заявка" subtitle="Операционная карточка" back @back="goBack" />
+    <ManagerPageHeader
+      :title="t('manager.orderPage.title')"
+      :subtitle="t('manager.orderPage.subtitle')"
+      back
+      @back="goBack"
+    />
 
     <div v-if="loading" class="row justify-center q-py-xl">
       <q-spinner size="36px" color="primary" />
     </div>
+    <EmptyStateCard
+      v-else-if="chatStore.activeOrderError"
+      :title="t('manager.orderPage.error.title')"
+      :text="t('manager.orderPage.error.text')"
+      :action-label="t('common.retry')"
+      icon="cloud_off"
+      @action="loadOrder"
+    />
     <template v-else-if="order">
       <OrderSummaryCard :order="order" />
+      <ManagerOrderDetails :order="order" />
 
       <div class="manager-order-actions">
         <q-btn
@@ -14,7 +28,7 @@
           rounded
           no-caps
           icon="forum"
-          label="Открыть чат клиента"
+          :label="t('manager.orderPage.actions.chat')"
           class="manager-gold-button"
           @click="openChat"
         />
@@ -25,7 +39,7 @@
           no-caps
           color="primary"
           icon="play_arrow"
-          label="Взять в работу"
+          :label="t('manager.orderPage.actions.take')"
           :loading="changingStatus"
           @click="setStatus(2)"
         />
@@ -36,7 +50,7 @@
             no-caps
             color="primary"
             icon="done_all"
-            label="Завершить заявку"
+            :label="t('manager.orderPage.actions.complete')"
             :loading="changingStatus"
             @click="setStatus(3)"
           />
@@ -46,7 +60,7 @@
             no-caps
             color="negative"
             icon="close"
-            label="Отменить заявку"
+            :label="t('manager.orderPage.actions.cancel')"
             :disable="changingStatus"
             @click="confirmCancel"
           />
@@ -59,41 +73,49 @@
 <script setup lang="ts">
 import { Dialog, Notify } from 'quasar';
 import { computed, onMounted, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 
+import EmptyStateCard from '@components/manager/EmptyStateCard.vue';
 import ManagerPageHeader from '@components/manager/ManagerPageHeader.vue';
+import ManagerOrderDetails from '@components/manager/ManagerOrderDetails.vue';
 import OrderSummaryCard from '@components/manager/OrderSummaryCard.vue';
 import { useManagerChatStore } from '@stores/manager-chat.store';
 
 const route = useRoute();
 const router = useRouter();
 const chatStore = useManagerChatStore();
+const { t } = useI18n();
 const loading = ref(true);
 const changingStatus = ref(false);
 const orderId = computed(() => Number(route.params.orderId));
 const order = computed(() => chatStore.activeOrder);
 
-onMounted(async () => {
+onMounted(() => {
   if (!Number.isFinite(orderId.value)) {
     goBack();
     return;
   }
+  void loadOrder();
+});
+
+async function loadOrder(): Promise<void> {
+  loading.value = true;
   try {
     await chatStore.loadOrder(orderId.value);
   } catch {
-    Notify.create({ type: 'negative', message: 'Заявка не найдена' });
-    goBack();
+    // Ошибка представлена отдельным retryable state из store.
   } finally {
     loading.value = false;
   }
-});
+}
 
 async function openChat(): Promise<void> {
   try {
     const conversation = await chatStore.ensureOrderChat(orderId.value);
     await router.push({ name: 'managerChat', params: { conversationId: conversation.id } });
   } catch {
-    Notify.create({ type: 'negative', message: 'Не удалось открыть чат клиента' });
+    Notify.create({ type: 'negative', message: t('manager.orders.notifications.chatError') });
   }
 }
 
@@ -102,9 +124,9 @@ async function setStatus(status: number): Promise<void> {
   try {
     await chatStore.changeOrderStatus(orderId.value, status);
     await chatStore.loadOrders();
-    Notify.create({ type: 'positive', message: 'Статус заявки обновлён' });
+    Notify.create({ type: 'positive', message: t('manager.orderPage.notifications.statusUpdated') });
   } catch {
-    Notify.create({ type: 'negative', message: 'Не удалось изменить статус заявки' });
+    Notify.create({ type: 'negative', message: t('manager.orderPage.notifications.statusError') });
   } finally {
     changingStatus.value = false;
   }
@@ -112,10 +134,10 @@ async function setStatus(status: number): Promise<void> {
 
 function confirmCancel(): void {
   Dialog.create({
-    title: 'Отменить заявку?',
-    message: 'Статус будет сохранён, клиент получит уведомление через бота.',
-    cancel: { label: 'Назад', flat: true },
-    ok: { label: 'Отменить заявку', color: 'negative' },
+    title: t('manager.orderPage.cancelDialog.title'),
+    message: t('manager.orderPage.cancelDialog.text'),
+    cancel: { label: t('common.back'), flat: true },
+    ok: { label: t('manager.orderPage.actions.cancel'), color: 'negative' },
     persistent: true,
   }).onOk(() => {
     void setStatus(4);

@@ -15,6 +15,15 @@
       <q-spinner size="36px" color="primary" />
     </div>
 
+    <EmptyStateCard
+      v-else-if="chatStore.activeConversationError"
+      :title="t('manager.chat.error.title')"
+      :text="t('manager.chat.error.text')"
+      :action-label="t('common.retry')"
+      icon="cloud_off"
+      @action="loadConversation"
+    />
+
     <template v-else-if="chatStore.activeConversation">
       <div v-if="chatStore.activeConversation.latestOrder" class="manager-chat-context">
         <OrderSummaryCard :order="chatStore.activeConversation.latestOrder" compact />
@@ -27,10 +36,10 @@
           dense
           rounded
           no-caps
-          label="Показать предыдущие"
+          :label="t('manager.chat.loadEarlier')"
           :loading="chatStore.messagesLoading"
           class="manager-chat-load-earlier"
-          @click="chatStore.loadEarlierMessages"
+          @click="loadEarlierMessages"
         />
 
         <template v-for="item in timelineItems" :key="item.key">
@@ -40,8 +49,8 @@
 
         <EmptyStateCard
           v-if="!chatStore.messages.length"
-          title="История пока пустая"
-          text="Можно написать клиенту первым — сообщение уйдёт через бота AntEx."
+          :title="t('manager.chat.empty.title')"
+          :text="t('manager.chat.empty.text')"
           icon="chat_bubble_outline"
         />
       </div>
@@ -58,6 +67,7 @@
 <script setup lang="ts">
 import { Notify } from 'quasar';
 import { computed, nextTick, onBeforeUnmount, onMounted, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 
 import ChatBubble from '@components/manager/ChatBubble.vue';
@@ -70,7 +80,7 @@ import OrderSummaryCard from '@components/manager/OrderSummaryCard.vue';
 import { useManagerChatStore } from '@stores/manager-chat.store';
 import { useManagerRealtimeStore } from '@stores/manager-realtime.store';
 import type { ManagerChatMessage } from '@types/manager-chat';
-import { managerUserDisplayName } from '@utils/manager-chat';
+import { managerUserFullName } from '@utils/manager-chat';
 
 interface DateTimelineItem {
   kind: 'date';
@@ -90,19 +100,21 @@ const route = useRoute();
 const router = useRouter();
 const chatStore = useManagerChatStore();
 const realtimeStore = useManagerRealtimeStore();
+const { locale, t } = useI18n();
 const conversationId = computed(() => Number(route.params.conversationId));
 
 const conversationTitle = computed(() =>
   chatStore.activeConversation
-    ? managerUserDisplayName(chatStore.activeConversation.user)
-    : 'Диалог',
+    ? managerUserFullName(chatStore.activeConversation.user) ||
+      t('manager.customerFallback', { id: chatStore.activeConversation.user.id })
+    : t('manager.chat.title'),
 );
 const conversationSubtitle = computed(() => {
   const user = chatStore.activeConversation?.user;
   if (!user) {
-    return 'Загрузка…';
+    return t('manager.chat.loading');
   }
-  return user.username ? `@${user.username}` : `Клиент #${user.id}`;
+  return user.username ? `@${user.username}` : t('manager.customerFallback', { id: user.id });
 });
 
 const timelineItems = computed<TimelineItem[]>(() => {
@@ -120,20 +132,23 @@ const timelineItems = computed<TimelineItem[]>(() => {
   return result;
 });
 
-onMounted(async () => {
+onMounted(() => {
   if (!Number.isFinite(conversationId.value)) {
     goBack();
     return;
   }
   realtimeStore.setViewing(conversationId.value);
+  void loadConversation();
+});
+
+async function loadConversation(): Promise<void> {
   try {
     await chatStore.openConversation(conversationId.value);
     await scrollToBottom();
   } catch {
-    Notify.create({ type: 'negative', message: 'Не удалось открыть диалог' });
-    goBack();
+    // Ошибка представлена отдельным retryable state из store.
   }
-});
+}
 
 onBeforeUnmount(() => {
   realtimeStore.setViewing(null);
@@ -152,12 +167,20 @@ function formatDay(date: Date): string {
   const yesterday = new Date(today);
   yesterday.setDate(today.getDate() - 1);
   if (date.toDateString() === today.toDateString()) {
-    return 'Сегодня';
+    return t('manager.chat.timeline.today');
   }
   if (date.toDateString() === yesterday.toDateString()) {
-    return 'Вчера';
+    return t('manager.chat.timeline.yesterday');
   }
-  return new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long' }).format(date);
+  return new Intl.DateTimeFormat(locale.value, { day: 'numeric', month: 'long' }).format(date);
+}
+
+async function loadEarlierMessages(): Promise<void> {
+  try {
+    await chatStore.loadEarlierMessages();
+  } catch {
+    Notify.create({ type: 'negative', message: t('manager.chat.notifications.loadEarlierError') });
+  }
 }
 
 async function sendText(text: string): Promise<void> {
@@ -165,7 +188,7 @@ async function sendText(text: string): Promise<void> {
     await chatStore.sendMessage(text);
     await scrollToBottom();
   } catch {
-    Notify.create({ type: 'negative', message: 'Сообщение не отправлено' });
+    Notify.create({ type: 'negative', message: t('manager.chat.notifications.messageError') });
   }
 }
 
@@ -174,7 +197,7 @@ async function sendFile(file: File): Promise<void> {
     await chatStore.sendAttachment(file);
     await scrollToBottom();
   } catch {
-    Notify.create({ type: 'negative', message: 'Вложение не отправлено' });
+    Notify.create({ type: 'negative', message: t('manager.chat.notifications.attachmentError') });
   }
 }
 

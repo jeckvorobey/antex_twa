@@ -64,18 +64,22 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
   const unreadTotal = ref(0);
   const loadingChats = ref(false);
   const chatsLoaded = ref(false);
+  const chatsError = ref<string | null>(null);
   const query = ref('');
   const unreadOnly = ref(false);
 
   const activeConversation = ref<ManagerConversation | null>(null);
   const messages = ref<ManagerChatMessage[]>([]);
   const messagesLoading = ref(false);
+  const activeConversationError = ref<string | null>(null);
   const hasMoreMessages = ref(false);
   const sending = ref(false);
 
   const orders = ref<ManagerOrderSummary[]>([]);
   const ordersLoading = ref(false);
+  const ordersError = ref<string | null>(null);
   const activeOrder = ref<ManagerOrderSummary | null>(null);
+  const activeOrderError = ref<string | null>(null);
 
   let chatsRequestController: AbortController | null = null;
   let chatsRequestGeneration = 0;
@@ -196,6 +200,7 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
     const generation = ++chatsRequestGeneration;
     chatsRequestController = controller;
     loadingChats.value = true;
+    chatsError.value = null;
     try {
       const search = query.value.trim();
       const response = await fetchManagerChats(
@@ -216,6 +221,7 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
       chatsLoaded.value = true;
     } catch (error) {
       if (!controller.signal.aborted) {
+        chatsError.value = 'load_failed';
         throw error;
       }
     } finally {
@@ -306,6 +312,10 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
   /** Открывает диалог только если его request generation всё ещё принадлежит текущему route. */
   async function openConversation(conversationId: number): Promise<void> {
     const { controller, detach, generation } = beginActiveConversationRequest();
+    activeConversation.value = null;
+    activeConversationError.value = null;
+    messages.value = [];
+    hasMoreMessages.value = false;
     messagesLoading.value = true;
     try {
       const [conversation, response] = await Promise.all([
@@ -327,6 +337,7 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
       }
     } catch (error) {
       if (!controller.signal.aborted) {
+        activeConversationError.value = 'load_failed';
         throw error;
       }
     } finally {
@@ -466,6 +477,7 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
     const generation = ++ordersRequestGeneration;
     ordersRequestController = controller;
     ordersLoading.value = true;
+    ordersError.value = null;
     try {
       const response = await fetchManagerOrders({ signal: controller.signal });
       if (generation !== ordersRequestGeneration || controller.signal.aborted) {
@@ -474,6 +486,7 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
       orders.value = response.items.filter((order) => !TERMINAL_ORDER_STATUSES.has(order.status));
     } catch (error) {
       if (!controller.signal.aborted) {
+        ordersError.value = 'load_failed';
         throw error;
       }
     } finally {
@@ -488,7 +501,14 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
   }
 
   async function loadOrder(orderId: number): Promise<void> {
-    activeOrder.value = await fetchManagerOrder(orderId);
+    activeOrder.value = null;
+    activeOrderError.value = null;
+    try {
+      activeOrder.value = await fetchManagerOrder(orderId);
+    } catch (error) {
+      activeOrderError.value = 'load_failed';
+      throw error;
+    }
   }
 
   async function ensureOrderChat(orderId: number): Promise<ManagerConversation> {
@@ -599,6 +619,7 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
   function resetActiveConversation(): void {
     cancelActiveConversationRequests();
     activeConversation.value = null;
+    activeConversationError.value = null;
     messages.value = [];
     hasMoreMessages.value = false;
   }
@@ -609,17 +630,21 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
     unreadTotal,
     loadingChats,
     chatsLoaded,
+    chatsError,
     query,
     unreadOnly,
     activeConversation,
     activeConversationId,
     messages,
     messagesLoading,
+    activeConversationError,
     hasMoreMessages,
     sending,
     orders,
     ordersLoading,
+    ordersError,
     activeOrder,
+    activeOrderError,
     loadChats,
     cancelChatsLoad,
     reconcile,

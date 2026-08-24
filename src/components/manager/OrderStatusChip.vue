@@ -4,21 +4,23 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 const props = defineProps<{ status: number }>();
+const { t } = useI18n();
 
 const label = computed(() => {
   switch (props.status) {
     case 1:
-      return 'Новая';
+      return t('manager.orderStatus.new');
     case 2:
-      return 'В работе';
+      return t('manager.orderStatus.active');
     case 3:
-      return 'Завершена';
+      return t('manager.orderStatus.done');
     case 4:
-      return 'Отменена';
+      return t('manager.orderStatus.cancelled');
     default:
-      return `Статус ${props.status}`;
+      return t('manager.orderStatus.unknown', { status: props.status });
   }
 });
 

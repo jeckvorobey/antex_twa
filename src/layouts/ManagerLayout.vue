@@ -19,11 +19,11 @@ const realtimeStore = useManagerRealtimeStore();
 
 onMounted(() => {
   realtimeStore.start();
-  if (!chatStore.chatsLoaded) {
-    void chatStore.loadChats();
+  if (!chatStore.chatsLoaded && !chatStore.loadingChats) {
+    void chatStore.loadChats().catch(() => undefined);
   }
-  if (!chatStore.orders.length) {
-    void chatStore.loadOrders();
+  if (!chatStore.orders.length && !chatStore.ordersLoading) {
+    void chatStore.loadOrders().catch(() => undefined);
   }
 });
 

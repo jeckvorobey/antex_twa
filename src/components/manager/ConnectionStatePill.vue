@@ -7,25 +7,27 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 import type { ManagerRealtimeState } from '@types/manager-chat';
 
 const props = defineProps<{
   state: ManagerRealtimeState;
 }>();
+const { t } = useI18n();
 
 const label = computed(() => {
   switch (props.state) {
     case 'online':
-      return 'Realtime online';
+      return t('manager.connection.online');
     case 'connecting':
-      return 'Подключение';
+      return t('manager.connection.connecting');
     case 'reconnecting':
-      return 'Переподключение';
+      return t('manager.connection.reconnecting');
     case 'offline':
-      return 'Offline';
+      return t('manager.connection.offline');
     default:
-      return 'Realtime';
+      return t('manager.connection.idle');
   }
 });
 </script>

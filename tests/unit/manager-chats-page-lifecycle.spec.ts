@@ -1,7 +1,9 @@
 import { createPinia, setActivePinia } from 'pinia';
 import { shallowMount } from '@vue/test-utils';
+import { createI18n } from 'vue-i18n';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import ru from '@i18n/ru';
 import ManagerChatsPage from '@pages/manager/ManagerChatsPage.vue';
 import { useManagerChatStore } from '@stores/manager-chat.store';
 import type { ManagerChatListResponse, ManagerConversation } from '@types/manager-chat';
@@ -80,6 +82,7 @@ describe('ManagerChatsPage route lifecycle', () => {
     const store = useManagerChatStore();
     const wrapper = shallowMount(ManagerChatsPage, {
       global: {
+        plugins: [createI18n({ legacy: false, locale: 'ru', messages: { ru } })],
         stubs: {
           'q-icon': true,
           'q-input': true,

@@ -1,0 +1,174 @@
+import { createPinia, setActivePinia } from 'pinia';
+import { flushPromises, mount } from '@vue/test-utils';
+import { QBtn, QIcon, QInput, QSpinner, QTooltip, Quasar } from 'quasar';
+import { createI18n } from 'vue-i18n';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import ChatComposer from '@components/manager/ChatComposer.vue';
+import ConnectionStatePill from '@components/manager/ConnectionStatePill.vue';
+import OrderStatusChip from '@components/manager/OrderStatusChip.vue';
+import ru from '@i18n/ru';
+import ManagerChatPage from '@pages/manager/ManagerChatPage.vue';
+import ManagerChatsPage from '@pages/manager/ManagerChatsPage.vue';
+import { useManagerChatStore } from '@stores/manager-chat.store';
+
+const { routerPush } = vi.hoisted(() => ({ routerPush: vi.fn() }));
+
+vi.mock('vue-router', () => ({
+  useRouter: () => ({ push: routerPush }),
+  useRoute: () => ({ params: { conversationId: '7' } }),
+}));
+
+vi.mock('@services/manager-chat', () => ({
+  closeManagerChat: vi.fn(),
+  ensureManagerOrderChat: vi.fn(),
+  fetchManagerAttachment: vi.fn(),
+  fetchManagerChat: vi.fn(),
+  fetchManagerChatMessages: vi.fn(),
+  fetchManagerChats: vi.fn(),
+  fetchManagerOrder: vi.fn(),
+  fetchManagerOrders: vi.fn(),
+  markManagerChatRead: vi.fn(),
+  sendManagerChatAttachment: vi.fn(),
+  sendManagerChatMessage: vi.fn(),
+  updateManagerOrderStatus: vi.fn(),
+}));
+
+import {
+  fetchManagerChat,
+  fetchManagerChatMessages,
+  fetchManagerChats,
+} from '@services/manager-chat';
+
+function globalOptions(pinia = createPinia()) {
+  return {
+    plugins: [
+      pinia,
+      Quasar,
+      createI18n({ legacy: false, locale: 'ru', messages: { ru } }),
+    ],
+    components: { QBtn, QIcon, QInput, QSpinner, QTooltip },
+    stubs: {
+      ManagerPageHeader: true,
+      ConnectionStatePill: true,
+      ConversationListItem: true,
+      OrderSummaryCard: true,
+      ChatBubble: true,
+      ChatDateDivider: true,
+      QPage: { template: '<main><slot /></main>' },
+    },
+  };
+}
+
+describe('manager localized states', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    vi.resetAllMocks();
+  });
+
+  it('tracks a failed chat list separately from an empty successful result', async () => {
+    const store = useManagerChatStore();
+    vi.mocked(fetchManagerChats).mockRejectedValueOnce(new Error('network unavailable'));
+
+    await expect(store.loadChats()).rejects.toThrow('network unavailable');
+    expect(store.chatsError).toBe('load_failed');
+
+    vi.mocked(fetchManagerChats).mockResolvedValueOnce({ items: [], total: 0, unreadTotal: 0 });
+    await store.loadChats();
+    expect(store.chatsError).toBeNull();
+  });
+
+  it('shows the loading state while the chat list request is pending', async () => {
+    const pinia = createPinia();
+    setActivePinia(pinia);
+    let resolveRequest!: (value: { items: []; total: number; unreadTotal: number }) => void;
+    vi.mocked(fetchManagerChats).mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveRequest = resolve;
+      }),
+    );
+
+    const wrapper = mount(ManagerChatsPage, { global: globalOptions(pinia) });
+    await vi.waitFor(() => expect(fetchManagerChats).toHaveBeenCalledTimes(1));
+    expect(wrapper.find('.q-spinner').exists()).toBe(true);
+
+    resolveRequest({ items: [], total: 0, unreadTotal: 0 });
+    await flushPromises();
+    expect(wrapper.text()).toContain('Новых диалогов нет');
+  });
+
+  it('shows a localized retryable chat-list error and then the empty state', async () => {
+    const pinia = createPinia();
+    setActivePinia(pinia);
+    vi.mocked(fetchManagerChats)
+      .mockRejectedValueOnce(new Error('network unavailable'))
+      .mockResolvedValueOnce({ items: [], total: 0, unreadTotal: 0 });
+
+    const wrapper = mount(ManagerChatsPage, { global: globalOptions(pinia) });
+    await vi.waitFor(() => expect(fetchManagerChats).toHaveBeenCalledTimes(1));
+    await flushPromises();
+    expect(wrapper.text()).toContain('Не удалось загрузить чаты');
+    expect(wrapper.text()).not.toContain('Новых диалогов нет');
+
+    await wrapper.get('.manager-empty-state__action').trigger('click');
+    await vi.waitFor(() => expect(fetchManagerChats).toHaveBeenCalledTimes(2));
+    await flushPromises();
+    expect(wrapper.text()).toContain('Новых диалогов нет');
+  });
+
+  it('keeps a failed conversation route visible and retryable', async () => {
+    const pinia = createPinia();
+    setActivePinia(pinia);
+    vi.mocked(fetchManagerChat)
+      .mockRejectedValueOnce(new Error('network unavailable'))
+      .mockResolvedValueOnce({
+        id: 7,
+        status: 'open',
+        unreadCount: 0,
+        lastMessageAt: null,
+        user: {
+          id: 41,
+          telegramId: 900_041,
+          username: 'client',
+          firstName: 'Сергей',
+          lastName: 'Иванов',
+          photoUrl: null,
+        },
+        lastMessage: null,
+        latestOrder: null,
+      });
+    vi.mocked(fetchManagerChatMessages).mockResolvedValue({ items: [], hasMore: false });
+
+    const wrapper = mount(ManagerChatPage, { global: globalOptions(pinia) });
+    await vi.waitFor(() => expect(fetchManagerChat).toHaveBeenCalledTimes(1));
+    await flushPromises();
+    expect(wrapper.text()).toContain('Не удалось открыть диалог');
+    expect(routerPush).not.toHaveBeenCalled();
+
+    await wrapper.get('button').trigger('click');
+    await vi.waitFor(() => expect(fetchManagerChat).toHaveBeenCalledTimes(2));
+    await flushPromises();
+    expect(wrapper.text()).toContain('История пока пустая');
+  });
+
+  it('localizes reconnecting, offline, status and compact composer controls', async () => {
+    const options = globalOptions();
+    const connection = mount(ConnectionStatePill, {
+      props: { state: 'reconnecting' },
+      global: options,
+    });
+    expect(connection.text()).toBe('Переподключение');
+    await connection.setProps({ state: 'offline' });
+    expect(connection.text()).toBe('Нет соединения');
+
+    const status = mount(OrderStatusChip, { props: { status: 2 }, global: options });
+    expect(status.text()).toBe('В работе');
+    await status.setProps({ status: 99 });
+    expect(status.text()).toBe('Статус 99');
+
+    const composer = mount(ChatComposer, { global: options });
+    expect(composer.get('textarea').attributes('placeholder')).toBe('Сообщение…');
+    expect(composer.get('[aria-label="Прикрепить файл"]').exists()).toBe(true);
+    expect(composer.get('[aria-label="Отправить сообщение"]').exists()).toBe(true);
+  });
+});

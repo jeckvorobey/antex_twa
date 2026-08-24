@@ -7,6 +7,15 @@ export interface ManagerChatUser {
   photoUrl: string | null;
 }
 
+export interface ManagerOrderCity {
+  id: number;
+  name: string;
+  country: string;
+  countryRuName: string;
+  countryCode: string;
+  countryFlag: string;
+}
+
 export interface ManagerOrderSummary {
   id: number;
   publicNumber: string;
@@ -14,6 +23,8 @@ export interface ManagerOrderSummary {
   amountSell: number;
   currencyBuy: string;
   amountBuy: number | null;
+  country: string;
+  city: ManagerOrderCity | null;
   status: number;
   methodGet: string;
   createdAt: string;

@@ -104,6 +104,8 @@ function makeOrder(id: number, status: number): ManagerOrderSummary {
     amountSell: 10_000,
     currencyBuy: 'THB',
     amountBuy: 4_000,
+    country: 'thailand',
+    city: null,
     status,
     methodGet: 'cash',
     createdAt: '2026-08-18T12:00:00+00:00',

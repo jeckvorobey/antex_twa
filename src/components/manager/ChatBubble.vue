@@ -8,7 +8,7 @@
       />
       <div v-if="content" class="manager-chat-bubble__text">{{ content }}</div>
       <div class="manager-chat-bubble__footer">
-        <span v-if="message.edited">изменено</span>
+        <span v-if="message.edited">{{ t('manager.chat.message.edited') }}</span>
         <span>{{ time }}</span>
         <span v-if="message.direction === 'outbound'" class="manager-chat-bubble__delivery">
           <q-icon v-if="message.deliveryStatus === 'failed'" name="error_outline" size="14px" />
@@ -17,7 +17,7 @@
         </span>
       </div>
       <div v-if="message.deliveryStatus === 'failed'" class="manager-chat-bubble__failed">
-        Не доставлено
+        {{ t('manager.chat.message.failed') }}
       </div>
     </article>
   </div>
@@ -25,15 +25,17 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 import ChatAttachmentCard from '@components/manager/ChatAttachmentCard.vue';
 import type { ManagerChatMessage } from '@types/manager-chat';
 
 const props = defineProps<{ message: ManagerChatMessage }>();
+const { locale, t } = useI18n();
 
 const content = computed(() => props.message.text || props.message.caption);
 const time = computed(() =>
-  new Intl.DateTimeFormat('ru-RU', { hour: '2-digit', minute: '2-digit' }).format(
+  new Intl.DateTimeFormat(locale.value, { hour: '2-digit', minute: '2-digit' }).format(
     Date.parse(props.message.createdAt),
   ),
 );

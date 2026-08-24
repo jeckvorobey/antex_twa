@@ -1,5 +1,5 @@
 <template>
-  <header class="manager-page-header">
+  <header class="manager-page-header antex-border-gold--muted">
     <q-btn
       v-if="back"
       flat
@@ -7,9 +7,11 @@
       dense
       icon="arrow_back"
       class="manager-page-header__back"
-      aria-label="Назад"
+      :aria-label="t('common.back')"
       @click="$emit('back')"
-    />
+    >
+      <q-tooltip>{{ t('common.back') }}</q-tooltip>
+    </q-btn>
     <div class="manager-page-header__copy">
       <div class="manager-page-header__title">{{ title }}</div>
       <div v-if="subtitle" class="manager-page-header__subtitle">{{ subtitle }}</div>
@@ -21,6 +23,10 @@
 </template>
 
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
+
 defineProps<{
   title: string;
   subtitle?: string | null;

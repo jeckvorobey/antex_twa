@@ -1,22 +1,24 @@
 <template>
-  <div class="manager-chat-composer">
+  <div class="manager-chat-composer antex-border-gold--muted">
     <input ref="fileInput" type="file" class="manager-chat-composer__file-input" @change="onFileChange" />
     <q-btn
       flat
       round
       dense
       icon="add"
-      aria-label="Прикрепить файл"
+      :aria-label="t('manager.chat.composer.attach')"
       :disable="sending"
       @click="fileInput?.click()"
-    />
+    >
+      <q-tooltip>{{ t('manager.chat.composer.attach') }}</q-tooltip>
+    </q-btn>
     <q-input
       v-model="text"
       borderless
       dense
       autogrow
       type="textarea"
-      placeholder="Сообщение…"
+      :placeholder="t('manager.chat.composer.placeholder')"
       maxlength="4096"
       class="manager-chat-composer__input"
       @keydown.enter.exact.prevent="submit"
@@ -28,16 +30,20 @@
       class="manager-chat-composer__send"
       :loading="sending"
       :disable="!text.trim()"
-      aria-label="Отправить"
+      :aria-label="t('manager.chat.composer.send')"
       @click="submit"
-    />
+    >
+      <q-tooltip>{{ t('manager.chat.composer.send') }}</q-tooltip>
+    </q-btn>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 const props = defineProps<{ sending?: boolean }>();
+const { t } = useI18n();
 const emit = defineEmits<{
   send: [text: string];
   sendFile: [file: File];

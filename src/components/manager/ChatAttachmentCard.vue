@@ -5,7 +5,7 @@
       <img
         v-if="attachment.kind === 'photo'"
         :src="objectUrl"
-        :alt="attachment.filename || 'Фото клиента'"
+        :alt="attachment.filename || t('manager.chat.attachment.photoAlt')"
         class="manager-chat-attachment__image"
       />
       <video
@@ -22,10 +22,15 @@
         preload="metadata"
         class="manager-chat-attachment__audio"
       />
-      <a v-else :href="objectUrl" :download="attachment.filename || 'attachment'" class="manager-chat-attachment__file">
+      <a
+        v-else
+        :href="objectUrl"
+        :download="attachment.filename || t('manager.chat.attachment.downloadName')"
+        class="manager-chat-attachment__file"
+      >
         <q-icon name="description" size="24px" />
         <span>
-          <strong>{{ attachment.filename || 'Документ' }}</strong>
+          <strong>{{ attachment.filename || t('manager.chat.attachment.document') }}</strong>
           <small v-if="sizeLabel">{{ sizeLabel }}</small>
         </span>
         <q-icon name="download" size="20px" />
@@ -33,23 +38,30 @@
     </template>
     <div v-else class="manager-chat-attachment__error">
       <q-icon name="broken_image" size="22px" />
-      <span>Вложение недоступно</span>
+      <span>{{ t('manager.chat.attachment.unavailable') }}</span>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 import { fetchManagerAttachment } from '@services/manager-chat';
 import type { ChatAttachment } from '@types/manager-chat';
 import { formatFileSize } from '@utils/manager-chat';
 
 const props = defineProps<{ attachment: ChatAttachment }>();
+const { t } = useI18n();
 
 const loading = ref(true);
 const objectUrl = ref<string | null>(null);
-const sizeLabel = computed(() => formatFileSize(props.attachment.size));
+const sizeLabel = computed(() =>
+  formatFileSize(props.attachment.size, {
+    kilobyte: t('manager.units.kilobyte'),
+    megabyte: t('manager.units.megabyte'),
+  }),
+);
 
 onMounted(async () => {
   try {
