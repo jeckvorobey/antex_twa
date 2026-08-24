@@ -1,5 +1,13 @@
 export type MiniappUserRole = 2 | 9;
 
+export interface MiniappNavigationItem {
+  name: string;
+  label: string;
+  icon: string;
+  route?: string;
+  badge_key?: string | null;
+}
+
 export interface MiniappUser {
   id: number;
   username: string | null;
@@ -15,6 +23,7 @@ export interface MiniappUser {
   trusted_contact: string | null;
   trusted_contact_source: string | null;
   trusted_contact_ready: boolean;
+  navigation?: MiniappNavigationItem[];
 }
 
 export interface TelegramAuthResponse {

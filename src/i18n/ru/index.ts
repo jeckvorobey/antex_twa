@@ -8,6 +8,7 @@ export default {
     exchange: 'Обменять',
     yes: 'Да',
     cancel: 'Отмена',
+    close: 'Закрыть',
     empty: 'Пока пусто',
     notifications: 'Уведомления',
     profile: 'Профиль',
@@ -15,11 +16,194 @@ export default {
     logoAlt: 'Логотип AntEx',
   },
   nav: {
+    navigation: 'Основная навигация',
     home: 'Главная',
     exchange: 'Обмен',
     history: 'История',
     profile: 'Профиль',
     more: 'Еще',
+    managerDashboard: 'Дашборд',
+    managerChats: 'Чаты',
+    managerOrders: 'Заявки',
+    managerSettings: 'Настройки',
+  },
+  manager: {
+    customerFallback: 'Клиент #{id}',
+    countries: {
+      thailand: 'Таиланд',
+      vietnam: 'Вьетнам',
+      georgia: 'Грузия',
+      internal: 'Внутренний обмен',
+    },
+    receiveMethods: {
+      cash: 'Наличные',
+      qrcode: 'QR code',
+      bank_account: 'Банк',
+      pay_services: 'Оплата услуг',
+    },
+    connection: {
+      idle: 'Ожидание подключения',
+      connecting: 'Подключение',
+      online: 'На связи',
+      reconnecting: 'Переподключение',
+      offline: 'Нет соединения',
+    },
+    orderStatus: {
+      new: 'Новая',
+      active: 'В работе',
+      done: 'Завершена',
+      cancelled: 'Отменена',
+      unknown: 'Статус {status}',
+    },
+    relativeTime: {
+      now: 'сейчас',
+      minutes: '{count} мин',
+      hours: '{count} ч',
+    },
+    units: {
+      kilobyte: 'КБ',
+      megabyte: 'МБ',
+    },
+    dashboard: {
+      title: 'Рабочий стол',
+      subtitle: 'Текущая операционная работа',
+      activeOrders: 'Активные заявки',
+      newChats: 'Новые чаты',
+      queue: 'Очередь заявок',
+      viewAll: 'Смотреть все',
+      empty: 'Активных заявок сейчас нет',
+    },
+    chats: {
+      title: 'Чаты',
+      subtitle: 'Все обращения клиентов',
+      unreadSummary: 'Непрочитанных: {count}',
+      searchPlaceholder: "Поиск по имени или {'@'}username",
+      filters: {
+        all: 'Все',
+        unread: 'Непрочитанные',
+      },
+      empty: {
+        title: 'Новых диалогов нет',
+        text: 'Новый клиент появится здесь сразу после сообщения боту.',
+        unreadText: 'Все сообщения уже прочитаны.',
+      },
+      error: {
+        title: 'Не удалось загрузить чаты',
+        text: 'Проверьте соединение и повторите запрос.',
+      },
+    },
+    chat: {
+      title: 'Диалог',
+      loading: 'Загрузка…',
+      loadEarlier: 'Показать предыдущие',
+      empty: {
+        title: 'История пока пустая',
+        text: 'Можно написать клиенту первым — сообщение уйдёт через бота AntEx.',
+      },
+      error: {
+        title: 'Не удалось открыть диалог',
+        text: 'Проверьте соединение и повторите запрос.',
+      },
+      timeline: {
+        today: 'Сегодня',
+        yesterday: 'Вчера',
+      },
+      composer: {
+        attach: 'Прикрепить файл',
+        placeholder: 'Сообщение…',
+        send: 'Отправить сообщение',
+      },
+      message: {
+        edited: 'изменено',
+        failed: 'Не доставлено',
+      },
+      preview: {
+        ready: 'Диалог готов к сообщению',
+        photo: 'Фото',
+        document: 'Документ',
+        voice: 'Голосовое сообщение',
+        video: 'Видео',
+        message: 'Сообщение',
+      },
+      attachment: {
+        photoAlt: 'Фото клиента',
+        downloadName: 'вложение',
+        document: 'Документ',
+        unavailable: 'Вложение недоступно',
+      },
+      notifications: {
+        loadEarlierError: 'Не удалось загрузить предыдущие сообщения',
+        messageError: 'Сообщение не отправлено',
+        attachmentError: 'Вложение не отправлено',
+      },
+    },
+    profile: {
+      title: 'Профиль',
+      subtitle: 'Рабочее пространство менеджера',
+      fallbackName: 'Менеджер',
+      role: 'Менеджер AntEx',
+      telegram: 'Telegram',
+      realtime: {
+        label: 'Связь с клиентами',
+        text: 'Новые сообщения, прочтение и счётчики обновляются без перезагрузки страницы.',
+      },
+      notifications: {
+        label: 'Уведомления',
+        text: 'Пока Mini App открыта, сообщения появляются здесь мгновенно. Если приложение закрыто, бот отправит Telegram-уведомление менеджеру.',
+      },
+    },
+    orders: {
+      title: 'Заявки',
+      subtitle: 'Текущая операционная работа',
+      empty: {
+        title: 'Активных заявок нет',
+        text: 'Новые заявки появятся здесь автоматически.',
+      },
+      error: {
+        title: 'Не удалось загрузить заявки',
+        text: 'Проверьте соединение и повторите запрос.',
+      },
+      actions: {
+        details: 'Открыть детали заявки',
+        chat: 'Открыть чат клиента',
+      },
+      notifications: {
+        chatError: 'Не удалось открыть чат клиента',
+      },
+    },
+    orderPage: {
+      title: 'Заявка',
+      subtitle: 'Операционная карточка',
+      error: {
+        title: 'Не удалось загрузить заявку',
+        text: 'Проверьте соединение и повторите запрос.',
+      },
+      actions: {
+        chat: 'Открыть чат клиента',
+        take: 'Взять в работу',
+        complete: 'Завершить заявку',
+        cancel: 'Отменить заявку',
+      },
+      notifications: {
+        statusUpdated: 'Статус заявки обновлён',
+        statusError: 'Не удалось изменить статус заявки',
+      },
+      cancelDialog: {
+        title: 'Отменить заявку?',
+        text: 'Статус будет сохранён, клиент получит уведомление через бота.',
+      },
+    },
+    orderDetails: {
+      title: 'Данные заявки',
+      customer: 'Клиент',
+      direction: 'Направление',
+      sell: 'Отдаёт',
+      buy: 'Получает',
+      country: 'Страна',
+      city: 'Город',
+      receiveMethod: 'Способ получения',
+      createdAt: 'Дата создания',
+    },
   },
   writeAccess: {
     idle: {

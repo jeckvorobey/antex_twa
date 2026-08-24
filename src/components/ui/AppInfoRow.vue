@@ -1,30 +1,23 @@
 <template>
-  <button
-    type="button"
-    :class="['app-info-row', clickable ? 'app-info-row--clickable' : null]"
-    :disabled="!clickable"
+  <AntexCell
+    :title="title"
+    :description="subtitle"
+    :clickable="clickable"
+    class="app-info-row"
     @click="emit('click')"
   >
-    <div class="app-info-row__icon">
-      <q-icon :name="icon" size="18px" />
-    </div>
-
-    <div class="app-info-row__content">
-      <div class="app-info-row__title">{{ title }}</div>
-      <div v-if="subtitle" class="app-info-row__subtitle">{{ subtitle }}</div>
-    </div>
-
-    <div v-if="badge || value || clickable" class="app-info-row__meta">
-      <div v-if="badge" :class="['app-status-pill', `app-status-pill--${badgeTone}`]">
-        {{ badge }}
-      </div>
+    <template #before><q-icon :name="icon" size="18px" /></template>
+    <template v-if="badge || value" #after>
+      <AntexBadge v-if="badge" :tone="badgeTone" :label="badge" />
       <div v-if="value" class="app-info-row__value">{{ value }}</div>
-      <q-icon v-if="clickable" name="chevron_right" size="16px" class="app-info-row__chevron" />
-    </div>
-  </button>
+    </template>
+  </AntexCell>
 </template>
 
 <script setup lang="ts">
+import AntexBadge from '@components/ui/AntexBadge.vue';
+import AntexCell from '@components/ui/AntexCell.vue';
+
 withDefaults(
   defineProps<{
     icon: string;

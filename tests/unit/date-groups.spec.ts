@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { groupItemsByDate } from '../../src/utils/date-groups';
+import { groupItemsByDate, localDateKey } from '../../src/utils/date-groups';
 
 type Item = { id: number; createdAt: string };
 
@@ -20,5 +20,11 @@ describe('groupItemsByDate', () => {
 
   it('returns an empty group list for empty input', () => {
     expect(groupItemsByDate([], (item: Item) => item.createdAt, 'ru')).toEqual([]);
+  });
+
+  it('uses the local calendar day instead of the UTC day as a grouping key', () => {
+    const date = new Date(2026, 6, 25, 0, 30);
+
+    expect(localDateKey(date)).toBe('2026-07-25');
   });
 });

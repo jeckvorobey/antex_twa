@@ -1,4 +1,10 @@
 import { defineBoot } from '#q-app/wrappers';
+import { Dark } from 'quasar';
+
+import {
+  applyTelegramEnvironment,
+  type TelegramEnvironmentWebApp,
+} from '@boot/telegram-theme';
 
 export interface TelegramMainButton {
   show(): void;
@@ -9,7 +15,7 @@ export interface TelegramMainButton {
 
 export type TelegramWriteAccessCallback = (allowed: boolean) => void;
 
-export interface TelegramWebApp {
+export interface TelegramWebApp extends TelegramEnvironmentWebApp {
   initData: string;
   initDataUnsafe: {
     user?: {
@@ -38,8 +44,13 @@ declare global {
 }
 
 export const tg = window.Telegram?.WebApp;
+let cleanupTelegramEnvironment: (() => void) | undefined;
 
 export default defineBoot(() => {
+  Dark.set(true);
+  cleanupTelegramEnvironment?.();
+  cleanupTelegramEnvironment = applyTelegramEnvironment(tg);
+
   if (!tg) {
     return;
   }

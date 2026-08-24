@@ -1,5 +1,5 @@
 <template>
-  <AppSurface
+  <AntexCard
     padded
     class="app-aex-balance-card"
     :class="{ 'app-aex-balance-card--clickable': clickable }"
@@ -20,14 +20,14 @@
         />
       </div>
     </div>
-  </AppSurface>
+  </AntexCard>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 
-import AppSurface from '@components/ui/AppSurface.vue';
+import AntexCard from '@components/ui/AntexCard.vue';
 
 const props = withDefaults(
   defineProps<{
