@@ -20,9 +20,10 @@ export default {
     history: 'История',
     profile: 'Профиль',
     more: 'Еще',
+    managerDashboard: 'Дашборд',
     managerChats: 'Чаты',
     managerOrders: 'Заявки',
-    managerProfile: 'Профиль',
+    managerSettings: 'Настройки',
   },
   manager: {
     customerFallback: 'Клиент #{id}',
@@ -60,6 +61,15 @@ export default {
     units: {
       kilobyte: 'КБ',
       megabyte: 'МБ',
+    },
+    dashboard: {
+      title: 'Рабочий стол',
+      subtitle: 'Текущая операционная работа',
+      activeOrders: 'Активные заявки',
+      newChats: 'Новые чаты',
+      queue: 'Очередь заявок',
+      viewAll: 'Смотреть все',
+      empty: 'Активных заявок сейчас нет',
     },
     chats: {
       title: 'Чаты',

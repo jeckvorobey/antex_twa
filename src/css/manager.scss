@@ -73,7 +73,7 @@
 .manager-page-header__title {
   overflow: hidden;
   color: var(--antex-text-primary);
-  font-family: 'Montserrat', 'Inter', sans-serif;
+  font-family: 'Montserrat Alternates', 'Inter Tight', sans-serif;
   font-size: 20px;
   font-weight: 700;
   line-height: 1.2;
@@ -376,7 +376,7 @@
 .manager-order-card__customer {
   overflow: hidden;
   margin-top: 2px;
-  margin-bottom: 8px;
+  margin-bottom: 16px;
   color: var(--antex-text-secondary);
   font-size: 12px;
   font-weight: 600;
@@ -385,51 +385,21 @@
   white-space: nowrap;
 }
 
-.manager-order-card__amounts {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-  align-items: center;
-  gap: 7px;
-}
-
-.manager-order-card__amount {
-  display: flex;
-  min-width: 0;
-  align-items: center;
-  gap: 5px;
-}
-
-.manager-order-card__amounts strong {
-  min-width: 0;
-  overflow: hidden;
-  color: var(--antex-text-primary);
-  font-family: 'Montserrat', 'Inter', sans-serif;
-  font-size: clamp(15px, 4.4vw, 18px);
-  line-height: 1.1;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.manager-order-card__amounts span {
-  color: var(--antex-text-muted);
-  font-size: 10px;
-  font-weight: 700;
-}
-
-.manager-order-card__amount .app-currency-mark {
-  flex: 0 0 auto;
-  font-size: 18px;
-}
-
-.manager-order-card__arrow {
-  color: var(--antex-gold-base);
+.manager-order-card__rate {
+  margin-top: 10px;
+  padding: 6px 9px;
+  border: 1px solid var(--antex-border-gold-subtle);
+  border-radius: 8px;
+  color: var(--antex-text-secondary);
+  background: color-mix(in srgb, var(--antex-bg-deep) 62%, transparent);
+  font-size: 11px;
 }
 
 .manager-order-card__meta {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 5px 10px;
-  margin-top: 10px;
+  margin-top: 9px;
   color: var(--antex-text-secondary);
   font-size: 10px;
 }
@@ -453,11 +423,68 @@
 }
 
 .manager-order-card__actions {
+  position: absolute;
+  right: 10px;
+  top: 96px;
   display: flex;
   justify-content: flex-end;
   gap: 2px;
   min-height: 44px;
-  margin-top: 4px;
+}
+
+.manager-order-card--actions .manager-order-card__rate {
+  margin-right: 94px;
+}
+
+.manager-dashboard__metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 22px;
+}
+
+.manager-dashboard__metric {
+  display: grid;
+  min-height: 112px;
+  padding: 14px;
+  border-radius: var(--antex-radius-card);
+  color: var(--antex-gold-base);
+  background: color-mix(in srgb, var(--antex-bg-card) 94%, transparent);
+}
+
+.manager-dashboard__metric strong {
+  align-self: end;
+  color: var(--antex-text-primary);
+  font-family: 'Montserrat Alternates', 'Inter Tight', sans-serif;
+  font-size: 28px;
+  line-height: 1;
+}
+
+.manager-dashboard__metric span {
+  margin-top: 5px;
+  color: var(--antex-text-secondary);
+  font-size: 11px;
+}
+
+.manager-dashboard__section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.manager-dashboard__section-heading h2 {
+  margin: 0;
+  font-family: 'Montserrat Alternates', 'Inter Tight', sans-serif;
+  font-size: 17px;
+}
+
+.manager-dashboard__empty {
+  padding: 24px 16px;
+  border-radius: var(--antex-radius-card);
+  color: var(--antex-text-muted);
+  background: color-mix(in srgb, var(--antex-bg-card) 88%, transparent);
+  text-align: center;
 }
 
 .manager-order-card__action {
@@ -696,7 +723,7 @@
 
 .manager-profile-card__name {
   color: var(--antex-text-primary);
-  font-family: 'Montserrat', 'Inter', sans-serif;
+  font-family: 'Montserrat Alternates', 'Inter Tight', sans-serif;
   font-weight: 700;
 }
 
@@ -740,7 +767,7 @@
 .manager-order-details__title {
   margin: 0 0 12px;
   color: var(--antex-gold-base);
-  font-family: 'Montserrat', 'Inter', sans-serif;
+  font-family: 'Montserrat Alternates', 'Inter Tight', sans-serif;
   font-size: 14px;
   font-weight: 700;
 }

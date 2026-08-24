@@ -1,5 +1,5 @@
 export const MANAGER_ROLE = 2;
-export const MANAGER_DEFAULT_PATH = '/manager/chats';
+export const MANAGER_DEFAULT_PATH = '/manager/dashboard';
 
 export function isManagerRole(role: number | null | undefined): boolean {
   return role === MANAGER_ROLE;

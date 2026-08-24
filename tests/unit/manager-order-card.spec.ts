@@ -28,6 +28,9 @@ function makeOrder(overrides: Partial<ManagerOrderFixture> = {}): ManagerOrderFi
     amountSell: 20_000,
     currencyBuy: 'VND',
     amountBuy: 5_979_619.21,
+    rate: 271.6,
+    rateDisplay: '271.60',
+    rateText: '1 RUB = 271.60 VND',
     country: 'vietnam',
     city: {
       id: 5,
@@ -79,6 +82,7 @@ describe('OrderSummaryCard variant 3', () => {
     expect(wrapper.get('.manager-order-card__customer').text()).toBe('Сергей Иванов');
     expect(wrapper.text()).not.toContain('@must-not-be-card-name');
     expect(wrapper.get('.manager-order-card__location').text()).toContain('Вьетнам, Хошимин');
+    expect(wrapper.get('.manager-order-card__rate').text()).toContain('1 RUB = 271.60 VND');
     expect(wrapper.findAllComponents(AppCurrencyMark).map((item) => item.props('mark'))).toEqual([
       '🇷🇺',
       '🇻🇳',

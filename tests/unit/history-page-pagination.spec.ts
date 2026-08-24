@@ -21,8 +21,9 @@ describe('HistoryPage pagination and repeat contract', () => {
     expect(historySource).toContain("value: 'cancelled'");
     expect(historySource).toContain("t('history.cancelled')");
     expect(historySource).toContain('icon="autorenew"');
-    expect(historySource).toContain(':label="t(\'history.repeat\')"');
-    expect(historySource).not.toContain(':aria-label="t(\'history.repeat\')"');
+    expect(historySource).not.toContain(':label="t(\'history.repeat\')"');
+    expect(historySource).toContain(':aria-label="t(\'history.repeat\')"');
+    expect(historySource).toContain('<q-tooltip>{{ t(\'history.repeat\') }}</q-tooltip>');
     expect(historySource).not.toContain('{{ item.currencySell }} → {{ item.currencyBuy }}');
   });
 
@@ -37,12 +38,13 @@ describe('HistoryPage pagination and repeat contract', () => {
     expect(historySource).not.toContain('rate: item.rate');
   });
 
-  it('keeps history card amount, status, and time split across Quasar rows', () => {
-    expect(historySource).toContain('class="row justify-center no-wrap"');
-    expect(historySource).toContain('class="col-12 app-history-item__amount text-center ellipsis"');
-    expect(historySource).toContain('class="row items-center no-wrap q-mt-xs"');
-    expect(historySource).toContain('class="col-4 row justify-start"');
-    expect(historySource).toContain('class="col-4 row justify-center"');
-    expect(historySource).toContain('class="col-4 app-history-item__time text-right"');
+  it('renders every history order as its own gold bordered card with the saved rate', () => {
+    expect(historySource).toContain(
+      'class="app-history-card antex-border-gold app-card-shadow"',
+    );
+    expect(historySource).toContain('class="app-history-card__number"');
+    expect(historySource).toContain('class="app-history-card__rate"');
+    expect(historySource).toContain('{{ item.rateText }}');
+    expect(historySource).not.toContain('<AppSurface class="app-history-list">');
   });
 });

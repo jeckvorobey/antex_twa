@@ -1,26 +1,24 @@
 <template>
   <article
     class="manager-order-card antex-border-gold"
-    :class="{ 'manager-order-card--compact': compact }"
+    :class="{
+      'manager-order-card--compact': compact,
+      'manager-order-card--actions': actions,
+    }"
   >
     <div class="manager-order-card__topline">
       <span class="manager-order-card__number">#{{ order.publicNumber }}</span>
       <OrderStatusChip :status="order.status" />
     </div>
     <div v-if="customerName" class="manager-order-card__customer">{{ customerName }}</div>
-    <div class="manager-order-card__amounts">
-      <div class="manager-order-card__amount">
-        <AppCurrencyMark :mark="managerCurrencyMark(order.currencySell)" />
-        <strong>{{ formatManagerAmount(order.amountSell) }}</strong>
-        <span>{{ order.currencySell }}</span>
-      </div>
-      <q-icon name="arrow_forward" size="16px" class="manager-order-card__arrow" />
-      <div class="manager-order-card__amount">
-        <AppCurrencyMark :mark="managerCurrencyMark(order.currencyBuy)" />
-        <strong>{{ formatManagerAmount(order.amountBuy) }}</strong>
-        <span>{{ order.currencyBuy }}</span>
-      </div>
-    </div>
+    <OrderAmountFlow
+      :currency-sell="order.currencySell"
+      :amount-sell="order.amountSell"
+      :currency-buy="order.currencyBuy"
+      :amount-buy="order.amountBuy"
+      result-prominent
+    />
+    <div v-if="order.rateText" class="manager-order-card__rate">{{ order.rateText }}</div>
     <div class="manager-order-card__meta">
       <span class="manager-order-card__location">
         <q-icon name="location_on" size="15px" />
@@ -67,13 +65,9 @@ import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 import OrderStatusChip from '@components/manager/OrderStatusChip.vue';
-import AppCurrencyMark from '@components/ui/AppCurrencyMark.vue';
+import OrderAmountFlow from '@components/orders/OrderAmountFlow.vue';
 import type { ManagerOrderSummary } from '@types/manager-chat';
-import {
-  formatManagerAmount,
-  managerCurrencyMark,
-  managerUserFullName,
-} from '@utils/manager-chat';
+import { managerUserFullName } from '@utils/manager-chat';
 
 const props = withDefaults(
   defineProps<{

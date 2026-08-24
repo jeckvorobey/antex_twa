@@ -44,49 +44,52 @@
             >
               <div class="app-group-label app-group-label--history q-mb-sm">{{ group.label }}</div>
 
-              <AppSurface class="app-history-list">
-                <div v-for="item in group.items" :key="item.id" class="app-history-item">
-                  <div class="column">
-                    <div class="row justify-center no-wrap">
-                      <div class="col-12 app-history-item__amount text-center ellipsis">
-                        {{ resolveAmountLine(item) }}
-                      </div>
-                    </div>
-
-                    <div class="row items-center no-wrap q-mt-xs">
-                      <div class="col-4 row justify-start">
-                        <q-btn
-                          flat
-                          dense
-                          no-caps
-                          color="warning"
-                          icon="autorenew"
-                          :label="t('history.repeat')"
-                          size="sm"
-                          class="app-history-item__repeat-btn"
-                          @click="repeatOrder(item)"
-                        />
-                      </div>
-
-                      <div class="col-4 row justify-center">
-                        <q-chip
-                          dense
-                          square
-                          :color="statusColor(item.status)"
-                          text-color="white"
-                          class="q-ma-none"
-                        >
-                          {{ t(getStatusLabelKey(item.status)) }}
-                        </q-chip>
-                      </div>
-
-                      <div class="col-4 app-history-item__time text-right">
-                        {{ formatTime(item.createdAt) }}
-                      </div>
-                    </div>
-                  </div>
+              <article
+                v-for="item in group.items"
+                :key="item.id"
+                class="app-history-card antex-border-gold app-card-shadow"
+              >
+                <div class="app-history-card__topline">
+                  <span class="app-history-card__number">#{{ item.publicNumber }}</span>
+                  <q-chip
+                    dense
+                    :color="statusColor(item.status)"
+                    text-color="white"
+                    class="app-history-card__status q-ma-none"
+                  >
+                    {{ t(getStatusLabelKey(item.status)) }}
+                  </q-chip>
                 </div>
-              </AppSurface>
+
+                <OrderAmountFlow
+                  :currency-sell="item.currencySell"
+                  :amount-sell="item.amountSell"
+                  :currency-buy="item.currencyBuy"
+                  :amount-buy="item.amountBuy"
+                />
+
+                <div v-if="item.rateText" class="app-history-card__rate">{{ item.rateText }}</div>
+
+                <div class="app-history-card__footer">
+                  <span class="app-history-card__location">
+                    <q-icon name="location_on" />
+                    {{ locationLabel(item) }}
+                  </span>
+                  <span><q-icon name="schedule" />{{ formatTime(item.createdAt) }}</span>
+                  <q-btn
+                    flat
+                    round
+                    dense
+                    icon="autorenew"
+                    color="warning"
+                    class="app-history-card__repeat"
+                    :aria-label="t('history.repeat')"
+                    @click="repeatOrder(item)"
+                  >
+                    <q-tooltip>{{ t('history.repeat') }}</q-tooltip>
+                  </q-btn>
+                </div>
+              </article>
             </section>
           </template>
 
@@ -109,11 +112,12 @@
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 
+import OrderAmountFlow from '@components/orders/OrderAmountFlow.vue';
 import AppSurface from '@components/ui/AppSurface.vue';
 import { useOrdersStore } from '@stores/orders.store';
 import { useUiStore } from '@stores/ui.store';
 import type { MiniappOrderItem } from '@types/miniapp';
-import { formatAmount, formatMiniappTime } from '@utils/formatters';
+import { formatMiniappTime } from '@utils/formatters';
 import { getStatusLabelKey, getStatusTone } from '@utils/miniapp';
 
 const { locale, t } = useI18n();
@@ -202,20 +206,10 @@ function statusColor(status: number) {
   return 'warning';
 }
 
-function resolveAmountLine(item: MiniappOrderItem) {
-  const amountBuy = item.amountBuy ?? 0;
-  return `${currencyFlag(item.currencySell)} ${formatAmount(item.amountSell, locale.value)} ${item.currencySell} → ${currencyFlag(item.currencyBuy)} ${formatAmount(amountBuy, locale.value)} ${item.currencyBuy}`;
-}
-
-function currencyFlag(currency: string) {
-  const flags: Record<string, string> = {
-    RUB: '🇷🇺',
-    USDT: '₮',
-    THB: '🇹🇭',
-    GEL: '🇬🇪',
-    VND: '🇻🇳',
-  };
-
-  return flags[currency] ?? currency;
+/** Выводит страну перед городом и не добавляет пустой разделитель. */
+function locationLabel(item: MiniappOrderItem): string {
+  const countryKey = `manager.countries.${item.country}`;
+  const country = item.city?.countryRuName || t(countryKey);
+  return item.city ? `${country}, ${item.city.name}` : country;
 }
 </script>

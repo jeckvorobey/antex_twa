@@ -23,6 +23,9 @@ export interface ManagerOrderSummary {
   amountSell: number;
   currencyBuy: string;
   amountBuy: number | null;
+  rate: number | null;
+  rateDisplay: string | null;
+  rateText: string | null;
   country: string;
   city: ManagerOrderCity | null;
   status: number;

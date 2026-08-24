@@ -17,6 +17,7 @@ const bottomNavSource = readFileSync(
   'utf8',
 );
 const appStylesSource = readFileSync(resolve(process.cwd(), 'src/css/app.scss'), 'utf8');
+const authStoreSource = readFileSync(resolve(process.cwd(), 'src/stores/auth.store.ts'), 'utf8');
 const bottomNavStyles = bottomNavSource.split('<style scoped lang="scss">')[1] ?? '';
 
 describe('app navigation chrome', () => {
@@ -57,10 +58,8 @@ describe('app navigation chrome', () => {
     expect(bottomNavSource).toContain('rounded');
     expect(bottomNavSource).toContain('size="10px"');
     expect(bottomNavSource).toContain('class="app-bottom-nav__item col q-py-sm"');
-    expect(bottomNavSource).toMatch(/name:\s*'home'/);
-    expect(bottomNavSource).toMatch(/name:\s*'exchange'/);
-    expect(bottomNavSource).toMatch(/name:\s*'history'/);
-    expect(bottomNavSource).toMatch(/name:\s*'profile'/);
+    expect(bottomNavSource).not.toMatch(/name:\s*'home'/);
+    expect(authStoreSource).toMatch(/name:\s*'home'/);
     expect(bottomNavSource).toContain(
       'app-bottom-nav fixed-bottom row justify-center q-px-sm q-pb-sm z-top',
     );
@@ -68,5 +67,11 @@ describe('app navigation chrome', () => {
     expect(bottomNavStyles).not.toContain('.q-btn__content');
     expect(bottomNavStyles).not.toContain('.block');
     expect(appStylesSource).toContain('.app-bottom-nav {');
+  });
+
+  it('registers the backend-addressable manager dashboard as the manager entry route', () => {
+    expect(routesSource).toContain("name: 'managerDashboard'");
+    expect(routesSource).toContain("component: () => import('@pages/manager/ManagerDashboardPage.vue')");
+    expect(routesSource).toContain("redirect: { name: 'managerDashboard' }");
   });
 });

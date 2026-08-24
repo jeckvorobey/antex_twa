@@ -21,12 +21,12 @@
         size="10px"
         :icon="item.icon"
         :label="item.label"
-        :text-color="isActive(item.name) ? 'primary' : 'white'"
-        :class="{ 'bottom-nav__item--active': isActive(item.name) }"
+        :text-color="isActive(item) ? 'primary' : 'white'"
+        :class="{ 'bottom-nav__item--active': isActive(item) }"
         :style="{ '--bottom-nav-item-delay': `${index * 60}ms` }"
         :aria-label="item.label"
-        :aria-current="isActive(item.name) ? 'page' : undefined"
-        @click="navigateTo(item.name)"
+        :aria-current="isActive(item) ? 'page' : undefined"
+        @click="navigateTo(item)"
       >
         <q-badge
           v-if="resolveBadge(item)"
@@ -45,7 +45,7 @@ import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 
-import { DEFAULT_USER_NAVIGATION, useAuthStore } from '@stores/auth.store';
+import { useAuthStore } from '@stores/auth.store';
 import { useManagerChatStore } from '@stores/manager-chat.store';
 import type { MiniappNavigationItem } from '@types/miniapp';
 
@@ -63,19 +63,8 @@ const { t, te } = useI18n();
 const authStore = useAuthStore();
 const chatStore = useManagerChatStore();
 
-const defaultNavItems: NavigationItem[] = DEFAULT_USER_NAVIGATION ?? [
-  { name: 'home', icon: 'home', label: 'Главная', route: 'home' },
-  { name: 'exchange', icon: 'currency_exchange', label: 'Обмен', route: 'exchange' },
-  { name: 'history', icon: 'history', label: 'История', route: 'history' },
-  { name: 'profile', icon: 'person_outline', label: 'Профиль', route: 'profile' },
-];
-
 const items = computed<NavigationItem[]>(() => {
-  const source = props.items?.length
-    ? props.items
-    : authStore.navigation?.length
-      ? authStore.navigation
-      : defaultNavItems;
+  const source = props.items ?? authStore.navigation;
 
   return source.map((item) => {
     const i18nKey = `nav.${item.name}`;
@@ -87,14 +76,15 @@ const items = computed<NavigationItem[]>(() => {
   });
 });
 
-function isActive(name: string): boolean {
-  if (route.name === name) {
+/** Сопоставляет стабильный id пункта с его backend route и дочерними экранами. */
+function isActive(item: NavigationItem): boolean {
+  if (route.name === item.route) {
     return true;
   }
-  if (name === 'managerChats' && route.name === 'managerChat') {
+  if (item.name === 'managerChats' && route.name === 'managerChat') {
     return true;
   }
-  if (name === 'managerOrders' && route.name === 'managerOrder') {
+  if (item.name === 'managerOrders' && route.name === 'managerOrder') {
     return true;
   }
   return false;
@@ -113,11 +103,12 @@ function resolveBadge(item: NavigationItem): string | number | null {
   return null;
 }
 
-function navigateTo(name: string): void {
-  if (route.name === name || isActive(name)) {
+/** Переходит по route, переданному backend, не связывая компонент с ролью. */
+function navigateTo(item: NavigationItem): void {
+  if (isActive(item)) {
     return;
   }
 
-  void router.push({ name });
+  void router.push({ name: item.route });
 }
 </script>

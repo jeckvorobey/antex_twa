@@ -54,7 +54,13 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@layouts/ManagerLayout.vue'),
     meta: { managerOnly: true },
     children: [
-      { path: '', redirect: { name: 'managerChats' } },
+      { path: '', redirect: { name: 'managerDashboard' } },
+      {
+        path: 'dashboard',
+        name: 'managerDashboard',
+        component: () => import('@pages/manager/ManagerDashboardPage.vue'),
+        meta: { managerOnly: true, title: 'manager.dashboard.title' },
+      },
       {
         path: 'chats',
         name: 'managerChats',

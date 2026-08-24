@@ -38,8 +38,8 @@ describe('AppBottomNav', () => {
     expect(component).toContain('dense');
     expect(component).toContain('rounded');
     expect(component).toContain('size="10px"');
-    expect(component).toContain(":text-color=\"isActive(item.name) ? 'primary' : 'white'\"");
-    expect(component).toContain(`:aria-current="isActive(item.name) ? 'page' : undefined"`);
+    expect(component).toContain(":text-color=\"isActive(item) ? 'primary' : 'white'\"");
+    expect(component).toContain(`:aria-current="isActive(item) ? 'page' : undefined"`);
     expect(component).not.toContain('.q-btn__content');
     expect(component).not.toContain('.block');
     expect(appStyles).toContain('.app-bottom-nav__item .q-icon {');
@@ -67,8 +67,18 @@ describe('AppBottomNav', () => {
     const component = readFileSync(componentPath, 'utf8');
 
     expect(component).toContain('const items = computed<NavigationItem[]>');
-    expect(component).toContain('if (route.name === name)');
-    expect(component).toContain('void router.push({ name })');
+    expect(component).toContain('item.route');
+    expect(component).toContain('void router.push({ name: item.route })');
+    expect(component).not.toContain('DEFAULT_USER_NAVIGATION');
+    expect(component).not.toContain('defaultNavItems');
+  });
+
+  it('does not derive an authenticated menu from the frontend role', () => {
+    const authStore = readFileSync(resolve(process.cwd(), 'src/stores/auth.store.ts'), 'utf8');
+
+    expect(authStore).not.toContain('DEFAULT_MANAGER_NAVIGATION');
+    expect(authStore).not.toContain("if (user.value?.role === 2)");
+    expect(authStore).toContain('return user.value?.navigation ?? []');
   });
 
   it('renders the header from the shared layout on every page', () => {

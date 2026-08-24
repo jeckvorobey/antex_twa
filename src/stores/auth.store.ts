@@ -20,28 +20,6 @@ export const DEFAULT_USER_NAVIGATION: MiniappNavigationItem[] = [
   { name: 'profile', icon: 'person_outline', label: 'Профиль', route: 'profile' },
 ];
 
-export const DEFAULT_MANAGER_NAVIGATION: MiniappNavigationItem[] = [
-  {
-    name: 'managerChats',
-    icon: 'chat_bubble_outline',
-    label: 'Чаты',
-    route: 'managerChats',
-    badge_key: 'unread_chats',
-  },
-  {
-    name: 'managerOrders',
-    icon: 'receipt_long',
-    label: 'Заявки',
-    route: 'managerOrders',
-  },
-  {
-    name: 'managerProfile',
-    icon: 'person_outline',
-    label: 'Профиль',
-    route: 'managerProfile',
-  },
-];
-
 export type TelegramWriteAccessState =
   | 'idle'
   | 'requesting'
@@ -70,13 +48,7 @@ export const useAuthStore = defineStore('auth', () => {
   );
   const canUseApp = computed(() => !requiresTelegramWriteAccess.value);
   const navigation = computed<MiniappNavigationItem[]>(() => {
-    if (user.value?.navigation && user.value.navigation.length > 0) {
-      return user.value.navigation;
-    }
-    if (user.value?.role === 2) {
-      return DEFAULT_MANAGER_NAVIGATION;
-    }
-    return DEFAULT_USER_NAVIGATION;
+    return user.value?.navigation ?? [];
   });
 
   async function init() {
