@@ -6,16 +6,16 @@
     />
 
     <section class="manager-dashboard__metrics" :aria-label="t('manager.dashboard.title')">
-      <q-card flat class="manager-dashboard__metric antex-border-gold--muted">
+      <AntexCard :elevated="false" class="manager-dashboard__metric">
         <q-icon name="receipt_long" size="20px" />
         <strong>{{ chatStore.orders.length }}</strong>
         <span>{{ t('manager.dashboard.activeOrders') }}</span>
-      </q-card>
-      <q-card flat class="manager-dashboard__metric antex-border-gold--muted">
+      </AntexCard>
+      <AntexCard :elevated="false" class="manager-dashboard__metric">
         <q-icon name="mark_chat_unread" size="20px" />
         <strong>{{ chatStore.unreadTotal }}</strong>
         <span>{{ t('manager.dashboard.newChats') }}</span>
-      </q-card>
+      </AntexCard>
     </section>
 
     <section class="manager-dashboard__queue">
@@ -35,16 +35,19 @@
       </div>
 
       <div v-if="chatStore.orders.length" class="manager-order-list">
-        <OrderSummaryCard
+        <OrderCard
           v-for="order in chatStore.orders.slice(0, 3)"
           :key="order.id"
           :order="order"
-          @click="openOrder(order.id)"
+          mode="manager"
+          :actions="false"
+          selectable
+          @select="openOrder(order.id)"
         />
       </div>
-      <q-card v-else flat class="manager-dashboard__empty antex-border-gold--muted">
+      <AntexCard v-else :elevated="false" class="manager-dashboard__empty">
         {{ t('manager.dashboard.empty') }}
-      </q-card>
+      </AntexCard>
     </section>
   </q-page>
 </template>
@@ -54,7 +57,8 @@ import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 
 import ManagerPageHeader from '@components/manager/ManagerPageHeader.vue';
-import OrderSummaryCard from '@components/manager/OrderSummaryCard.vue';
+import OrderCard from '@components/orders/OrderCard.vue';
+import AntexCard from '@components/ui/AntexCard.vue';
 import { useManagerChatStore } from '@stores/manager-chat.store';
 
 const chatStore = useManagerChatStore();

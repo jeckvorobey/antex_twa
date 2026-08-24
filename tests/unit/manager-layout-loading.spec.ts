@@ -42,7 +42,7 @@ describe('ManagerLayout initial loading', () => {
       global: {
         plugins: [pinia],
         stubs: {
-          AppBottomNav: true,
+          AntexBottomNav: true,
           QLayout: { template: '<main><slot /></main>' },
           QPageContainer: { template: '<section><slot /></section>' },
           RouterView: true,

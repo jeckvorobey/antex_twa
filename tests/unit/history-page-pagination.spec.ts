@@ -7,23 +7,24 @@ const historyPagePath = resolve(process.cwd(), 'src/pages/HistoryPage.vue');
 const historySource = readFileSync(historyPagePath, 'utf8');
 
 describe('HistoryPage pagination and repeat contract', () => {
-  it('uses Quasar infinite scroll with dots loader and manual refresh button', () => {
+  it('uses Quasar infinite scroll with card skeletons and manual refresh button', () => {
     expect(historySource).toContain('<q-infinite-scroll');
-    expect(historySource).toContain('<q-spinner-dots');
+    expect(historySource).toContain('<AntexSkeleton preset="order-card"');
     expect(historySource).toContain('icon="refresh"');
     expect(historySource).toContain(':aria-label="t(\'history.refresh\')"');
     expect(historySource).toContain(':scroll-target="historyScrollRef"');
     expect(historySource).toContain('ref="historyScrollRef"');
     expect(historySource).toContain('app-page--history');
+    expect(historySource).toContain(':aria-busy="ordersStore.loading || ordersStore.refreshing"');
+    expect(historySource).toContain('ordersStore.loading && !ordersStore.items.length');
   });
 
-  it('keeps cancelled filter and repeat action in the page source', () => {
+  it('keeps cancelled filter and delegates repeat action to shared OrderCard', () => {
     expect(historySource).toContain("value: 'cancelled'");
     expect(historySource).toContain("t('history.cancelled')");
-    expect(historySource).toContain('icon="autorenew"');
-    expect(historySource).not.toContain(':label="t(\'history.repeat\')"');
-    expect(historySource).toContain(':aria-label="t(\'history.repeat\')"');
-    expect(historySource).toContain('<q-tooltip>{{ t(\'history.repeat\') }}</q-tooltip>');
+    expect(historySource).toContain('<OrderCard');
+    expect(historySource).toContain('mode="user"');
+    expect(historySource).toContain('@repeat="repeatOrder(item)"');
     expect(historySource).not.toContain('{{ item.currencySell }} → {{ item.currencyBuy }}');
   });
 
@@ -38,13 +39,10 @@ describe('HistoryPage pagination and repeat contract', () => {
     expect(historySource).not.toContain('rate: item.rate');
   });
 
-  it('renders every history order as its own gold bordered card with the saved rate', () => {
-    expect(historySource).toContain(
-      'class="app-history-card antex-border-gold app-card-shadow"',
-    );
-    expect(historySource).toContain('class="app-history-card__number"');
-    expect(historySource).toContain('class="app-history-card__rate"');
-    expect(historySource).toContain('{{ item.rateText }}');
-    expect(historySource).not.toContain('<AppSurface class="app-history-list">');
+  it('renders every history order through the shared card instead of inline markup', () => {
+    expect(historySource).toContain('class="app-history-card app-card-shadow"');
+    expect(historySource).toContain(':order="item"');
+    expect(historySource).not.toContain('class="app-history-card__number"');
+    expect(historySource).not.toContain('<AntexCard class="app-history-list">');
   });
 });

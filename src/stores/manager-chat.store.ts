@@ -139,18 +139,33 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
     }
   }
 
+  /** Находит индекс сообщения или позицию вставки в упорядоченном по id массиве. */
+  function findMessagePosition(messageId: number): number {
+    let low = 0;
+    let high = messages.value.length;
+    while (low < high) {
+      const middle = low + Math.floor((high - low) / 2);
+      if ((messages.value[middle]?.id ?? Number.POSITIVE_INFINITY) < messageId) {
+        low = middle + 1;
+      } else {
+        high = middle;
+      }
+    }
+    return low;
+  }
+
   function upsertMessage(message: ManagerChatMessage): void {
     if (activeConversation.value?.id !== message.conversationId) {
       return;
     }
-    const index = messages.value.findIndex((item) => item.id === message.id);
-    if (index === -1) {
-      messages.value = [...messages.value, message].sort((a, b) => a.id - b.id);
+    const position = findMessagePosition(message.id);
+    const next = messages.value.slice();
+    if (messages.value[position]?.id === message.id) {
+      next[position] = message;
     } else {
-      const next = messages.value.slice();
-      next[index] = message;
-      messages.value = next;
+      next.splice(position, 0, message);
     }
+    messages.value = next;
     if (activeConversation.value) {
       activeConversation.value.lastMessage = message;
       activeConversation.value.lastMessageAt = message.createdAt;

@@ -1,9 +1,9 @@
 import { mount } from '@vue/test-utils';
-import { QBtn, QIcon, Quasar } from 'quasar';
+import { QBadge, QBtn, QCard, QIcon, Quasar } from 'quasar';
 import { createI18n } from 'vue-i18n';
 import { describe, expect, it } from 'vitest';
 
-import OrderSummaryCard from '@components/manager/OrderSummaryCard.vue';
+import OrderCard from '@components/orders/OrderCard.vue';
 import AppCurrencyMark from '@components/ui/AppCurrencyMark.vue';
 import ru from '@i18n/ru';
 import type { ManagerOrderSummary } from '@types/manager-chat';
@@ -61,11 +61,11 @@ function mountCard(order: ManagerOrderFixture) {
     locale: 'ru',
     messages: { ru },
   });
-  return mount(OrderSummaryCard, {
-    props: { order, actions: true },
+  return mount(OrderCard, {
+    props: { order, mode: 'manager', actions: true },
     global: {
       plugins: [Quasar, i18n],
-      components: { QBtn, QIcon },
+      components: { QBadge, QBtn, QCard, QIcon },
       stubs: {
         QTooltip: { template: '<span class="test-tooltip"><slot /></span>' },
       },
@@ -73,11 +73,11 @@ function mountCard(order: ManagerOrderFixture) {
   });
 }
 
-describe('OrderSummaryCard variant 3', () => {
+describe('OrderCard manager mode', () => {
   it('renders backend full name, currency marks and country before optional city', () => {
     const wrapper = mountCard(makeOrder());
 
-    expect(wrapper.classes()).toContain('antex-border-gold');
+    expect(wrapper.classes()).toContain('antex-card--gold-border');
     expect(wrapper.get('.manager-order-card__number').text()).toBe('#2026080127');
     expect(wrapper.get('.manager-order-card__customer').text()).toBe('Сергей Иванов');
     expect(wrapper.text()).not.toContain('@must-not-be-card-name');

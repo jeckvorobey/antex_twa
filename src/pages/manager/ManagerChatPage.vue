@@ -15,10 +15,10 @@
       <q-spinner size="36px" color="primary" />
     </div>
 
-    <EmptyStateCard
+    <AntexEmptyState
       v-else-if="chatStore.activeConversationError"
       :title="t('manager.chat.error.title')"
-      :text="t('manager.chat.error.text')"
+      :description="t('manager.chat.error.text')"
       :action-label="t('common.retry')"
       icon="cloud_off"
       @action="loadConversation"
@@ -26,7 +26,12 @@
 
     <template v-else-if="chatStore.activeConversation">
       <div v-if="chatStore.activeConversation.latestOrder" class="manager-chat-context">
-        <OrderSummaryCard :order="chatStore.activeConversation.latestOrder" compact />
+        <OrderCard
+          :order="chatStore.activeConversation.latestOrder"
+          mode="manager"
+          compact
+          :actions="false"
+        />
       </div>
 
       <div class="manager-chat-timeline">
@@ -47,10 +52,10 @@
           <ChatBubble v-else :message="item.message" />
         </template>
 
-        <EmptyStateCard
+        <AntexEmptyState
           v-if="!chatStore.messages.length"
           :title="t('manager.chat.empty.title')"
-          :text="t('manager.chat.empty.text')"
+          :description="t('manager.chat.empty.text')"
           icon="chat_bubble_outline"
         />
       </div>
@@ -65,7 +70,7 @@
 </template>
 
 <script setup lang="ts">
-import { Notify } from 'quasar';
+import { useAntexNotify } from '@/composables/useAntexNotify';
 import { computed, nextTick, onBeforeUnmount, onMounted, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
@@ -74,9 +79,9 @@ import ChatBubble from '@components/manager/ChatBubble.vue';
 import ChatComposer from '@components/manager/ChatComposer.vue';
 import ChatDateDivider from '@components/manager/ChatDateDivider.vue';
 import ConnectionStatePill from '@components/manager/ConnectionStatePill.vue';
-import EmptyStateCard from '@components/manager/EmptyStateCard.vue';
+import AntexEmptyState from '@components/ui/AntexEmptyState.vue';
 import ManagerPageHeader from '@components/manager/ManagerPageHeader.vue';
-import OrderSummaryCard from '@components/manager/OrderSummaryCard.vue';
+import OrderCard from '@components/orders/OrderCard.vue';
 import { useManagerChatStore } from '@stores/manager-chat.store';
 import { useManagerRealtimeStore } from '@stores/manager-realtime.store';
 import type { ManagerChatMessage } from '@types/manager-chat';
@@ -101,6 +106,7 @@ const router = useRouter();
 const chatStore = useManagerChatStore();
 const realtimeStore = useManagerRealtimeStore();
 const { locale, t } = useI18n();
+const { notify } = useAntexNotify();
 const conversationId = computed(() => Number(route.params.conversationId));
 
 const conversationTitle = computed(() =>
@@ -179,7 +185,7 @@ async function loadEarlierMessages(): Promise<void> {
   try {
     await chatStore.loadEarlierMessages();
   } catch {
-    Notify.create({ type: 'negative', message: t('manager.chat.notifications.loadEarlierError') });
+    notify('negative', t('manager.chat.notifications.loadEarlierError'));
   }
 }
 
@@ -188,7 +194,7 @@ async function sendText(text: string): Promise<void> {
     await chatStore.sendMessage(text);
     await scrollToBottom();
   } catch {
-    Notify.create({ type: 'negative', message: t('manager.chat.notifications.messageError') });
+    notify('negative', t('manager.chat.notifications.messageError'));
   }
 }
 
@@ -197,7 +203,7 @@ async function sendFile(file: File): Promise<void> {
     await chatStore.sendAttachment(file);
     await scrollToBottom();
   } catch {
-    Notify.create({ type: 'negative', message: t('manager.chat.notifications.attachmentError') });
+    notify('negative', t('manager.chat.notifications.attachmentError'));
   }
 }
 

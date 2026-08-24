@@ -1,6 +1,6 @@
 import { createPinia, setActivePinia } from 'pinia';
 import { flushPromises, mount } from '@vue/test-utils';
-import { QBtn, QIcon, QInput, QSpinner, QTooltip, Quasar } from 'quasar';
+import { QBtn, QCard, QIcon, QInput, QSpinner, QTooltip, Quasar } from 'quasar';
 import { createI18n } from 'vue-i18n';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -47,12 +47,12 @@ function globalOptions(pinia = createPinia()) {
       Quasar,
       createI18n({ legacy: false, locale: 'ru', messages: { ru } }),
     ],
-    components: { QBtn, QIcon, QInput, QSpinner, QTooltip },
+    components: { QBtn, QCard, QIcon, QInput, QSpinner, QTooltip },
     stubs: {
       ManagerPageHeader: true,
       ConnectionStatePill: true,
       ConversationListItem: true,
-      OrderSummaryCard: true,
+      OrderCard: true,
       ChatBubble: true,
       ChatDateDivider: true,
       QPage: { template: '<main><slot /></main>' },
@@ -110,7 +110,7 @@ describe('manager localized states', () => {
     expect(wrapper.text()).toContain('Не удалось загрузить чаты');
     expect(wrapper.text()).not.toContain('Новых диалогов нет');
 
-    await wrapper.get('.manager-empty-state__action').trigger('click');
+    await wrapper.get('.antex-empty-state__action').trigger('click');
     await vi.waitFor(() => expect(fetchManagerChats).toHaveBeenCalledTimes(2));
     await flushPromises();
     expect(wrapper.text()).toContain('Новых диалогов нет');

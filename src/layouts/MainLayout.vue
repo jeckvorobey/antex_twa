@@ -15,7 +15,7 @@
       <router-view />
     </q-page-container>
 
-    <AppBottomNav v-if="shouldShowNavigation" />
+    <AntexBottomNav v-if="shouldShowNavigation" />
 
     <AppPageLoader :showing="pageLoading" @hidden="showNavigation" />
 
@@ -30,7 +30,7 @@ import { useRoute } from 'vue-router';
 
 import MoreMenuSheet from '@components/orders/MoreMenuSheet.vue';
 import OrderFormSheet from '@components/orders/OrderFormSheet.vue';
-import AppBottomNav from '@components/ui/AppBottomNav.vue';
+import AntexBottomNav from '@components/ui/AntexBottomNav.vue';
 import AppHeaderBar from '@components/ui/AppHeaderBar.vue';
 import AppPageLoader from '@components/ui/AppPageLoader.vue';
 import { useExchangeStore } from '@stores/exchange.store';

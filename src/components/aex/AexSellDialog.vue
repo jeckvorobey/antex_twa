@@ -1,6 +1,6 @@
 <template>
   <q-dialog :model-value="modelValue" @update:model-value="$emit('update:modelValue', $event)">
-    <AppSurface padded class="q-dialog-plugin" style="min-width: 320px; max-width: 400px">
+    <AntexCard padded class="q-dialog-plugin" style="min-width: 320px; max-width: 400px">
       <div class="text-weight-bold text-subtitle1 q-mb-md">
         {{ t('referral.sellTitle') }}
       </div>
@@ -53,19 +53,19 @@
 
       <!-- Actions -->
       <div class="row q-gutter-sm justify-end">
-        <AppButton variant="secondary" @click="$emit('update:modelValue', false)">
+        <AntexButton variant="secondary" @click="$emit('update:modelValue', false)">
           {{ t('common.cancel') }}
-        </AppButton>
-        <AppButton
+        </AntexButton>
+        <AntexButton
           color="warning"
           :loading="aexStore.sellLoading"
           :disabled="!isValid"
           @click="handleSell"
         >
           {{ t('referral.sellConfirm') }}
-        </AppButton>
+        </AntexButton>
       </div>
-    </AppSurface>
+    </AntexCard>
   </q-dialog>
 </template>
 
@@ -73,8 +73,8 @@
 import { computed, onMounted, reactive, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 
-import AppButton from '@components/ui/AppButton.vue';
-import AppSurface from '@components/ui/AppSurface.vue';
+import AntexButton from '@components/ui/AntexButton.vue';
+import AntexCard from '@components/ui/AntexCard.vue';
 import { fetchOrders } from '@services/api/miniapp.service';
 import { useAexStore } from '@stores/aex.store';
 import type { MiniappOrderItem } from '@types/miniapp';

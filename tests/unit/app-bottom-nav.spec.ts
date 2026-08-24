@@ -3,13 +3,13 @@ import { resolve } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-const componentPath = resolve(process.cwd(), 'src/components/ui/AppBottomNav.vue');
+const componentPath = resolve(process.cwd(), 'src/components/ui/AntexBottomNav.vue');
 const homePagePath = resolve(process.cwd(), 'src/pages/HomePage.vue');
 const mainLayoutPath = resolve(process.cwd(), 'src/layouts/MainLayout.vue');
 const managerLayoutPath = resolve(process.cwd(), 'src/layouts/ManagerLayout.vue');
 const stylesPath = resolve(process.cwd(), 'src/css/app.scss');
 
-describe('AppBottomNav', () => {
+describe('AntexBottomNav', () => {
   it('uses stacked Quasar buttons so labels stay below icons', () => {
     const component = readFileSync(componentPath, 'utf8');
 
@@ -22,12 +22,9 @@ describe('AppBottomNav', () => {
     const component = readFileSync(componentPath, 'utf8');
     const appStyles = readFileSync(stylesPath, 'utf8');
 
-    expect(component).toContain(
-      'app-bottom-nav fixed-bottom row justify-center q-px-sm q-pb-sm z-top',
-    );
-    expect(component).toContain('margin-bottom: env(safe-area-inset-bottom)');
-    expect(component).toContain('max-width: 322px');
-    expect(component).toContain('q-pa-xs');
+    expect(component).toContain('antex-bottom-nav app-bottom-nav fixed-bottom');
+    expect(appStyles).toContain('calc(8px + var(--antex-safe-area-bottom))');
+    expect(appStyles).toContain('width: min(100%, 322px);');
     expect(appStyles).toContain('.app-bottom-nav {');
   });
 
@@ -53,7 +50,7 @@ describe('AppBottomNav', () => {
     const appStyles = readFileSync(stylesPath, 'utf8');
 
     expect(component).toContain('v-for="(item, index) in items"');
-    expect(component).toContain('app-bottom-nav__item col q-py-sm');
+    expect(component).toContain('antex-bottom-nav__item app-bottom-nav__item');
     expect(component).toContain('`${index * 60}ms`');
     expect(appStyles).toContain('@keyframes app-bottom-nav-velvet-reveal');
     expect(appStyles).toContain('@keyframes app-bottom-nav-item-reveal');
@@ -95,18 +92,20 @@ describe('AppBottomNav', () => {
     expect(styles).toContain('.app-header-shell {');
     expect(styles).toContain('position: relative;');
     expect(styles).toContain(
-      'margin: calc(env(safe-area-inset-top) + var(--antex-space-md)) auto 0',
+      'margin: calc(var(--antex-safe-area-top) + var(--antex-space-md)) auto 0',
     );
     expect(styles).toContain('width: min(calc(100vw - (var(--antex-space-md) * 2)), 390px)');
     expect(styles).toContain('transform: none;');
   });
 
-  it('reuses AppBottomNav in ManagerLayout without duplicating component code', () => {
+  it('reuses AntexBottomNav in ManagerLayout without duplicating component code', () => {
     const managerLayout = readFileSync(managerLayoutPath, 'utf8');
     const component = readFileSync(componentPath, 'utf8');
 
-    expect(managerLayout).toContain("import AppBottomNav from '@components/ui/AppBottomNav.vue'");
-    expect(managerLayout).toContain('<AppBottomNav />');
+    expect(managerLayout).toContain(
+      "import AntexBottomNav from '@components/ui/AntexBottomNav.vue'",
+    );
+    expect(managerLayout).toContain('<AntexBottomNav />');
     expect(managerLayout).not.toContain('ManagerBottomNav');
     expect(component).toContain('resolveBadge(item)');
     expect(component).toContain('class="app-bottom-nav__badge"');

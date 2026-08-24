@@ -354,6 +354,39 @@ describe('manager chat store realtime filters', () => {
   });
 });
 
+describe('manager chat store realtime message ordering', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    vi.resetAllMocks();
+  });
+
+  it('вставляет out-of-order сообщение по id без полной сортировки массива', async () => {
+    const store = useManagerChatStore();
+    vi.mocked(fetchManagerChat).mockResolvedValueOnce(makeConversation(10));
+    vi.mocked(fetchManagerChatMessages).mockResolvedValueOnce({
+      items: [makeMessage(1, 10), makeMessage(3, 10)],
+      hasMore: false,
+    });
+    await store.openConversation(10);
+    vi.mocked(markManagerChatRead).mockResolvedValueOnce({ unreadCount: 0, unreadTotal: 0 });
+    const sortSpy = vi.spyOn(Array.prototype, 'sort');
+
+    await store.handleRealtimeEvent({
+      type: 'chat.message.created',
+      payload: { message: makeMessage(2, 10) },
+    });
+
+    expect(store.messages.map((message) => message.id)).toEqual([1, 2, 3]);
+    const sortedMessageArrays = sortSpy.mock.instances.filter(
+      (value) =>
+        Array.isArray(value) &&
+        value.some((item) => typeof item === 'object' && item !== null && 'conversationId' in item),
+    );
+    expect(sortedMessageArrays).toHaveLength(0);
+    sortSpy.mockRestore();
+  });
+});
+
 describe('manager active orders realtime reducer', () => {
   beforeEach(() => {
     setActivePinia(createPinia());

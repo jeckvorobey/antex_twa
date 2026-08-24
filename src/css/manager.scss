@@ -22,13 +22,13 @@
   width: min(100%, 720px);
   min-height: 100vh;
   margin: 0 auto;
-  padding: calc(env(safe-area-inset-top) + 18px) 16px calc(110px + env(safe-area-inset-bottom));
+  padding: calc(var(--antex-safe-area-top) + 18px) 16px calc(110px + var(--antex-safe-area-bottom));
 }
 
 .manager-page--chat {
   display: flex;
   flex-direction: column;
-  padding-bottom: calc(176px + env(safe-area-inset-bottom));
+  padding-bottom: calc(176px + var(--antex-safe-area-bottom));
 }
 
 .manager-unread-badge {
@@ -154,48 +154,6 @@
   color: #e1a0a0;
   border-color: rgba(225, 120, 120, 0.22);
   background: rgba(170, 70, 70, 0.08);
-}
-
-.manager-empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 210px;
-  padding: 28px;
-  border-radius: var(--antex-radius-card);
-  color: var(--antex-text-secondary);
-  background: color-mix(in srgb, var(--antex-bg-deep) 82%, transparent);
-  text-align: center;
-}
-
-.manager-empty-state__icon {
-  display: grid;
-  width: 52px;
-  height: 52px;
-  margin-bottom: 14px;
-  place-items: center;
-  border-radius: 17px;
-  color: var(--antex-gold-base);
-  background: var(--antex-gold-soft);
-}
-
-.manager-empty-state__title {
-  color: var(--antex-text-primary);
-  font-weight: 700;
-}
-
-.manager-empty-state__text {
-  max-width: 300px;
-  margin-top: 7px;
-  color: var(--antex-text-muted);
-  font-size: 13px;
-  line-height: 1.5;
-}
-
-.manager-empty-state__action {
-  min-height: 44px;
-  margin-top: 14px;
 }
 
 .manager-chat-toolbar {
@@ -342,100 +300,6 @@
   gap: 12px;
 }
 
-.manager-order-card {
-  position: relative;
-  width: min(100%, 343px);
-  min-height: 184px;
-  padding: 12px 14px;
-  border-radius: var(--antex-radius-card);
-  background: color-mix(in srgb, var(--antex-bg-card) 94%, transparent);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-}
-
-.manager-order-card--compact {
-  width: 100%;
-  min-height: auto;
-  padding: 11px 13px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
-}
-
-.manager-order-card__topline {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.manager-order-card__number {
-  color: var(--antex-gold-base);
-  font-size: 14px;
-  font-weight: 800;
-  letter-spacing: 0.025em;
-}
-
-.manager-order-card__customer {
-  overflow: hidden;
-  margin-top: 2px;
-  margin-bottom: 16px;
-  color: var(--antex-text-secondary);
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1.35;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.manager-order-card__rate {
-  margin-top: 10px;
-  padding: 6px 9px;
-  border: 1px solid var(--antex-border-gold-subtle);
-  border-radius: 8px;
-  color: var(--antex-text-secondary);
-  background: color-mix(in srgb, var(--antex-bg-deep) 62%, transparent);
-  font-size: 11px;
-}
-
-.manager-order-card__meta {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 5px 10px;
-  margin-top: 9px;
-  color: var(--antex-text-secondary);
-  font-size: 10px;
-}
-
-.manager-order-card__meta > span {
-  display: inline-flex;
-  min-width: 0;
-  align-items: center;
-  gap: 4px;
-  white-space: nowrap;
-}
-
-.manager-order-card__location {
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.manager-order-card__meta > span:last-child {
-  grid-column: 1 / -1;
-  color: var(--antex-text-muted);
-}
-
-.manager-order-card__actions {
-  position: absolute;
-  right: 10px;
-  top: 96px;
-  display: flex;
-  justify-content: flex-end;
-  gap: 2px;
-  min-height: 44px;
-}
-
-.manager-order-card--actions .manager-order-card__rate {
-  margin-right: 94px;
-}
-
 .manager-dashboard__metrics {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -485,36 +349,6 @@
   color: var(--antex-text-muted);
   background: color-mix(in srgb, var(--antex-bg-card) 88%, transparent);
   text-align: center;
-}
-
-.manager-order-card__action {
-  width: 44px;
-  min-width: 44px;
-  height: 44px;
-  min-height: 44px;
-  padding: 7px;
-  color: var(--antex-gold-base);
-}
-
-.manager-order-card__action .q-btn__content {
-  width: 30px;
-  height: 30px;
-  border: 1px solid var(--antex-border-gold-muted);
-  border-radius: 50%;
-}
-
-.manager-order-card__action .q-icon {
-  font-size: 16px;
-}
-
-.manager-order-card__action--chat .q-btn__content {
-  color: var(--antex-bg-deep);
-  border-color: var(--antex-border-gold);
-  background: var(--antex-gold-gradient);
-}
-
-.manager-order-card__action:focus-visible {
-  box-shadow: var(--antex-focus-ring);
 }
 
 .manager-gold-button,
@@ -664,7 +498,7 @@
   position: fixed;
   z-index: 70;
   right: max(16px, calc((100vw - 720px) / 2 + 16px));
-  bottom: calc(88px + env(safe-area-inset-bottom));
+  bottom: calc(88px + var(--antex-safe-area-bottom));
   left: max(16px, calc((100vw - 720px) / 2 + 16px));
   display: flex;
   align-items: flex-end;

@@ -34,9 +34,18 @@
           :scroll-target="historyScrollRef"
           :offset="120"
           :disable="!ordersStore.hasMore || ordersStore.loading || ordersStore.refreshing"
+          :aria-busy="ordersStore.loading || ordersStore.refreshing"
           @load="loadMore"
         >
-          <template v-if="filteredGroups.length">
+          <div
+            v-if="ordersStore.loading && !ordersStore.items.length"
+            class="column q-gutter-y-sm q-my-md items-center"
+          >
+            <AntexSkeleton preset="order-card" />
+            <AntexSkeleton preset="order-card" />
+          </div>
+
+          <template v-else-if="filteredGroups.length">
             <section
               v-for="group in filteredGroups"
               :key="group.label"
@@ -44,62 +53,27 @@
             >
               <div class="app-group-label app-group-label--history q-mb-sm">{{ group.label }}</div>
 
-              <article
+              <OrderCard
                 v-for="item in group.items"
                 :key="item.id"
-                class="app-history-card antex-border-gold app-card-shadow"
-              >
-                <div class="app-history-card__topline">
-                  <span class="app-history-card__number">#{{ item.publicNumber }}</span>
-                  <q-chip
-                    dense
-                    :color="statusColor(item.status)"
-                    text-color="white"
-                    class="app-history-card__status q-ma-none"
-                  >
-                    {{ t(getStatusLabelKey(item.status)) }}
-                  </q-chip>
-                </div>
-
-                <OrderAmountFlow
-                  :currency-sell="item.currencySell"
-                  :amount-sell="item.amountSell"
-                  :currency-buy="item.currencyBuy"
-                  :amount-buy="item.amountBuy"
-                />
-
-                <div v-if="item.rateText" class="app-history-card__rate">{{ item.rateText }}</div>
-
-                <div class="app-history-card__footer">
-                  <span class="app-history-card__location">
-                    <q-icon name="location_on" />
-                    {{ locationLabel(item) }}
-                  </span>
-                  <span><q-icon name="schedule" />{{ formatTime(item.createdAt) }}</span>
-                  <q-btn
-                    flat
-                    round
-                    dense
-                    icon="autorenew"
-                    color="warning"
-                    class="app-history-card__repeat"
-                    :aria-label="t('history.repeat')"
-                    @click="repeatOrder(item)"
-                  >
-                    <q-tooltip>{{ t('history.repeat') }}</q-tooltip>
-                  </q-btn>
-                </div>
-              </article>
+                :order="item"
+                mode="user"
+                class="app-history-card app-card-shadow"
+                @repeat="repeatOrder(item)"
+              />
             </section>
           </template>
 
-          <AppSurface v-else-if="!ordersStore.loading" class="app-history-empty">
-            <div class="app-empty-state">{{ t('history.empty') }}</div>
-          </AppSurface>
+          <AntexEmptyState
+            v-else-if="!ordersStore.loading"
+            :title="t('history.empty')"
+            class="app-history-empty"
+          />
 
           <template #loading>
-            <div class="row justify-center q-my-md">
-              <q-spinner-dots color="warning" size="32px" />
+            <div class="column q-gutter-y-sm q-my-md items-center">
+              <AntexSkeleton preset="order-card" />
+              <AntexSkeleton preset="order-card" />
             </div>
           </template>
         </q-infinite-scroll>
@@ -112,15 +86,14 @@
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 
-import OrderAmountFlow from '@components/orders/OrderAmountFlow.vue';
-import AppSurface from '@components/ui/AppSurface.vue';
+import OrderCard from '@components/orders/OrderCard.vue';
+import AntexEmptyState from '@components/ui/AntexEmptyState.vue';
+import AntexSkeleton from '@components/ui/AntexSkeleton.vue';
 import { useOrdersStore } from '@stores/orders.store';
 import { useUiStore } from '@stores/ui.store';
 import type { MiniappOrderItem } from '@types/miniapp';
-import { formatMiniappTime } from '@utils/formatters';
-import { getStatusLabelKey, getStatusTone } from '@utils/miniapp';
 
-const { locale, t } = useI18n();
+const { t } = useI18n();
 const ordersStore = useOrdersStore();
 const uiStore = useUiStore();
 const activeFilter = ref<'all' | 'active' | 'done' | 'cancelled'>('all');
@@ -185,31 +158,4 @@ function repeatOrder(item: MiniappOrderItem) {
   });
 }
 
-function formatTime(value: string) {
-  return formatMiniappTime(value, locale.value);
-}
-
-function statusColor(status: number) {
-  const tone = getStatusTone(status);
-  if (tone === 'positive') {
-    return 'positive';
-  }
-
-  if (tone === 'negative') {
-    return 'negative';
-  }
-
-  if (tone === 'info') {
-    return 'info';
-  }
-
-  return 'warning';
-}
-
-/** Выводит страну перед городом и не добавляет пустой разделитель. */
-function locationLabel(item: MiniappOrderItem): string {
-  const countryKey = `manager.countries.${item.country}`;
-  const country = item.city?.countryRuName || t(countryKey);
-  return item.city ? `${country}, ${item.city.name}` : country;
-}
 </script>

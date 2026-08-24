@@ -1,6 +1,8 @@
 import { createPinia, setActivePinia } from 'pinia';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { flushPromises, mount } from '@vue/test-utils';
-import { QBtn, QIcon, QSpinner, Quasar } from 'quasar';
+import { QBtn, QCard, QIcon, QSkeleton, QSpinner, Quasar } from 'quasar';
 import { createI18n } from 'vue-i18n';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -9,6 +11,11 @@ import ManagerOrderPage from '@pages/manager/ManagerOrderPage.vue';
 import { useManagerChatStore } from '@stores/manager-chat.store';
 import type { ManagerOrderSummary } from '@types/manager-chat';
 import ru from '@i18n/ru';
+
+const managerOrdersSource = readFileSync(
+  resolve(process.cwd(), 'src/pages/manager/ManagerOrdersPage.vue'),
+  'utf8',
+);
 
 const { routerPush } = vi.hoisted(() => ({ routerPush: vi.fn() }));
 
@@ -67,10 +74,10 @@ function managerPageGlobal(pinia: ReturnType<typeof createPinia>) {
       Quasar,
       createI18n({ legacy: false, locale: 'ru', messages: { ru } }),
     ],
-    components: { QBtn, QIcon, QSpinner },
+    components: { QBtn, QCard, QIcon, QSkeleton, QSpinner },
     stubs: {
       ManagerPageHeader: true,
-      OrderSummaryCard: true,
+      OrderCard: true,
       QPage: { template: '<main><slot /></main>' },
     },
   };
@@ -80,6 +87,13 @@ describe('manager orders workflow state', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     vi.resetAllMocks();
+  });
+
+  it('uses shared skeletons, busy semantics and shared empty states', () => {
+    expect(managerOrdersSource).toContain('<AntexSkeleton preset="order-card"');
+    expect(managerOrdersSource).toContain(':aria-busy="chatStore.ordersLoading"');
+    expect(managerOrdersSource).toContain('<AntexEmptyState');
+    expect(managerOrdersSource).not.toContain('<q-spinner');
   });
 
   it('keeps a failed orders request distinct from an empty successful list', async () => {

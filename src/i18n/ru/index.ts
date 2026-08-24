@@ -8,6 +8,7 @@ export default {
     exchange: 'Обменять',
     yes: 'Да',
     cancel: 'Отмена',
+    close: 'Закрыть',
     empty: 'Пока пусто',
     notifications: 'Уведомления',
     profile: 'Профиль',
@@ -15,6 +16,7 @@ export default {
     logoAlt: 'Логотип AntEx',
   },
   nav: {
+    navigation: 'Основная навигация',
     home: 'Главная',
     exchange: 'Обмен',
     history: 'История',

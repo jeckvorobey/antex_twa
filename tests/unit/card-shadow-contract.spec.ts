@@ -4,7 +4,7 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const styles = readFileSync(resolve(process.cwd(), 'src/css/app.scss'), 'utf8');
-const appSurface = readFileSync(resolve(process.cwd(), 'src/components/ui/AppSurface.vue'), 'utf8');
+const antexCard = readFileSync(resolve(process.cwd(), 'src/components/ui/AntexCard.vue'), 'utf8');
 const homePage = readFileSync(resolve(process.cwd(), 'src/pages/HomePage.vue'), 'utf8');
 const exchangePage = readFileSync(resolve(process.cwd(), 'src/pages/ExchangePage.vue'), 'utf8');
 
@@ -16,16 +16,16 @@ describe('Mini App card shadow contract', () => {
     expect(styles).toMatch(/\.app-card-shadow\s*{\s*box-shadow:\s*var\(--antex-shadow-card\);/s);
   });
 
-  it('applies the shared helper through AppSurface elevation', () => {
-    expect(appSurface).toContain("elevated ? 'app-card-shadow' : null");
+  it('applies the shared helper through AntexCard elevation', () => {
+    expect(antexCard).toContain("'app-card-shadow': elevated");
     expect(styles).not.toMatch(/\.app-surface--elevated\s*{\s*box-shadow:\s*0 8px/s);
   });
 
-  it('keeps the card shadow token private to the helper class', () => {
-    expect(styles.match(/var\(--antex-shadow-card\)/g)).toHaveLength(1);
+  it('keeps card shadows tokenized for the primitive and compatibility helper', () => {
+    expect(styles.match(/var\(--antex-shadow-card\)/g)?.length).toBeGreaterThanOrEqual(2);
   });
 
-  it('applies the helper explicitly to card-like blocks outside AppSurface', () => {
+  it('applies the helper explicitly to card-like blocks outside AntexCard', () => {
     expect(homePage).toContain('class="app-home-rate-item app-card-shadow"');
   });
 
@@ -35,7 +35,7 @@ describe('Mini App card shadow contract', () => {
     );
   });
 
-  it('does not clip AppSurface shadows on exchange and home screens', () => {
+  it('does not clip AntexCard shadows on exchange and home screens', () => {
     expect(exchangePage).not.toContain(
       'app-exchange-content col column q-gutter-md no-wrap overflow-hidden',
     );

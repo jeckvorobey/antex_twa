@@ -9,34 +9,34 @@
       </template>
     </ManagerPageHeader>
 
-    <section class="manager-profile-card antex-border-gold">
+    <AntexCard tag="section" class="manager-profile-card">
       <div class="manager-profile-card__avatar">{{ initials }}</div>
       <div>
         <div class="manager-profile-card__name">{{ displayName }}</div>
         <div class="manager-profile-card__role">{{ t('manager.profile.role') }}</div>
       </div>
-    </section>
+    </AntexCard>
 
     <div class="manager-info-stack">
-      <section class="manager-info-card antex-border-gold">
+      <AntexCard tag="section" class="manager-info-card">
         <div class="manager-info-card__label">{{ t('manager.profile.realtime.label') }}</div>
         <ConnectionStatePill :state="realtimeStore.state" />
         <div class="manager-info-card__text">
           {{ t('manager.profile.realtime.text') }}
         </div>
-      </section>
+      </AntexCard>
 
-      <section class="manager-info-card antex-border-gold">
+      <AntexCard tag="section" class="manager-info-card">
         <div class="manager-info-card__label">{{ t('manager.profile.notifications.label') }}</div>
         <div class="manager-info-card__text">
           {{ t('manager.profile.notifications.text') }}
         </div>
-      </section>
+      </AntexCard>
 
-      <section v-if="authStore.user?.username" class="manager-info-card antex-border-gold">
+      <AntexCard v-if="authStore.user?.username" tag="section" class="manager-info-card">
         <div class="manager-info-card__label">{{ t('manager.profile.telegram') }}</div>
         <div class="manager-info-card__text">@{{ authStore.user.username }}</div>
-      </section>
+      </AntexCard>
     </div>
   </q-page>
 </template>
@@ -47,6 +47,7 @@ import { useI18n } from 'vue-i18n';
 
 import ConnectionStatePill from '@components/manager/ConnectionStatePill.vue';
 import ManagerPageHeader from '@components/manager/ManagerPageHeader.vue';
+import AntexCard from '@components/ui/AntexCard.vue';
 import { useAuthStore } from '@stores/auth.store';
 import { useManagerRealtimeStore } from '@stores/manager-realtime.store';
 

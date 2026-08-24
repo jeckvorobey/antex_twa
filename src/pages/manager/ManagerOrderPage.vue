@@ -10,16 +10,16 @@
     <div v-if="loading" class="row justify-center q-py-xl">
       <q-spinner size="36px" color="primary" />
     </div>
-    <EmptyStateCard
+    <AntexEmptyState
       v-else-if="chatStore.activeOrderError"
       :title="t('manager.orderPage.error.title')"
-      :text="t('manager.orderPage.error.text')"
+      :description="t('manager.orderPage.error.text')"
       :action-label="t('common.retry')"
       icon="cloud_off"
       @action="loadOrder"
     />
     <template v-else-if="order">
-      <OrderSummaryCard :order="order" />
+      <OrderCard :order="order" mode="manager" :actions="false" />
       <ManagerOrderDetails :order="order" />
 
       <div class="manager-order-actions">
@@ -71,21 +71,23 @@
 </template>
 
 <script setup lang="ts">
-import { Dialog, Notify } from 'quasar';
+import { Dialog } from 'quasar';
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 
-import EmptyStateCard from '@components/manager/EmptyStateCard.vue';
+import AntexEmptyState from '@components/ui/AntexEmptyState.vue';
 import ManagerPageHeader from '@components/manager/ManagerPageHeader.vue';
 import ManagerOrderDetails from '@components/manager/ManagerOrderDetails.vue';
-import OrderSummaryCard from '@components/manager/OrderSummaryCard.vue';
+import OrderCard from '@components/orders/OrderCard.vue';
+import { useAntexNotify } from '@/composables/useAntexNotify';
 import { useManagerChatStore } from '@stores/manager-chat.store';
 
 const route = useRoute();
 const router = useRouter();
 const chatStore = useManagerChatStore();
 const { t } = useI18n();
+const { notify } = useAntexNotify();
 const loading = ref(true);
 const changingStatus = ref(false);
 const orderId = computed(() => Number(route.params.orderId));
@@ -115,7 +117,7 @@ async function openChat(): Promise<void> {
     const conversation = await chatStore.ensureOrderChat(orderId.value);
     await router.push({ name: 'managerChat', params: { conversationId: conversation.id } });
   } catch {
-    Notify.create({ type: 'negative', message: t('manager.orders.notifications.chatError') });
+    notify('negative', t('manager.orders.notifications.chatError'));
   }
 }
 
@@ -124,9 +126,9 @@ async function setStatus(status: number): Promise<void> {
   try {
     await chatStore.changeOrderStatus(orderId.value, status);
     await chatStore.loadOrders();
-    Notify.create({ type: 'positive', message: t('manager.orderPage.notifications.statusUpdated') });
+    notify('positive', t('manager.orderPage.notifications.statusUpdated'));
   } catch {
-    Notify.create({ type: 'negative', message: t('manager.orderPage.notifications.statusError') });
+    notify('negative', t('manager.orderPage.notifications.statusError'));
   } finally {
     changingStatus.value = false;
   }
