@@ -91,11 +91,6 @@ export interface ManagerOrderListResponse {
   items: ManagerOrderSummary[];
 }
 
-export interface ManagerSocketTicketResponse {
-  ticket: string;
-  expiresInSeconds: number;
-}
-
 export interface ManagerRealtimeEnvelope {
   type: string;
   payload: Record<string, unknown>;

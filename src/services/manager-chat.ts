@@ -1,4 +1,5 @@
 import { api } from '@boot/axios';
+import { fetchEventSource, type EventSourceMessage } from '@microsoft/fetch-event-source';
 import type {
   ManagerChatListResponse,
   ManagerChatMessage,
@@ -7,7 +8,6 @@ import type {
   ManagerConversation,
   ManagerOrderListResponse,
   ManagerOrderSummary,
-  ManagerSocketTicketResponse,
 } from '@types/manager-chat';
 
 export interface FetchManagerChatsParams {
@@ -147,18 +147,37 @@ export async function updateManagerOrderStatus(orderId: number, status: number) 
   return response.data;
 }
 
-export async function issueManagerSocketTicket() {
-  const response = await api.post<ManagerSocketTicketResponse>('/api/manager/realtime/ticket');
-  return response.data;
-}
-
-export function buildManagerSocketUrl(ticket: string): string {
+function managerRealtimeUrl(): string {
   const configuredBase = api.defaults.baseURL || window.location.origin;
   const base = new URL(configuredBase, window.location.origin);
-  const socket = new URL('/api/manager/realtime/ws', base.origin);
-  socket.protocol = socket.protocol === 'https:' ? 'wss:' : 'ws:';
-  socket.searchParams.set('ticket', ticket);
-  return socket.toString();
+  return new URL('/api/manager/realtime/stream', base.origin).toString();
+}
+
+export async function openManagerRealtimeStream(options: {
+  signal: AbortSignal;
+  connectionId: string;
+  onmessage: (message: EventSourceMessage) => void;
+}): Promise<void> {
+  const token = localStorage.getItem('access_token');
+  await fetchEventSource(managerRealtimeUrl(), {
+    headers: {
+      Authorization: token ? `Bearer ${token}` : '',
+      'X-Manager-Realtime-Connection-Id': options.connectionId,
+    },
+    onmessage: options.onmessage,
+    onerror: (error) => {
+      throw error;
+    },
+    openWhenHidden: true,
+    signal: options.signal,
+  });
+}
+
+export async function updateManagerRealtimeViewing(
+  connectionId: string,
+  conversationId: number | null,
+): Promise<void> {
+  await api.put('/api/manager/realtime/viewing', { connectionId, conversationId });
 }
 
 export async function fetchManagerAttachment(attachmentId: number): Promise<Blob> {
