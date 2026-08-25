@@ -21,12 +21,12 @@
           </div>
         </div>
 
-        <div class="app-page-loader__title">Загружаем AntEx</div>
-        <div class="app-page-loader__subtitle">Готовим актуальные курсы и ваши данные</div>
+        <div class="app-page-loader__title">{{ t('common.pageLoader.title') }}</div>
+        <div class="app-page-loader__subtitle">{{ t('common.pageLoader.subtitle') }}</div>
       </div>
 
       <div class="app-page-loader__progress">
-        <div class="app-page-loader__progress-label">Синхронизация данных</div>
+        <div class="app-page-loader__progress-label">{{ t('common.pageLoader.syncing') }}</div>
         <div class="app-page-loader__progress-track">
           <div class="app-page-loader__progress-fill" />
         </div>
@@ -36,9 +36,12 @@
 </template>
 
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n';
+
 import logoUrl from '../../assets/images/logo.PNG';
 
 const emit = defineEmits<{ hidden: [] }>();
+const { t } = useI18n();
 
 defineProps<{
   showing: boolean;

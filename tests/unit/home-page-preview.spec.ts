@@ -139,7 +139,7 @@ describe('HomePage preview rates', () => {
 
     expect(source).toContain('border-radius: var(--antex-radius-chip);');
     expect(source).toContain('overflow: hidden;');
-    expect(source).toContain('box-shadow: inset 0 0 0 1px rgba(212, 175, 55, 0.9);');
+    expect(source).toContain('box-shadow: inset 0 0 0 1px rgba(255, 179, 0, 0.9);');
     expect(source).toContain('.app-home-rates-card__chips');
     expect(source).toContain('padding: 2px 2px 4px 2px;');
     expect(source).toContain('z-index: 1;');

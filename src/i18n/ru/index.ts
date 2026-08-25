@@ -14,6 +14,11 @@ export default {
     profile: 'Профиль',
     back: 'Назад',
     logoAlt: 'Логотип AntEx',
+    pageLoader: {
+      title: 'Загружаем AntEx',
+      subtitle: 'Готовим актуальные курсы и ваши данные',
+      syncing: 'Синхронизация данных',
+    },
   },
   nav: {
     navigation: 'Основная навигация',

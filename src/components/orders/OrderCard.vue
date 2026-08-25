@@ -5,7 +5,7 @@
       'order-card',
       `order-card--${mode}`,
       {
-        'order-card--compact': compact,
+        [`order-card--${density}`]: density !== 'default',
         'order-card--selectable': selectable,
         'manager-order-card': mode === 'manager',
       },
@@ -110,11 +110,11 @@ const props = withDefaults(
   defineProps<{
     order: MiniappOrderItem | ManagerOrderSummary;
     mode: OrderCardMode;
-    compact?: boolean;
+    density?: 'default' | 'compact';
     actions?: boolean;
     selectable?: boolean;
   }>(),
-  { compact: false, actions: true, selectable: false },
+  { density: 'default', actions: true, selectable: false },
 );
 const emit = defineEmits<{ repeat: []; openChat: []; openDetails: []; select: [] }>();
 const { locale, t, te } = useI18n();

@@ -11,7 +11,7 @@ const exchangePage = readFileSync(resolve(process.cwd(), 'src/pages/ExchangePage
 describe('Mini App card shadow contract', () => {
   it('defines the profile card shadow once and exposes it through a global helper', () => {
     expect(styles).toMatch(
-      /--antex-shadow-card:\s*0 8px 24px rgba\(0,\s*0,\s*0,\s*0\.4\),\s*0 0 20px rgba\(212,\s*175,\s*55,\s*0\.06\);/,
+      /--antex-shadow-card:\s*0 8px 24px rgba\(0,\s*0,\s*0,\s*0\.4\),\s*0 0 20px rgba\(255,\s*179,\s*0,\s*0\.06\);/,
     );
     expect(styles).toMatch(/\.app-card-shadow\s*{\s*box-shadow:\s*var\(--antex-shadow-card\);/s);
   });
