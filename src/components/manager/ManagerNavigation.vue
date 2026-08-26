@@ -27,19 +27,6 @@ import { useAuthStore } from '@stores/auth.store';
 import { useManagerChatStore } from '@stores/manager-chat.store';
 import type { MiniappNavigationItem } from '@types/miniapp';
 
-const MANAGER_NAVIGATION_FALLBACK: MiniappNavigationItem[] = [
-  { name: 'managerDashboard', label: '', icon: 'space_dashboard', route: 'managerDashboard' },
-  { name: 'managerOrders', label: '', icon: 'receipt_long', route: 'managerOrders' },
-  {
-    name: 'managerChats',
-    label: '',
-    icon: 'chat_bubble_outline',
-    route: 'managerChats',
-    badge_key: 'unread_chats',
-  },
-  { name: 'managerSettings', label: '', icon: 'settings', route: 'managerProfile' },
-];
-
 const emit = defineEmits<{
   navigate: [];
 }>();
@@ -52,8 +39,7 @@ const navigationRoot = ref<HTMLElement | null>(null);
 
 const items = computed<MiniappNavigationItem[]>(() => {
   const managerItems = authStore.navigation.filter((item) => item.route?.startsWith('manager'));
-  const source = managerItems.length ? managerItems : MANAGER_NAVIGATION_FALLBACK;
-  return source.map((item) => {
+  return managerItems.map((item) => {
     const key = `nav.${item.name}`;
     return { ...item, label: te(key) ? t(key) : item.label };
   });

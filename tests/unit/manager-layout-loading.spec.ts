@@ -98,6 +98,10 @@ describe('ManagerLayout initial loading', () => {
   it('keeps the fixed chat composer clear of the mobile viewport and desktop drawer', () => {
     expect(managerStyles).not.toContain('bottom: calc(88px + var(--antex-safe-area-bottom));');
     expect(managerStyles).not.toContain('padding-bottom: calc(176px + var(--antex-safe-area-bottom));');
+    expect(managerStyles).not.toContain('padding-bottom: calc(92px + var(--antex-safe-area-bottom));');
+    expect(managerStyles).toMatch(
+      /\.manager-page--chat\s*{[^}]*padding-bottom:\s*calc\(160px \+ var\(--antex-safe-area-bottom\)\)/s,
+    );
     expect(managerStyles).toMatch(
       /\.manager-chat-composer\s*{[^}]*bottom:\s*calc\(16px \+ var\(--antex-safe-area-bottom\)\)/s,
     );

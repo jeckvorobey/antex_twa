@@ -136,6 +136,31 @@ describe('ManagerNavigation', () => {
     const { default: ManagerNavigation } = await import(/* @vite-ignore */ componentPath);
     const pinia = createPinia();
     setActivePinia(pinia);
+    const authStore = useAuthStore();
+    authStore.user = {
+      id: 2,
+      username: 'manager',
+      phone: null,
+      first_name: 'Менеджер',
+      last_name: null,
+      language_code: 'ru',
+      photo_url: null,
+      is_bot: false,
+      is_premium: false,
+      telegram_write_access: true,
+      role: 2,
+      trusted_contact: 'manager',
+      trusted_contact_source: 'username',
+      trusted_contact_ready: true,
+      navigation: [
+        {
+          name: 'managerDashboard',
+          label: 'Дашборд',
+          icon: 'space_dashboard',
+          route: 'managerDashboard',
+        },
+      ],
+    };
 
     const wrapper = mount(ManagerNavigation, {
       global: {
@@ -149,5 +174,38 @@ describe('ManagerNavigation', () => {
     expect(routerPush).toHaveBeenCalledTimes(1);
     expect(routerPush).toHaveBeenCalledWith({ name: 'managerDashboard' });
     expect(wrapper.emitted('navigate')).toHaveLength(1);
+  });
+
+  it('does not invent manager navigation for an unconfirmed role', async () => {
+    const { default: ManagerNavigation } = await import(/* @vite-ignore */ componentPath);
+    const pinia = createPinia();
+    setActivePinia(pinia);
+    const authStore = useAuthStore();
+    authStore.user = {
+      id: 9,
+      username: 'customer',
+      phone: null,
+      first_name: 'Клиент',
+      last_name: null,
+      language_code: 'ru',
+      photo_url: null,
+      is_bot: false,
+      is_premium: false,
+      telegram_write_access: true,
+      role: 9,
+      trusted_contact: 'customer',
+      trusted_contact_source: 'username',
+      trusted_contact_ready: true,
+      navigation: [{ name: 'home', label: 'Главная', icon: 'home', route: 'home' }],
+    };
+
+    const wrapper = mount(ManagerNavigation, {
+      global: {
+        plugins: [pinia, Quasar, createI18n({ legacy: false, locale: 'ru', messages: { ru } })],
+        components: { QBadge, QIcon, QItem, QItemLabel, QItemSection, QList },
+      },
+    });
+
+    expect(wrapper.findAll('.manager-navigation-item')).toHaveLength(0);
   });
 });
