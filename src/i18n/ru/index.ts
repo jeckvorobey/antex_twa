@@ -33,6 +33,11 @@ export default {
     managerSettings: 'Настройки',
   },
   manager: {
+    navigation: {
+      title: 'Меню менеджера',
+      label: 'Навигация менеджера',
+      open: 'Открыть меню менеджера',
+    },
     customerFallback: 'Клиент #{id}',
     countries: {
       thailand: 'Таиланд',

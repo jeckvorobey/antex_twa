@@ -16,6 +16,71 @@
   opacity: 0.85;
 }
 
+.manager-mobile-header {
+  padding-top: var(--antex-safe-area-top);
+  color: var(--antex-text-primary);
+  background: color-mix(in srgb, var(--antex-bg-deep) 94%, transparent);
+  border-bottom: 1px solid var(--antex-border-gold-muted);
+  backdrop-filter: blur(16px);
+}
+
+.manager-mobile-header__title {
+  font-family: 'Montserrat Alternates', 'Inter Tight', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.manager-navigation-drawer {
+  color: var(--antex-text-primary);
+  background: color-mix(in srgb, var(--antex-bg-deep) 96%, transparent);
+  border-right: 1px solid var(--antex-border-gold-muted);
+}
+
+.manager-navigation {
+  min-height: 100%;
+  padding-top: var(--antex-safe-area-top);
+}
+
+.manager-navigation__brand {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.manager-navigation__brand-mark {
+  color: var(--antex-gold-base);
+  font-family: 'Montserrat Alternates', 'Inter Tight', sans-serif;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.manager-navigation__brand-role {
+  color: var(--antex-text-muted);
+  font-size: 12px;
+}
+
+.manager-navigation-item {
+  min-height: 48px;
+  margin-bottom: 4px;
+  border-radius: var(--antex-radius-btn);
+  color: var(--antex-text-secondary);
+}
+
+.manager-navigation-item:focus-visible {
+  outline: 2px solid var(--antex-gold-base);
+  outline-offset: 2px;
+}
+
+.manager-navigation-item--active {
+  color: var(--antex-gold-base);
+  background: var(--antex-gold-soft);
+}
+
+.manager-navigation-item__badge {
+  color: var(--antex-bg-deep);
+  background: var(--antex-gold-base);
+}
+
 .manager-page {
   position: relative;
   z-index: 1;
@@ -214,7 +279,10 @@
   background: color-mix(in srgb, var(--antex-bg-card) 92%, transparent);
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
   text-align: left;
-  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    background 0.2s ease;
 }
 
 .manager-conversation-item:active {

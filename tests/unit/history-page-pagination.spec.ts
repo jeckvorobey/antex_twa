@@ -19,12 +19,12 @@ describe('HistoryPage pagination and repeat contract', () => {
     expect(historySource).toContain('ordersStore.loading && !ordersStore.items.length');
   });
 
-  it('keeps cancelled filter and delegates repeat action to shared OrderCard', () => {
+  it('keeps cancelled filter and delegates repeat action to reusable history list', () => {
     expect(historySource).toContain("value: 'cancelled'");
     expect(historySource).toContain("t('history.cancelled')");
-    expect(historySource).toContain('<OrderCard');
-    expect(historySource).toContain('mode="user"');
-    expect(historySource).toContain('@repeat="repeatOrder(item)"');
+    expect(historySource).toContain('<OrderHistoryList');
+    expect(historySource).toContain(':groups="filteredGroups"');
+    expect(historySource).toContain('@repeat="repeatOrder"');
     expect(historySource).not.toContain('{{ item.currencySell }} → {{ item.currencyBuy }}');
   });
 
@@ -39,9 +39,9 @@ describe('HistoryPage pagination and repeat contract', () => {
     expect(historySource).not.toContain('rate: item.rate');
   });
 
-  it('renders every history order through the shared card instead of inline markup', () => {
-    expect(historySource).toContain('class="app-history-card app-card-shadow"');
-    expect(historySource).toContain(':order="item"');
+  it('keeps route orchestration thin and delegates grouped card markup', () => {
+    expect(historySource).toContain("import OrderHistoryList from '@components/orders/OrderHistoryList.vue'");
+    expect(historySource).not.toContain('<OrderCard');
     expect(historySource).not.toContain('class="app-history-card__number"');
     expect(historySource).not.toContain('<AntexCard class="app-history-list">');
   });

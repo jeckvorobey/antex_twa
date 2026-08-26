@@ -18,6 +18,11 @@ const bottomNavSource = readFileSync(
 );
 const appStylesSource = readFileSync(resolve(process.cwd(), 'src/css/app.scss'), 'utf8');
 const authStoreSource = readFileSync(resolve(process.cwd(), 'src/stores/auth.store.ts'), 'utf8');
+const mainLayoutSource = readFileSync(resolve(process.cwd(), 'src/layouts/MainLayout.vue'), 'utf8');
+const managerLayoutSource = readFileSync(
+  resolve(process.cwd(), 'src/layouts/ManagerLayout.vue'),
+  'utf8',
+);
 const bottomNavStyles = bottomNavSource.split('<style scoped lang="scss">')[1] ?? '';
 
 describe('app navigation chrome', () => {
@@ -68,5 +73,15 @@ describe('app navigation chrome', () => {
     expect(routesSource).toContain("name: 'managerDashboard'");
     expect(routesSource).toContain("component: () => import('@pages/manager/ManagerDashboardPage.vue')");
     expect(routesSource).toContain("redirect: { name: 'managerDashboard' }");
+  });
+
+  it('isolates manager drawer navigation from the user bottom navigation', () => {
+    expect(mainLayoutSource).toContain('<AntexBottomNav v-if="shouldShowNavigation"');
+    expect(managerLayoutSource).toContain('<ManagerNavigation');
+    expect(managerLayoutSource).not.toContain('AntexBottomNav');
+    expect(routesSource).toContain("name: 'home'");
+    expect(routesSource).toContain("name: 'exchange'");
+    expect(routesSource).toContain("name: 'profile'");
+    expect(routesSource).toContain("name: 'referral'");
   });
 });
