@@ -48,13 +48,12 @@
     <div v-if="chatStore.loadingChats && !chatStore.chatsLoaded" class="row justify-center q-py-xl">
       <q-spinner size="36px" color="primary" />
     </div>
-    <AntexEmptyState
+    <AntexErrorState
       v-else-if="chatStore.chatsError"
       :title="t('manager.chats.error.title')"
       :description="t('manager.chats.error.text')"
-      :action-label="t('common.retry')"
-      icon="cloud_off"
-      @action="loadChats"
+      :retry-label="t('common.retry')"
+      @retry="loadChats"
     />
     <AntexEmptyState
       v-else-if="!chatStore.conversations.length"
@@ -84,6 +83,7 @@ import { useRouter } from 'vue-router';
 
 import ConnectionStatePill from '@components/manager/ConnectionStatePill.vue';
 import ConversationListItem from '@components/manager/ConversationListItem.vue';
+import AntexErrorState from '@components/ui/AntexErrorState.vue';
 import AntexEmptyState from '@components/ui/AntexEmptyState.vue';
 import ManagerPageHeader from '@components/manager/ManagerPageHeader.vue';
 import { useManagerChatStore } from '@stores/manager-chat.store';

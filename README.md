@@ -16,3 +16,9 @@ yarn dev
 - `allowedHosts: true`
 
 HMR/WebSocket включен (поведение Vite по умолчанию).
+
+## Требования и документация
+
+Общие правила, OpenSpec и документация AntEx находятся в
+репозитории [`antex_product`](https://github.com/jeckvorobey/antex_product). Локальный `openspec/` в Mini App не
+создаётся; здесь остаются только код и его проверки.

@@ -12,13 +12,12 @@
       <AntexSkeleton preset="order-card" />
       <AntexSkeleton preset="order-card" />
     </div>
-    <AntexEmptyState
+    <AntexErrorState
       v-else-if="chatStore.ordersError"
       :title="t('manager.orders.error.title')"
       :description="t('manager.orders.error.text')"
-      :action-label="t('common.retry')"
-      icon="cloud_off"
-      @action="loadOrders"
+      :retry-label="t('common.retry')"
+      @retry="loadOrders"
     />
     <AntexEmptyState
       v-else-if="!chatStore.orders.length"
@@ -48,6 +47,7 @@ import { useRouter } from 'vue-router';
 
 import ManagerPageHeader from '@components/manager/ManagerPageHeader.vue';
 import OrderCard from '@components/orders/OrderCard.vue';
+import AntexErrorState from '@components/ui/AntexErrorState.vue';
 import AntexEmptyState from '@components/ui/AntexEmptyState.vue';
 import AntexSkeleton from '@components/ui/AntexSkeleton.vue';
 import { useManagerChatStore } from '@stores/manager-chat.store';

@@ -5,13 +5,17 @@ import { describe, expect, it } from 'vitest';
 
 const styles = readFileSync(resolve(process.cwd(), 'src/css/app.scss'), 'utf8');
 const antexCard = readFileSync(resolve(process.cwd(), 'src/components/ui/AntexCard.vue'), 'utf8');
+const antexBottomSheet = readFileSync(
+  resolve(process.cwd(), 'src/components/ui/AntexBottomSheet.vue'),
+  'utf8',
+);
 const homePage = readFileSync(resolve(process.cwd(), 'src/pages/HomePage.vue'), 'utf8');
 const exchangePage = readFileSync(resolve(process.cwd(), 'src/pages/ExchangePage.vue'), 'utf8');
 
 describe('Mini App card shadow contract', () => {
   it('defines the profile card shadow once and exposes it through a global helper', () => {
     expect(styles).toMatch(
-      /--antex-shadow-card:\s*0 8px 24px rgba\(0,\s*0,\s*0,\s*0\.4\),\s*0 0 20px rgba\(212,\s*175,\s*55,\s*0\.06\);/,
+      /--antex-shadow-card:\s*0 8px 24px rgba\(0,\s*0,\s*0,\s*0\.4\),\s*0 0 20px rgba\(255,\s*179,\s*0,\s*0\.06\);/,
     );
     expect(styles).toMatch(/\.app-card-shadow\s*{\s*box-shadow:\s*var\(--antex-shadow-card\);/s);
   });
@@ -19,6 +23,10 @@ describe('Mini App card shadow contract', () => {
   it('applies the shared helper through AntexCard elevation', () => {
     expect(antexCard).toContain("'app-card-shadow': elevated");
     expect(styles).not.toMatch(/\.app-surface--elevated\s*{\s*box-shadow:\s*0 8px/s);
+  });
+
+  it('keeps overlay surfaces explicitly elevated when cards are flat by default', () => {
+    expect(antexBottomSheet).toMatch(/<AntexCard[\s\S]*?\belevated\b/);
   });
 
   it('keeps card shadows tokenized for the primitive and compatibility helper', () => {

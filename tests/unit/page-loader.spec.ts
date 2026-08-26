@@ -47,8 +47,11 @@ describe('AppPageLoader', () => {
     expect(loader).toContain("import logoUrl from '../../assets/images/logo.PNG'");
     expect(loader).toContain('class="app-page-loader"');
     expect(loader).toContain(':src="logoUrl"');
-    expect(loader).toContain('Загружаем AntEx');
-    expect(loader).toContain('Готовим актуальные курсы и ваши данные');
+    expect(loader).toContain("import { useI18n } from 'vue-i18n'");
+    expect(loader).toContain("const { t } = useI18n();");
+    expect(loader).toContain("t('common.pageLoader.title')");
+    expect(loader).toContain("t('common.pageLoader.subtitle')");
+    expect(loader).toContain("t('common.pageLoader.syncing')");
   });
 
   it('removes local page overlays so only the shared loader masks route data loads', () => {

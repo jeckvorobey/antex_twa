@@ -98,15 +98,18 @@ describe('AntexBottomNav', () => {
     expect(styles).toContain('transform: none;');
   });
 
-  it('reuses AntexBottomNav in ManagerLayout without duplicating component code', () => {
+  it('keeps AntexBottomNav user-only and gives ManagerLayout its own navigation', () => {
     const managerLayout = readFileSync(managerLayoutPath, 'utf8');
+    const mainLayout = readFileSync(mainLayoutPath, 'utf8');
     const component = readFileSync(componentPath, 'utf8');
 
+    expect(mainLayout).toContain("import AntexBottomNav from '@components/ui/AntexBottomNav.vue'");
+    expect(mainLayout).toContain('<AntexBottomNav v-if="shouldShowNavigation"');
     expect(managerLayout).toContain(
-      "import AntexBottomNav from '@components/ui/AntexBottomNav.vue'",
+      "import ManagerNavigation from '@components/manager/ManagerNavigation.vue'",
     );
-    expect(managerLayout).toContain('<AntexBottomNav />');
-    expect(managerLayout).not.toContain('ManagerBottomNav');
+    expect(managerLayout).toContain('<ManagerNavigation');
+    expect(managerLayout).not.toContain('AntexBottomNav');
     expect(component).toContain('resolveBadge(item)');
     expect(component).toContain('class="app-bottom-nav__badge"');
   });

@@ -10,13 +10,12 @@
     <div v-if="loading" class="row justify-center q-py-xl">
       <q-spinner size="36px" color="primary" />
     </div>
-    <AntexEmptyState
+    <AntexErrorState
       v-else-if="chatStore.activeOrderError"
       :title="t('manager.orderPage.error.title')"
       :description="t('manager.orderPage.error.text')"
-      :action-label="t('common.retry')"
-      icon="cloud_off"
-      @action="loadOrder"
+      :retry-label="t('common.retry')"
+      @retry="loadOrder"
     />
     <template v-else-if="order">
       <OrderCard :order="order" mode="manager" :actions="false" />
@@ -76,7 +75,7 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 
-import AntexEmptyState from '@components/ui/AntexEmptyState.vue';
+import AntexErrorState from '@components/ui/AntexErrorState.vue';
 import ManagerPageHeader from '@components/manager/ManagerPageHeader.vue';
 import ManagerOrderDetails from '@components/manager/ManagerOrderDetails.vue';
 import OrderCard from '@components/orders/OrderCard.vue';

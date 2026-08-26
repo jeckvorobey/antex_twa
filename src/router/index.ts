@@ -6,6 +6,9 @@ import {
   createWebHistory,
 } from 'vue-router';
 
+import { useAuthStore } from '@stores/auth.store';
+
+import { resolveManagerRouteGuard } from './manager-route.guard';
 import routes from './routes';
 
 export default defineRouter(function () {
@@ -15,9 +18,16 @@ export default defineRouter(function () {
       ? createWebHistory
       : createWebHashHistory;
 
-  return createRouter({
+  const router = createRouter({
     scrollBehavior: () => ({ left: 0, top: 0 }),
     routes,
     history: createHistory(process.env.VUE_ROUTER_BASE),
   });
+
+  router.beforeEach((to) => {
+    const authStore = useAuthStore();
+    return resolveManagerRouteGuard(authStore.user?.role, to.meta.managerOnly === true);
+  });
+
+  return router;
 });
