@@ -26,6 +26,6 @@ withDefaults(
     elevated?: boolean;
     tag?: string;
   }>(),
-  { surface: 'default', padded: false, elevated: false, tag: 'div' },
+  { surface: 'default', padded: false, elevated: true, tag: 'div' },
 );
 </script>

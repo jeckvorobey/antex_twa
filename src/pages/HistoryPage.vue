@@ -45,11 +45,24 @@
             <AntexSkeleton preset="order-card" />
           </div>
 
-          <OrderHistoryList
-            v-else-if="filteredGroups.length"
-            :groups="filteredGroups"
-            @repeat="repeatOrder"
-          />
+          <template v-else-if="filteredGroups.length">
+            <section
+              v-for="group in filteredGroups"
+              :key="group.label"
+              class="app-history-group q-mb-md"
+            >
+              <div class="app-group-label app-group-label--history q-mb-sm">{{ group.label }}</div>
+
+              <OrderCard
+                v-for="item in group.items"
+                :key="item.id"
+                :order="item"
+                mode="user"
+                class="app-history-card app-card-shadow"
+                @repeat="repeatOrder(item)"
+              />
+            </section>
+          </template>
 
           <AntexEmptyState
             v-else-if="!ordersStore.loading"
@@ -73,7 +86,7 @@
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 
-import OrderHistoryList from '@components/orders/OrderHistoryList.vue';
+import OrderCard from '@components/orders/OrderCard.vue';
 import AntexEmptyState from '@components/ui/AntexEmptyState.vue';
 import AntexSkeleton from '@components/ui/AntexSkeleton.vue';
 import { useOrdersStore } from '@stores/orders.store';
@@ -144,4 +157,5 @@ function repeatOrder(item: MiniappOrderItem) {
     cityId: item.cityId,
   });
 }
+
 </script>

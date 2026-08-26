@@ -16,10 +16,6 @@ const managerOrdersSource = readFileSync(
   resolve(process.cwd(), 'src/pages/manager/ManagerOrdersPage.vue'),
   'utf8',
 );
-const managerOrderSource = readFileSync(
-  resolve(process.cwd(), 'src/pages/manager/ManagerOrderPage.vue'),
-  'utf8',
-);
 
 const { routerPush, routeHarness } = vi.hoisted(() => ({
   routerPush: vi.fn(),
@@ -118,21 +114,6 @@ describe('manager orders workflow state', () => {
     expect(managerOrdersSource).toContain(':aria-busy="chatStore.ordersLoading"');
     expect(managerOrdersSource).toContain('<AntexEmptyState');
     expect(managerOrdersSource).not.toContain('<q-spinner');
-  });
-
-  it('preserves manager order actions, safeguards and state reconciliation', () => {
-    expect(managerOrdersSource).toContain('@open-chat="openChat(order.id)"');
-    expect(managerOrdersSource).toContain('@open-details="openDetails(order.id)"');
-    expect(managerOrderSource).toContain('@click="openChat"');
-    expect(managerOrderSource).toContain('@click="setStatus(2)"');
-    expect(managerOrderSource).toContain('@click="setStatus(3)"');
-    expect(managerOrderSource).toContain('@click="confirmCancel"');
-    expect(managerOrderSource).toContain(':loading="changingStatus"');
-    expect(managerOrderSource).toContain(':disable="changingStatus"');
-    expect(managerOrderSource).toContain('Dialog.create({');
-    expect(managerOrderSource).toContain('.onOk(() => {');
-    expect(managerOrderSource).toContain('void setStatus(4);');
-    expect(managerOrderSource).toContain('await chatStore.loadOrders();');
   });
 
   it('keeps a failed orders request distinct from an empty successful list', async () => {

@@ -15,12 +15,13 @@
       <q-spinner size="36px" color="primary" />
     </div>
 
-    <AntexErrorState
+    <AntexEmptyState
       v-else-if="chatStore.activeConversationError"
       :title="t('manager.chat.error.title')"
       :description="t('manager.chat.error.text')"
-      :retry-label="t('common.retry')"
-      @retry="loadConversation"
+      :action-label="t('common.retry')"
+      icon="cloud_off"
+      @action="loadConversation"
     />
 
     <template v-else-if="chatStore.activeConversation">
@@ -28,7 +29,7 @@
         <OrderCard
           :order="chatStore.activeConversation.latestOrder"
           mode="manager"
-          density="compact"
+          compact
           :actions="false"
         />
       </div>
@@ -79,7 +80,6 @@ import ChatBubble from '@components/manager/ChatBubble.vue';
 import ChatComposer from '@components/manager/ChatComposer.vue';
 import ChatDateDivider from '@components/manager/ChatDateDivider.vue';
 import ConnectionStatePill from '@components/manager/ConnectionStatePill.vue';
-import AntexErrorState from '@components/ui/AntexErrorState.vue';
 import AntexEmptyState from '@components/ui/AntexEmptyState.vue';
 import ManagerPageHeader from '@components/manager/ManagerPageHeader.vue';
 import OrderCard from '@components/orders/OrderCard.vue';

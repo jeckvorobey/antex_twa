@@ -57,9 +57,9 @@ export default defineConfig((ctx) => {
       config: {
         dark: true,
         brand: {
-          primary: '#FFB300',
+          primary: '#D4AF37',
           secondary: '#123530',
-          accent: '#F1C769',
+          accent: '#F2D27A',
           dark: '#0F2A26',
           positive: '#4CAF50',
           negative: '#E53935',
