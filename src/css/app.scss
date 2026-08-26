@@ -434,7 +434,17 @@ body.body--dark .q-page {
   height: 44px;
   min-height: 44px;
   color: var(--antex-gold-base);
+  border: 0;
+  background: transparent;
+}
+
+.order-card__action .q-btn__content {
+  width: 28px;
+  min-width: 28px;
+  height: 28px;
+  min-height: 28px;
   border: 1px solid var(--antex-border-gold-muted);
+  border-radius: 9px;
 }
 
 .order-card__action:focus-visible {
@@ -443,6 +453,9 @@ body.body--dark .q-page {
 
 .order-card__action--chat {
   color: var(--antex-bg-deep);
+}
+
+.order-card__action--chat .q-btn__content {
   border-color: var(--antex-border-gold);
   background: var(--antex-gold-gradient);
 }

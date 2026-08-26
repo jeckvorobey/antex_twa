@@ -8,6 +8,7 @@
   >
     <AntexCard
       ref="contentRef"
+      elevated
       role="dialog"
       :aria-labelledby="$slots.title ? titleId : undefined"
       :aria-label="$slots.title ? undefined : ariaLabel"

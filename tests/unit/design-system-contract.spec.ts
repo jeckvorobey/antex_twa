@@ -37,5 +37,15 @@ describe('canonical AntEx design-system contract', () => {
     expect(styles).toMatch(/\.antex-skeleton--order-card\s*{[^}]*min-height:\s*172px;/s);
     expect(styles).not.toMatch(/\.order-card\s*{[^}]*min-height:\s*184px;/s);
   });
-});
 
+  it('separates the 28px action outline from the 44px touch target', () => {
+    const styles = read('src/css/app.scss');
+
+    expect(styles).toMatch(
+      /\.order-card__action\s*{[^}]*width:\s*44px;[^}]*height:\s*44px;[^}]*border:\s*0;/s,
+    );
+    expect(styles).toMatch(
+      /\.order-card__action \.q-btn__content\s*{[^}]*width:\s*28px;[^}]*height:\s*28px;[^}]*border:\s*1px solid var\(--antex-border-gold-muted\);[^}]*border-radius:\s*9px;/s,
+    );
+  });
+});
