@@ -13,6 +13,7 @@ import { useManagerRealtimeStore } from '@stores/manager-realtime.store';
 
 const layoutSource = readFileSync(resolve(process.cwd(), 'src/layouts/ManagerLayout.vue'), 'utf8');
 const managerStyles = readFileSync(resolve(process.cwd(), 'src/css/manager.scss'), 'utf8');
+const readmeSource = readFileSync(resolve(process.cwd(), 'README.md'), 'utf8');
 
 vi.mock('@services/manager-chat', () => ({
   buildManagerSocketUrl: vi.fn(),
@@ -92,5 +93,24 @@ describe('ManagerLayout initial loading', () => {
     expect(managerStyles).toContain('padding-top: var(--antex-safe-area-top);');
     expect(managerStyles).toMatch(/\.manager-navigation-item\s*{[^}]*min-height:\s*48px/s);
     expect(managerStyles).toContain('.manager-navigation-item:focus-visible');
+  });
+
+  it('keeps the fixed chat composer clear of the mobile viewport and desktop drawer', () => {
+    expect(managerStyles).not.toContain('bottom: calc(88px + var(--antex-safe-area-bottom));');
+    expect(managerStyles).not.toContain('padding-bottom: calc(176px + var(--antex-safe-area-bottom));');
+    expect(managerStyles).toMatch(
+      /\.manager-chat-composer\s*{[^}]*bottom:\s*calc\(16px \+ var\(--antex-safe-area-bottom\)\)/s,
+    );
+    expect(managerStyles).toMatch(
+      /@media \(max-width: 1023px\)\s*{[^}]*\.manager-page\s*{[^}]*padding-top:\s*18px/s,
+    );
+    expect(managerStyles).toMatch(
+      /@media \(min-width: 1024px\)\s*{[^}]*\.manager-chat-composer\s*{[^}]*left:\s*max\(296px,/s,
+    );
+  });
+
+  it('links the central SSOT through a portable repository URL', () => {
+    expect(readmeSource).toContain('https://github.com/jeckvorobey/antex_product');
+    expect(readmeSource).not.toContain('](../antex_product/)');
   });
 });

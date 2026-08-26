@@ -87,13 +87,13 @@
   width: min(100%, 720px);
   min-height: 100vh;
   margin: 0 auto;
-  padding: calc(var(--antex-safe-area-top) + 18px) 16px calc(110px + var(--antex-safe-area-bottom));
+  padding: calc(var(--antex-safe-area-top) + 18px) 16px calc(24px + var(--antex-safe-area-bottom));
 }
 
 .manager-page--chat {
   display: flex;
   flex-direction: column;
-  padding-bottom: calc(176px + var(--antex-safe-area-bottom));
+  padding-bottom: calc(92px + var(--antex-safe-area-bottom));
 }
 
 .manager-unread-badge {
@@ -566,7 +566,7 @@
   position: fixed;
   z-index: 70;
   right: max(16px, calc((100vw - 720px) / 2 + 16px));
-  bottom: calc(88px + var(--antex-safe-area-bottom));
+  bottom: calc(16px + var(--antex-safe-area-bottom));
   left: max(16px, calc((100vw - 720px) / 2 + 16px));
   display: flex;
   align-items: flex-end;
@@ -723,5 +723,18 @@
   .manager-conversation-list {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1023px) {
+  .manager-page {
+    padding-top: 18px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .manager-chat-composer {
+    right: max(16px, calc((100vw - 1000px) / 2 + 16px));
+    left: max(296px, calc(280px + (100vw - 1000px) / 2 + 16px));
   }
 }
