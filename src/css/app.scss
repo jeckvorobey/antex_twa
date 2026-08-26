@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700;800&family=Montserrat+Alternates:wght@600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700;800&family=Montserrat:wght@600;700;800&family=Montserrat+Alternates:wght@600;700;800&display=swap');
 
 :root {
   /* Telegram is environment input only. Product presentation remains adaptive-dark. */
@@ -998,7 +998,7 @@ body.body--dark .q-page {
 }
 
 .app-header-bar__title {
-  font-family: 'Montserrat Alternates', 'Inter Tight', sans-serif;
+  font-family: 'Montserrat', 'Inter Tight', sans-serif;
   overflow: hidden;
   font-size: 22px;
   font-weight: 800;
