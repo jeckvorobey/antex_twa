@@ -45,7 +45,7 @@ describe('ManagerLayout initial loading', () => {
     await router.push('/');
     await router.isReady();
 
-    mount(ManagerLayout, {
+    const wrapper = mount(ManagerLayout, {
       global: {
         plugins: [pinia, router],
         stubs: {
@@ -59,5 +59,6 @@ describe('ManagerLayout initial loading', () => {
 
     expect(loadChats).not.toHaveBeenCalled();
     expect(loadOrders).not.toHaveBeenCalled();
+    expect(wrapper.find('.app-layout-background').exists()).toBe(true);
   });
 });

@@ -138,12 +138,12 @@ describe('manager dashboard contract', () => {
     expect(source).toContain('clearTimeout(dayRefreshTimer)');
   });
 
-  it('uses the flat Penpot layout surface and canonical font roles', () => {
+  it('uses the shared application layout surface and canonical font roles', () => {
     const source = readFileSync(managerStylesPath, 'utf8');
     const appSource = readFileSync(appStylesPath, 'utf8');
     const layoutBlock = source.match(/\.manager-layout\s*\{([\s\S]*?)\n\}/)?.[1] ?? '';
-    expect(layoutBlock).toContain('background: var(--antex-bg-primary);');
-    expect(layoutBlock).not.toContain('gradient');
+    expect(layoutBlock).not.toContain('background:');
+    expect(appSource).toContain('.app-layout-background {');
     expect(source).toContain("font-family: 'Montserrat Alternates', 'Inter Tight', sans-serif;");
     expect(source).toContain("font-family: 'Inter Tight', sans-serif;");
     expect(appSource).toContain("font-family: 'Montserrat', 'Montserrat Alternates', sans-serif;");

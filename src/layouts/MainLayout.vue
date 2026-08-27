@@ -1,11 +1,6 @@
 <template>
   <q-layout class="app-layout" view="lHh Lpr lFf">
-    <div class="app-layout-background" aria-hidden="true">
-      <div class="app-layout-background__mesh" />
-      <div class="app-layout-background__glow app-layout-background__glow--top" />
-      <div class="app-layout-background__glow app-layout-background__glow--bottom" />
-      <div class="app-layout-background__grain" />
-    </div>
+    <AppLayoutBackground />
 
     <div class="app-header-shell">
       <AppHeaderBar />
@@ -32,6 +27,7 @@ import MoreMenuSheet from '@components/orders/MoreMenuSheet.vue';
 import OrderFormSheet from '@components/orders/OrderFormSheet.vue';
 import AntexBottomNav from '@components/ui/AntexBottomNav.vue';
 import AppHeaderBar from '@components/ui/AppHeaderBar.vue';
+import AppLayoutBackground from '@components/ui/AppLayoutBackground.vue';
 import AppPageLoader from '@components/ui/AppPageLoader.vue';
 import { useExchangeStore } from '@stores/exchange.store';
 import { useHomeStore } from '@stores/home.store';
