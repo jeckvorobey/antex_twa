@@ -1,48 +1,23 @@
 <template>
-  <q-page class="manager-page">
-    <ManagerPageHeader
-      :title="t('manager.chats.title')"
-      :subtitle="
-        chatStore.unreadTotal
-          ? t('manager.chats.unreadSummary', { count: chatStore.unreadTotal })
-          : t('manager.chats.subtitle')
-      "
-    >
-      <template #trailing>
-        <ConnectionStatePill :state="realtimeStore.state" />
-      </template>
-    </ManagerPageHeader>
+  <q-page class="manager-page manager-chats">
+    <AppHeaderBar
+      :eyebrow="t('manager.role')"
+      profile-route-name="managerProfile"
+    />
 
     <div class="manager-chat-toolbar">
-      <q-input
+      <ManagerChatSearch
         v-model="chatStore.query"
-        borderless
-        dense
-        :debounce="250"
         :placeholder="t('manager.chats.searchPlaceholder')"
-        class="manager-search-input antex-border-gold--muted q-px-md"
-        @update:model-value="reload"
-      >
-        <template #prepend><q-icon name="search" size="20px" /></template>
-      </q-input>
-      <div class="manager-chat-filters">
-        <button
-          type="button"
-          class="manager-filter-pill"
-          :class="{ 'manager-filter-pill--active': !chatStore.unreadOnly }"
-          @click="setUnreadOnly(false)"
-        >
-          {{ t('manager.chats.filters.all') }}
-        </button>
-        <button
-          type="button"
-          class="manager-filter-pill"
-          :class="{ 'manager-filter-pill--active': chatStore.unreadOnly }"
-          @click="setUnreadOnly(true)"
-        >
-          {{ t('manager.chats.filters.unread') }}
-        </button>
-      </div>
+        @search="reload"
+      />
+      <ManagerChatFilters
+        :unread-only="chatStore.unreadOnly"
+        :all-label="t('manager.chats.filters.all')"
+        :unread-label="t('manager.chats.filters.unread')"
+        :aria-label="t('manager.chats.filters.ariaLabel')"
+        @change="setUnreadOnly"
+      />
     </div>
 
     <div v-if="chatStore.loadingChats && !chatStore.chatsLoaded" class="row justify-center q-py-xl">
@@ -66,14 +41,11 @@
       "
       icon="forum"
     />
-    <div v-else class="manager-conversation-list">
-      <ConversationListItem
-        v-for="conversation in chatStore.conversations"
-        :key="conversation.id"
-        :conversation="conversation"
-        @open="openConversation(conversation.id)"
-      />
-    </div>
+    <ManagerConversationList
+      v-else
+      :conversations="chatStore.conversations"
+      @open="openConversation"
+    />
   </q-page>
 </template>
 
@@ -82,16 +54,15 @@ import { onBeforeUnmount, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 
-import ConnectionStatePill from '@components/manager/ConnectionStatePill.vue';
-import ConversationListItem from '@components/manager/ConversationListItem.vue';
+import ManagerChatFilters from '@components/manager/ManagerChatFilters.vue';
+import ManagerChatSearch from '@components/manager/ManagerChatSearch.vue';
+import ManagerConversationList from '@components/manager/ManagerConversationList.vue';
 import AntexEmptyState from '@components/ui/AntexEmptyState.vue';
-import ManagerPageHeader from '@components/manager/ManagerPageHeader.vue';
+import AppHeaderBar from '@components/ui/AppHeaderBar.vue';
 import { useManagerChatStore } from '@stores/manager-chat.store';
-import { useManagerRealtimeStore } from '@stores/manager-realtime.store';
 
 const router = useRouter();
 const chatStore = useManagerChatStore();
-const realtimeStore = useManagerRealtimeStore();
 const { t } = useI18n();
 
 onMounted(() => {

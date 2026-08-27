@@ -1,7 +1,7 @@
 <template>
   <button
     type="button"
-    class="manager-conversation-item antex-border-gold"
+    class="manager-conversation-item"
     @click="$emit('open')"
   >
     <div class="manager-conversation-item__avatar">
@@ -10,16 +10,13 @@
     </div>
     <div class="manager-conversation-item__body">
       <div class="manager-conversation-item__row">
-        <strong class="manager-conversation-item__name">{{ displayName }}</strong>
+        <strong class="manager-conversation-item__order">{{ primaryId }}</strong>
         <span class="manager-conversation-item__time">{{ relativeTime }}</span>
       </div>
+      <div class="manager-conversation-item__name">{{ displayName }}</div>
       <div class="manager-conversation-item__row manager-conversation-item__row--preview">
         <span class="manager-conversation-item__preview">{{ preview }}</span>
         <UnreadBadge :count="conversation.unreadCount" />
-      </div>
-      <div v-if="conversation.latestOrder" class="manager-conversation-item__order">
-        #{{ conversation.latestOrder.publicNumber }} · {{ conversation.latestOrder.currencySell }} →
-        {{ conversation.latestOrder.currencyBuy }}
       </div>
     </div>
   </button>
@@ -49,6 +46,11 @@ const displayName = computed(() =>
   ),
 );
 const initials = computed(() => managerUserInitials(props.conversation.user));
+const primaryId = computed(() =>
+  props.conversation.latestOrder
+    ? `#${props.conversation.latestOrder.publicNumber}`
+    : t('manager.chats.conversationFallback', { id: props.conversation.id }),
+);
 const preview = computed(() => managerMessagePreview(props.conversation.lastMessage, t));
 const relativeTime = computed(() =>
   managerRelativeTime(props.conversation.lastMessageAt, t, locale.value),

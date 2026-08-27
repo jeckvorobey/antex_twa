@@ -1,6 +1,6 @@
 import { createPinia, setActivePinia } from 'pinia';
 import { flushPromises, mount } from '@vue/test-utils';
-import { QBtn, QCard, QIcon, QInput, QSpinner, QTooltip, Quasar } from 'quasar';
+import { QAvatar, QBtn, QCard, QIcon, QImg, QInput, QSpinner, QTooltip, Quasar } from 'quasar';
 import { createI18n } from 'vue-i18n';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -14,12 +14,12 @@ import { useManagerChatStore } from '@stores/manager-chat.store';
 
 const { routerPush, routeHarness } = vi.hoisted(() => ({
   routerPush: vi.fn(),
-  routeHarness: {} as { route?: { params: { conversationId: string } } },
+  routeHarness: {} as { route?: { params: { conversationId: string }; meta: Record<string, unknown> } },
 }));
 
 vi.mock('vue-router', async () => {
   const { reactive } = await import('vue');
-  routeHarness.route = reactive({ params: { conversationId: '7' } });
+  routeHarness.route = reactive({ params: { conversationId: '7' }, meta: {} });
   return {
     useRouter: () => ({ push: routerPush }),
     useRoute: () => routeHarness.route,
@@ -54,7 +54,7 @@ function globalOptions(pinia = createPinia()) {
       Quasar,
       createI18n({ legacy: false, locale: 'ru', messages: { ru } }),
     ],
-    components: { QBtn, QCard, QIcon, QInput, QSpinner, QTooltip },
+    components: { QAvatar, QBtn, QCard, QIcon, QImg, QInput, QSpinner, QTooltip },
     stubs: {
       ManagerPageHeader: true,
       ConnectionStatePill: true,
