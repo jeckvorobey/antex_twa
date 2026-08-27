@@ -1,6 +1,7 @@
 import { createPinia, setActivePinia } from 'pinia';
 import { mount } from '@vue/test-utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { createMemoryHistory, createRouter } from 'vue-router';
 
 import ManagerLayout from '@layouts/ManagerLayout.vue';
 import { useManagerChatStore } from '@stores/manager-chat.store';
@@ -27,7 +28,7 @@ describe('ManagerLayout initial loading', () => {
     setActivePinia(createPinia());
   });
 
-  it('does not duplicate list requests already started by the active page', () => {
+  it('does not duplicate list requests already started by the active page', async () => {
     const pinia = createPinia();
     setActivePinia(pinia);
     const chatStore = useManagerChatStore();
@@ -37,10 +38,16 @@ describe('ManagerLayout initial loading', () => {
     const loadChats = vi.spyOn(chatStore, 'loadChats');
     const loadOrders = vi.spyOn(chatStore, 'loadOrders');
     vi.spyOn(realtimeStore, 'start').mockImplementation(() => undefined);
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [{ path: '/', name: 'home', component: { template: '<div />' } }],
+    });
+    await router.push('/');
+    await router.isReady();
 
     mount(ManagerLayout, {
       global: {
-        plugins: [pinia],
+        plugins: [pinia, router],
         stubs: {
           AntexBottomNav: true,
           QLayout: { template: '<main><slot /></main>' },

@@ -1,22 +1,26 @@
 <template>
   <q-page class="manager-page manager-dashboard">
-    <ManagerPageHeader
-      :title="t('manager.dashboard.title')"
-      :subtitle="t('manager.dashboard.subtitle')"
-    />
+    <AppHeaderBar :eyebrow="t('manager.role')" profile-route-name="managerProfile" />
+
+    <h1 class="manager-dashboard__date">{{ dashboardDate }}</h1>
 
     <section class="manager-dashboard__metrics" :aria-label="t('manager.dashboard.title')">
-      <AntexCard :elevated="false" class="manager-dashboard__metric">
-        <q-icon name="receipt_long" size="20px" />
-        <strong>{{ chatStore.orders.length }}</strong>
-        <span>{{ t('manager.dashboard.activeOrders') }}</span>
-      </AntexCard>
-      <AntexCard :elevated="false" class="manager-dashboard__metric">
-        <q-icon name="mark_chat_unread" size="20px" />
-        <strong>{{ chatStore.unreadTotal }}</strong>
-        <span>{{ t('manager.dashboard.newChats') }}</span>
-      </AntexCard>
+      <ManagerDashboardKpi
+        :label="t('manager.dashboard.active')"
+        :value="chatStore.orders.length"
+        :trend="t('manager.dashboard.ordersToday', { count: ordersToday })"
+        tone="positive"
+      />
+      <ManagerDashboardKpi
+        :label="t('manager.dashboard.chatsLabel')"
+        :value="chatStore.total"
+        :trend="t('manager.dashboard.unreadChats', { count: chatStore.unreadTotal })"
+      />
     </section>
+
+    <p v-if="activeOrderTotals" class="manager-dashboard__totals">
+      {{ t('manager.dashboard.activeOrderTotals', { total: activeOrderTotals }) }}
+    </p>
 
     <section class="manager-dashboard__queue">
       <div class="manager-dashboard__section-heading">
@@ -34,17 +38,13 @@
         </q-btn>
       </div>
 
-      <div v-if="chatStore.orders.length" class="manager-order-list">
-        <OrderCard
-          v-for="order in chatStore.orders.slice(0, 3)"
-          :key="order.id"
-          :order="order"
-          mode="manager"
-          :actions="false"
-          selectable
-          @select="openOrder(order.id)"
-        />
-      </div>
+      <ManagerActiveOrderQueue
+        v-if="chatStore.orders.length"
+        :orders="chatStore.orders"
+        :view-all-label="t('manager.dashboard.viewAll')"
+        @select="openOrder"
+        @view-all="openOrders"
+      />
       <AntexCard v-else :elevated="false" class="manager-dashboard__empty">
         {{ t('manager.dashboard.empty') }}
       </AntexCard>
@@ -53,17 +53,32 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 
-import ManagerPageHeader from '@components/manager/ManagerPageHeader.vue';
-import OrderCard from '@components/orders/OrderCard.vue';
+import ManagerActiveOrderQueue from '@components/manager/ManagerActiveOrderQueue.vue';
+import ManagerDashboardKpi from '@components/manager/ManagerDashboardKpi.vue';
 import AntexCard from '@components/ui/AntexCard.vue';
+import AppHeaderBar from '@components/ui/AppHeaderBar.vue';
 import { useManagerChatStore } from '@stores/manager-chat.store';
+import {
+  countTodayOrders,
+  formatActiveOrderTotals,
+  formatManagerDashboardDate,
+} from '@utils/manager-dashboard';
 
 const chatStore = useManagerChatStore();
 const router = useRouter();
-const { t } = useI18n();
+const { locale, t } = useI18n();
+const now = new Date();
+const dashboardDate = computed(() =>
+  formatManagerDashboardDate(now, locale.value, t('manager.dashboard.today')),
+);
+const ordersToday = computed(() => countTodayOrders(chatStore.orders, now));
+const activeOrderTotals = computed(() =>
+  formatActiveOrderTotals(chatStore.orders, locale.value),
+);
 
 /** Открывает полный список активных заявок. */
 function openOrders(): void {

@@ -1,5 +1,11 @@
 <template>
-  <q-layout view="lHh Lpr lFf" class="manager-layout">
+  <q-layout
+    view="lHh Lpr lFf"
+    :class="[
+      'manager-layout',
+      { 'manager-layout--dashboard': route.name === 'managerDashboard' },
+    ]"
+  >
     <q-page-container>
       <router-view />
     </q-page-container>
@@ -9,6 +15,7 @@
 
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted } from 'vue';
+import { useRoute } from 'vue-router';
 
 import AntexBottomNav from '@components/ui/AntexBottomNav.vue';
 import { useManagerChatStore } from '@stores/manager-chat.store';
@@ -16,6 +23,7 @@ import { useManagerRealtimeStore } from '@stores/manager-realtime.store';
 
 const chatStore = useManagerChatStore();
 const realtimeStore = useManagerRealtimeStore();
+const route = useRoute();
 
 onMounted(() => {
   realtimeStore.start();

@@ -28,6 +28,7 @@ export default {
     managerSettings: 'Настройки',
   },
   manager: {
+    role: 'МЕНЕДЖЕР',
     customerFallback: 'Клиент #{id}',
     countries: {
       thailand: 'Таиланд',
@@ -67,8 +68,14 @@ export default {
     dashboard: {
       title: 'Рабочий стол',
       subtitle: 'Текущая операционная работа',
+      today: 'Сегодня',
+      active: 'Активные',
+      chatsLabel: 'Чаты',
       activeOrders: 'Активные заявки',
       newChats: 'Новые чаты',
+      ordersToday: '+{count} заявки',
+      unreadChats: '{count} новых',
+      activeOrderTotals: 'Сумма активных заявок: {total}',
       queue: 'Очередь заявок',
       viewAll: 'Смотреть все',
       empty: 'Активных заявок сейчас нет',
