@@ -15,6 +15,7 @@
       </div>
       <div class="app-header-bar__title">{{ t('common.brand') }}</div>
     </div>
+    <div v-if="eyebrow" class="app-header-bar__eyebrow">{{ eyebrow }}</div>
     <q-btn
       round
       flat
@@ -48,6 +49,14 @@ import { useAuthStore } from '@stores/auth.store';
 import { toSafeExternalUrl } from '@utils/safe-external-url';
 import logoImage from '../../assets/images/logo.PNG';
 
+const props = withDefaults(
+  defineProps<{
+    eyebrow?: string | null;
+    profileRouteName?: string;
+  }>(),
+  { eyebrow: null, profileRouteName: 'profile' },
+);
+
 const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
@@ -80,7 +89,7 @@ const userInitials = computed(() => {
 
 /** Открывает профиль из постоянного правого avatar action. */
 function openProfile() {
-  void router.push({ name: 'profile' });
+  void router.push({ name: props.profileRouteName });
 }
 
 /** Возвращает на объявленный в route meta родительский экран. */
