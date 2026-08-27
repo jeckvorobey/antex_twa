@@ -75,6 +75,7 @@ function makeConversation(
     lastName?: string;
     username?: string;
     unreadCount?: number;
+    latestOrder?: ManagerOrderSummary;
   } = {},
 ): ManagerConversation {
   const message = makeMessage(id, id);
@@ -92,7 +93,7 @@ function makeConversation(
       photoUrl: null,
     },
     lastMessage: message,
-    latestOrder: null,
+    latestOrder: params.latestOrder ?? null,
   };
 }
 
@@ -344,6 +345,20 @@ describe('manager chat store realtime filters', () => {
       payload: { conversation },
     });
     expect(store.conversations.map((item) => item.id)).toEqual([16]);
+  });
+
+  it('сохраняет realtime-диалог при поиске по номеру заявки с решёткой', async () => {
+    const store = useManagerChatStore();
+    store.query = '#2026080017';
+
+    await store.handleRealtimeEvent({
+      type: 'chat.conversation.updated',
+      payload: {
+        conversation: makeConversation(17, { latestOrder: makeOrder(17, 2) }),
+      },
+    });
+
+    expect(store.conversations.map((item) => item.id)).toEqual([17]);
   });
 
   it('TWA-6 удаляет прочитанный realtime-диалог из unread-only списка', async () => {
