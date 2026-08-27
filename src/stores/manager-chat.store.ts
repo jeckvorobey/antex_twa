@@ -61,6 +61,7 @@ function createClientRequestId(): string {
 export const useManagerChatStore = defineStore('manager-chat', () => {
   const conversations = ref<ManagerConversation[]>([]);
   const total = ref(0);
+  const dashboardChatTotal = ref(0);
   const unreadTotal = ref(0);
   const loadingChats = ref(false);
   const chatsLoaded = ref(false);
@@ -83,6 +84,8 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
 
   let chatsRequestController: AbortController | null = null;
   let chatsRequestGeneration = 0;
+  let dashboardTotalRequestController: AbortController | null = null;
+  let dashboardTotalRequestGeneration = 0;
   let activeConversationRequestController: AbortController | null = null;
   let earlierMessagesRequestController: AbortController | null = null;
   let activeConversationGeneration = 0;
@@ -251,6 +254,30 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
     }
   }
 
+  /** Загружает нефильтрованный total для KPI Dashboard независимо от состояния списка. */
+  async function loadDashboardChatTotal(config: { signal?: AbortSignal } = {}): Promise<void> {
+    dashboardTotalRequestController?.abort();
+    const { controller, detach } = createLinkedAbortController(config.signal);
+    const generation = ++dashboardTotalRequestGeneration;
+    dashboardTotalRequestController = controller;
+    try {
+      const response = await fetchManagerChats(
+        { unreadOnly: false, limit: 1, offset: 0 },
+        { signal: controller.signal },
+      );
+      if (generation === dashboardTotalRequestGeneration && !controller.signal.aborted) {
+        dashboardChatTotal.value = response.total;
+      }
+    } catch (error) {
+      if (!controller.signal.aborted) throw error;
+    } finally {
+      if (dashboardTotalRequestController === controller) {
+        dashboardTotalRequestController = null;
+      }
+      detach();
+    }
+  }
+
   /** Инвалидирует filtered list request при уходе со страницы списка. */
   function cancelChatsLoad(): void {
     chatsRequestGeneration += 1;
@@ -286,7 +313,7 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
 
   /** Сверяет REST state после reconnect, не позволяя route leave вернуть старый диалог. */
   async function reconcile(config: { signal?: AbortSignal } = {}): Promise<void> {
-    await Promise.all([loadChats(config), loadOrders(config)]);
+    await Promise.all([loadChats(config), loadDashboardChatTotal(config), loadOrders(config)]);
     if (config.signal?.aborted) {
       return;
     }
@@ -649,6 +676,7 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
   return {
     conversations,
     total,
+    dashboardChatTotal,
     unreadTotal,
     loadingChats,
     chatsLoaded,
@@ -668,6 +696,7 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
     activeOrder,
     activeOrderError,
     loadChats,
+    loadDashboardChatTotal,
     cancelChatsLoad,
     reconcile,
     openConversation,

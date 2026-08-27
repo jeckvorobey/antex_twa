@@ -131,8 +131,9 @@ describe('manager dashboard contract', () => {
     expect(source).toContain('formatManagerDashboardDate');
     expect(source).toContain('countTodayOrders');
     expect(source).toContain('formatActiveOrderTotals');
-    expect(source).toContain('chatStore.total');
+    expect(source).toContain('chatStore.dashboardChatTotal');
     expect(source).toContain('chatStore.unreadTotal');
+    expect(source).toContain('chatStore.loadDashboardChatTotal()');
     expect(source).toContain('millisecondsUntilNextLocalDay');
     expect(source).toContain('clearTimeout(dayRefreshTimer)');
   });

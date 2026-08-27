@@ -131,6 +131,24 @@ describe('manager chat store request races', () => {
     vi.resetAllMocks();
   });
 
+  it('keeps the Dashboard chat total independent from list filters', async () => {
+    const store = useManagerChatStore();
+    store.query = 'Анна';
+    vi.mocked(fetchManagerChats)
+      .mockResolvedValueOnce({ items: [makeConversation(1)], total: 1, unreadTotal: 0 })
+      .mockResolvedValueOnce({ items: [], total: 42, unreadTotal: 0 });
+
+    await store.loadChats();
+    await store.loadDashboardChatTotal();
+
+    expect(store.total).toBe(1);
+    expect(store.dashboardChatTotal).toBe(42);
+    expect(fetchManagerChats).toHaveBeenLastCalledWith(
+      { unreadOnly: false, limit: 1, offset: 0 },
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    );
+  });
+
   it('TWA-2 не применяет ответ active conversation после ухода с маршрута', async () => {
     const store = useManagerChatStore();
     const conversationRequest = deferred<ManagerConversation>();
@@ -164,7 +182,9 @@ describe('manager chat store request races', () => {
       .mockResolvedValueOnce({ items: [], hasMore: false })
       .mockReturnValueOnce(nextMessages.promise)
       .mockResolvedValueOnce({ items: [], hasMore: false });
-    vi.mocked(fetchManagerChats).mockResolvedValueOnce(makeChatList([]));
+    vi.mocked(fetchManagerChats)
+      .mockResolvedValueOnce(makeChatList([]))
+      .mockResolvedValueOnce(makeChatList([]));
     vi.mocked(fetchManagerOrders).mockResolvedValueOnce({ items: [] });
     await store.openConversation(10);
 

@@ -13,7 +13,7 @@
       />
       <ManagerDashboardKpi
         :label="t('manager.dashboard.chatsLabel')"
-        :value="chatStore.total"
+        :value="chatStore.dashboardChatTotal"
         :trend="t('manager.dashboard.unreadChats', { count: chatStore.unreadTotal })"
       />
     </section>
@@ -88,7 +88,10 @@ function scheduleNextDayRefresh(): void {
   dayRefreshTimer = setTimeout(scheduleNextDayRefresh, millisecondsUntilNextLocalDay(current));
 }
 
-onMounted(scheduleNextDayRefresh);
+onMounted(() => {
+  scheduleNextDayRefresh();
+  void chatStore.loadDashboardChatTotal().catch(() => undefined);
+});
 
 onBeforeUnmount(() => {
   if (dayRefreshTimer !== undefined) clearTimeout(dayRefreshTimer);
