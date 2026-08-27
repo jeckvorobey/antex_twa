@@ -53,7 +53,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 
@@ -66,19 +66,33 @@ import {
   countTodayOrders,
   formatActiveOrderTotals,
   formatManagerDashboardDate,
+  millisecondsUntilNextLocalDay,
 } from '@utils/manager-dashboard';
 
 const chatStore = useManagerChatStore();
 const router = useRouter();
 const { locale, t } = useI18n();
-const now = new Date();
+const now = ref(new Date());
+let dayRefreshTimer: ReturnType<typeof setTimeout> | undefined;
 const dashboardDate = computed(() =>
-  formatManagerDashboardDate(now, locale.value, t('manager.dashboard.today')),
+  formatManagerDashboardDate(now.value, locale.value, t('manager.dashboard.today')),
 );
-const ordersToday = computed(() => countTodayOrders(chatStore.orders, now));
+const ordersToday = computed(() => countTodayOrders(chatStore.orders, now.value));
 const activeOrderTotals = computed(() =>
   formatActiveOrderTotals(chatStore.orders, locale.value),
 );
+
+function scheduleNextDayRefresh(): void {
+  const current = new Date();
+  now.value = current;
+  dayRefreshTimer = setTimeout(scheduleNextDayRefresh, millisecondsUntilNextLocalDay(current));
+}
+
+onMounted(scheduleNextDayRefresh);
+
+onBeforeUnmount(() => {
+  if (dayRefreshTimer !== undefined) clearTimeout(dayRefreshTimer);
+});
 
 /** Открывает полный список активных заявок. */
 function openOrders(): void {

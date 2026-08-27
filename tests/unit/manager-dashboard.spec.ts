@@ -8,6 +8,7 @@ import {
   countTodayOrders,
   formatActiveOrderTotals,
   formatManagerDashboardDate,
+  millisecondsUntilNextLocalDay,
 } from '@utils/manager-dashboard';
 
 const helperPath = resolve(process.cwd(), 'src/utils/manager-dashboard.ts');
@@ -69,6 +70,12 @@ describe('manager dashboard contract', () => {
     expect(countTodayOrders(orders, new Date('2026-08-21T12:00:00+03:00'))).toBe(2);
   });
 
+  it('schedules the next refresh at the following local midnight', () => {
+    const now = new Date(2026, 7, 21, 23, 59, 30, 0);
+
+    expect(millisecondsUntilNextLocalDay(now)).toBe(30_000);
+  });
+
   it('groups active sell amounts by currency without mixing units', () => {
     const orders = [
       makeOrder(1, 'RUB', 25_000, '2026-08-21T08:00:00+03:00'),
@@ -126,6 +133,8 @@ describe('manager dashboard contract', () => {
     expect(source).toContain('formatActiveOrderTotals');
     expect(source).toContain('chatStore.total');
     expect(source).toContain('chatStore.unreadTotal');
+    expect(source).toContain('millisecondsUntilNextLocalDay');
+    expect(source).toContain('clearTimeout(dayRefreshTimer)');
   });
 
   it('uses the flat Penpot layout surface and canonical font roles', () => {

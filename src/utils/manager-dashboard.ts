@@ -25,6 +25,12 @@ export function countTodayOrders(orders: ManagerOrderSummary[], now: Date): numb
   }).length;
 }
 
+export function millisecondsUntilNextLocalDay(now: Date): number {
+  const nextDay = new Date(now);
+  nextDay.setHours(24, 0, 0, 0);
+  return nextDay.getTime() - now.getTime();
+}
+
 export function formatActiveOrderTotals(
   orders: ManagerOrderSummary[],
   locale: string,
