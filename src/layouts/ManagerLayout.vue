@@ -2,10 +2,12 @@
   <q-layout
     view="lHh Lpr lFf"
     :class="[
+      'app-layout',
       'manager-layout',
       { 'manager-layout--dashboard': route.name === 'managerDashboard' },
     ]"
   >
+    <AppLayoutBackground />
     <q-page-container>
       <router-view />
     </q-page-container>
@@ -18,6 +20,7 @@ import { onBeforeUnmount, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 
 import AntexBottomNav from '@components/ui/AntexBottomNav.vue';
+import AppLayoutBackground from '@components/ui/AppLayoutBackground.vue';
 import { useManagerChatStore } from '@stores/manager-chat.store';
 import { useManagerRealtimeStore } from '@stores/manager-realtime.store';
 
