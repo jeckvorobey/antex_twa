@@ -84,10 +84,12 @@ export default {
       title: 'Чаты',
       subtitle: 'Все обращения клиентов',
       unreadSummary: 'Непрочитанных: {count}',
-      searchPlaceholder: "Поиск по имени или {'@'}username",
+      searchPlaceholder: 'Имя, username или номер заявки',
+      conversationFallback: 'Диалог #{id}',
       filters: {
         all: 'Все',
         unread: 'Непрочитанные',
+        ariaLabel: 'Фильтр чатов',
       },
       empty: {
         title: 'Новых диалогов нет',

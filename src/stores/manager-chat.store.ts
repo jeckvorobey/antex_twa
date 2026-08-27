@@ -106,8 +106,15 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
       return true;
     }
     const user = conversation.user;
-    return [user.firstName, user.lastName, user.username].some((field) =>
-      field?.toLocaleLowerCase('ru-RU').includes(search),
+    const orderSearch = search.replace(/^#/, '');
+    return (
+      [user.firstName, user.lastName, user.username].some((field) =>
+        field?.toLocaleLowerCase('ru-RU').includes(search),
+      ) ||
+      Boolean(
+        orderSearch &&
+          conversation.latestOrder?.publicNumber.toLocaleLowerCase('ru-RU').includes(orderSearch),
+      )
     );
   }
 
