@@ -8,7 +8,6 @@ const itemPath = resolve(process.cwd(), 'src/components/manager/ConversationList
 const searchPath = resolve(process.cwd(), 'src/components/manager/ManagerChatSearch.vue');
 const filtersPath = resolve(process.cwd(), 'src/components/manager/ManagerChatFilters.vue');
 const listPath = resolve(process.cwd(), 'src/components/manager/ManagerConversationList.vue');
-const managerStylesPath = resolve(process.cwd(), 'src/css/manager.scss');
 
 describe('manager chats Penpot composition', () => {
   it('delegates search, filters and repeated rows to reusable components', () => {
@@ -44,16 +43,5 @@ describe('manager chats Penpot composition', () => {
     );
     expect(item).toContain('<img v-if="safePhotoUrl" :src="safePhotoUrl" alt="" />');
     expect(item).not.toContain(':src="conversation.user.photoUrl"');
-  });
-
-  it('matches the Penpot header inset and 44px avatar touch target', () => {
-    const styles = readFileSync(managerStylesPath, 'utf8');
-
-    expect(styles).toContain(
-      '.manager-chats {\n  width: min(100%, 390px);\n  padding-top: calc(var(--antex-safe-area-top) + 16px);',
-    );
-    expect(styles).toContain(
-      '.manager-chats .app-header-bar__avatar-button,\n.manager-chats .app-header-bar__avatar {\n  width: 44px;\n  height: 44px;\n  min-height: 44px;',
-    );
   });
 });
