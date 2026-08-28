@@ -328,6 +328,8 @@ export default {
     cancelled: 'Отменённые',
     refresh: 'Обновить историю',
     repeat: 'Повторить',
+    cancel: 'Отменить заявку',
+    cancelUnavailable: 'Отмена заявки из Mini App пока недоступна',
     loadingMore: 'Загружаем ещё',
   },
   profile: {

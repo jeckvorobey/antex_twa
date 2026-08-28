@@ -110,18 +110,22 @@ describe('OrderCard manager mode', () => {
     expect(wrapper.text()).not.toContain('username-is-not-a-name');
   });
 
-  it('exposes compact actions with localized accessible names and hints', async () => {
+  it('exposes processing actions with localized accessible names and hints', async () => {
     const wrapper = mountCard(makeOrder());
-    const details = wrapper.get('[aria-label="Открыть детали заявки"]');
     const chat = wrapper.get('[aria-label="Открыть чат клиента"]');
+    const complete = wrapper.get('[aria-label="Завершить заявку"]');
+    const cancel = wrapper.get('[aria-label="Отменить заявку"]');
 
-    expect(details.text()).toContain('Открыть детали заявки');
     expect(chat.text()).toContain('Открыть чат клиента');
+    expect(complete.text()).toContain('Завершить заявку');
+    expect(cancel.text()).toContain('Отменить заявку');
 
-    await details.trigger('click');
     await chat.trigger('click');
+    await complete.trigger('click');
+    await cancel.trigger('click');
 
-    expect(wrapper.emitted('openDetails')).toHaveLength(1);
     expect(wrapper.emitted('openChat')).toHaveLength(1);
+    expect(wrapper.emitted('complete')).toHaveLength(1);
+    expect(wrapper.emitted('cancel')).toHaveLength(1);
   });
 });

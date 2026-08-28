@@ -35,11 +35,15 @@ const baseOrder: MiniappOrderItem = {
   },
 };
 
-function mountCard(mode: 'user' | 'manager', actions = true) {
+function mountCard(
+  mode: 'user' | 'manager',
+  actions = true,
+  overrides: Partial<MiniappOrderItem | ManagerOrderSummary> = {},
+) {
   const i18n = createI18n({ legacy: false, locale: 'ru', messages: { ru } });
   const order: MiniappOrderItem | ManagerOrderSummary =
     mode === 'user'
-      ? baseOrder
+      ? { ...baseOrder, ...overrides }
       : {
           ...baseOrder,
           user: {
@@ -50,6 +54,7 @@ function mountCard(mode: 'user' | 'manager', actions = true) {
             lastName: 'Иванов',
             photoUrl: null,
           },
+          ...overrides,
         };
   return mount(OrderCard, {
     props: { order, mode, actions },
@@ -80,26 +85,57 @@ describe('shared OrderCard', () => {
   });
 
   it('places time before the right-aligned action group and emits user repeat', async () => {
-    const wrapper = mountCard('user');
+    const wrapper = mountCard('user', true, { status: 3 });
     const bottom = wrapper.get('.order-card__bottom');
 
+    expect(wrapper.classes()).toContain('order-card--regular');
+    expect(wrapper.classes()).not.toContain('order-card--compact');
     expect(bottom.element.firstElementChild?.classList).toContain('order-card__time');
     expect(bottom.element.lastElementChild?.classList).toContain('order-card__actions');
     await wrapper.get('[aria-label="Повторить"]').trigger('click');
     expect(wrapper.emitted('repeat')).toHaveLength(1);
   });
 
-  it('adds only manager actions in manager mode and keeps 44px action classes', async () => {
-    const wrapper = mountCard('manager');
-    const details = wrapper.get('[aria-label="Открыть детали заявки"]');
+  it('uses status-specific customer actions and compact density when there is no action', async () => {
+    const newOrder = mountCard('user', true, { status: 1 });
+    await newOrder.get('[aria-label="Отменить заявку"]').trigger('click');
+    expect(newOrder.emitted('cancel')).toHaveLength(1);
+    expect(newOrder.classes()).toContain('order-card--regular');
+
+    const activeOrder = mountCard('user', true, { status: 2 });
+    expect(activeOrder.findAll('.order-card__action')).toHaveLength(0);
+    expect(activeOrder.classes()).toContain('order-card--compact');
+
+    const cancelledOrder = mountCard('user', true, { status: 4 });
+    await cancelledOrder.get('[aria-label="Повторить"]').trigger('click');
+    expect(cancelledOrder.emitted('repeat')).toHaveLength(1);
+  });
+
+  it('adds status-specific manager actions and keeps 44px action classes', async () => {
+    const newOrder = mountCard('manager', true, { status: 1 });
+    const take = newOrder.get('[aria-label="Взять в работу"]');
+
+    expect(newOrder.findAll('.order-card__action')).toHaveLength(1);
+    await take.trigger('click');
+    expect(newOrder.emitted('take')).toHaveLength(1);
+
+    const wrapper = mountCard('manager', true, { status: 2 });
     const chat = wrapper.get('[aria-label="Открыть чат клиента"]');
+    const complete = wrapper.get('[aria-label="Завершить заявку"]');
+    const cancel = wrapper.get('[aria-label="Отменить заявку"]');
 
     expect(wrapper.find('[aria-label="Повторить"]').exists()).toBe(false);
-    expect(wrapper.findAll('.order-card__action')).toHaveLength(2);
-    await details.trigger('click');
+    expect(wrapper.findAll('.order-card__action')).toHaveLength(3);
     await chat.trigger('click');
-    expect(wrapper.emitted('openDetails')).toHaveLength(1);
+    await complete.trigger('click');
+    await cancel.trigger('click');
     expect(wrapper.emitted('openChat')).toHaveLength(1);
+    expect(wrapper.emitted('complete')).toHaveLength(1);
+    expect(wrapper.emitted('cancel')).toHaveLength(1);
+
+    const completedOrder = mountCard('manager', true, { status: 3 });
+    expect(completedOrder.findAll('.order-card__action')).toHaveLength(0);
+    expect(completedOrder.classes()).toContain('order-card--compact');
   });
 
   it('emits select from an explicitly selectable card for click and keyboard', async () => {

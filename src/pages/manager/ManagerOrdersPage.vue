@@ -33,8 +33,12 @@
         :order="order"
         mode="manager"
         actions
+        selectable
         @open-chat="openChat(order.id)"
-        @open-details="openDetails(order.id)"
+        @select="openDetails(order.id)"
+        @take="setStatus(order.id, 2)"
+        @complete="setStatus(order.id, 3)"
+        @cancel="confirmCancel(order.id)"
       />
     </div>
   </q-page>
@@ -42,6 +46,7 @@
 
 <script setup lang="ts">
 import { useAntexNotify } from '@/composables/useAntexNotify';
+import { Dialog } from 'quasar';
 import { onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
@@ -80,5 +85,26 @@ async function openChat(orderId: number): Promise<void> {
 
 function openDetails(orderId: number): void {
   void router.push({ name: 'managerOrder', params: { orderId } });
+}
+
+async function setStatus(orderId: number, status: number): Promise<void> {
+  try {
+    await chatStore.changeOrderStatus(orderId, status);
+    notify('positive', t('manager.orderPage.notifications.statusUpdated'));
+  } catch {
+    notify('negative', t('manager.orderPage.notifications.statusError'));
+  }
+}
+
+function confirmCancel(orderId: number): void {
+  Dialog.create({
+    title: t('manager.orderPage.cancelDialog.title'),
+    message: t('manager.orderPage.cancelDialog.text'),
+    cancel: { label: t('common.back'), flat: true },
+    ok: { label: t('manager.orderPage.actions.cancel'), color: 'negative' },
+    persistent: true,
+  }).onOk(() => {
+    void setStatus(orderId, 4);
+  });
 }
 </script>

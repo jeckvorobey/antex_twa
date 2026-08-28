@@ -59,6 +59,7 @@
                 :order="item"
                 mode="user"
                 class="app-history-card app-card-shadow"
+                @cancel="showCancelUnavailable"
                 @repeat="repeatOrder(item)"
               />
             </section>
@@ -86,6 +87,7 @@
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 
+import { useAntexNotify } from '@/composables/useAntexNotify';
 import OrderCard from '@components/orders/OrderCard.vue';
 import AntexEmptyState from '@components/ui/AntexEmptyState.vue';
 import AntexSkeleton from '@components/ui/AntexSkeleton.vue';
@@ -96,6 +98,7 @@ import type { MiniappOrderItem } from '@types/miniapp';
 const { t } = useI18n();
 const ordersStore = useOrdersStore();
 const uiStore = useUiStore();
+const { notify } = useAntexNotify();
 const activeFilter = ref<'all' | 'active' | 'done' | 'cancelled'>('all');
 const infiniteScrollRef = ref<{ resume: () => void; stop: () => void } | null>(null);
 const historyScrollRef = ref<HTMLElement | null>(null);
@@ -158,4 +161,7 @@ function repeatOrder(item: MiniappOrderItem) {
   });
 }
 
+function showCancelUnavailable() {
+  notify('negative', t('history.cancelUnavailable'));
+}
 </script>
