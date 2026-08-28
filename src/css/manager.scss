@@ -331,6 +331,7 @@
 
 .manager-chats {
   width: min(100%, 390px);
+  padding-top: calc(var(--antex-safe-area-top) + 16px);
   padding-right: 20px;
   padding-left: 20px;
   font-family: 'Inter Tight', sans-serif;
@@ -339,6 +340,13 @@
 .manager-chats .app-header-bar {
   min-height: 44px;
   margin-bottom: 16px;
+}
+
+.manager-chats .app-header-bar__avatar-button,
+.manager-chats .app-header-bar__avatar {
+  width: 44px;
+  height: 44px;
+  min-height: 44px;
 }
 
 .manager-order-list {

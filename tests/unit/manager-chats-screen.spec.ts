@@ -33,4 +33,15 @@ describe('manager chats Penpot composition', () => {
     expect(orderIndex).toBeLessThan(nameIndex);
     expect(nameIndex).toBeLessThan(previewIndex);
   });
+
+  it('allows only validated HTTPS avatar URLs in conversation rows', () => {
+    const item = readFileSync(itemPath, 'utf8');
+
+    expect(item).toContain("import { toSafeExternalUrl } from '@utils/safe-external-url';");
+    expect(item).toContain(
+      'const safePhotoUrl = computed(() => toSafeExternalUrl(props.conversation.user.photoUrl));',
+    );
+    expect(item).toContain('<img v-if="safePhotoUrl" :src="safePhotoUrl" alt="" />');
+    expect(item).not.toContain(':src="conversation.user.photoUrl"');
+  });
 });
