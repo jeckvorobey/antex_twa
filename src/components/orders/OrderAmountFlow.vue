@@ -1,15 +1,16 @@
 <template>
-  <div class="order-amount-flow" :class="{ 'order-amount-flow--result-prominent': resultProminent }">
-    <div class="order-amount-flow__side order-amount-flow__side--source">
-      <AppCurrencyMark :mark="managerCurrencyMark(currencySell)" />
-      <strong>{{ formatAmount(amountSell, locale) }}</strong>
-      <span>{{ currencySell }}</span>
+  <div class="order-amount-flow order-amount-flow--card-stack">
+    <div class="order-amount-flow__row order-amount-flow__row--source">
+      <AppCurrencyMark class="order-amount-flow__mark" :mark="managerCurrencyMark(currencySell)" />
+      <strong class="order-amount-flow__source-amount">{{ formatAmount(amountSell, locale) }}</strong>
+      <span class="order-amount-flow__source-currency">{{ currencySell }}</span>
+      <q-icon name="south_east" class="order-amount-flow__direction" aria-hidden="true" />
+      <span v-if="rateText" class="order-amount-flow__rate-inline">{{ rateText }}</span>
     </div>
-    <q-icon name="arrow_forward" class="order-amount-flow__arrow" />
-    <div class="order-amount-flow__side order-amount-flow__side--result">
-      <AppCurrencyMark :mark="managerCurrencyMark(currencyBuy)" />
-      <strong>{{ formatAmount(amountBuy ?? 0, locale) }}</strong>
-      <span>{{ currencyBuy }}</span>
+    <div class="order-amount-flow__row order-amount-flow__row--result">
+      <AppCurrencyMark class="order-amount-flow__mark" :mark="managerCurrencyMark(currencyBuy)" />
+      <strong class="order-amount-flow__result-amount">{{ formatAmount(amountBuy ?? 0, locale) }}</strong>
+      <span class="order-amount-flow__result-currency">{{ currencyBuy }}</span>
     </div>
   </div>
 </template>
@@ -27,9 +28,9 @@ withDefaults(
     amountSell: number;
     currencyBuy: string;
     amountBuy: number | null;
-    resultProminent?: boolean;
+    rateText?: string | null;
   }>(),
-  { resultProminent: false },
+  { rateText: null },
 );
 
 const { locale } = useI18n();
