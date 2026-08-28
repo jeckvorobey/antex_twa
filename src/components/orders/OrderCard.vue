@@ -8,7 +8,6 @@
         'order-card--compact': compact,
         'order-card--regular': !compact,
         'order-card--selectable': selectableCard,
-        'manager-order-card': mode === 'manager',
       },
     ]"
     :data-order-card-mode="mode"
@@ -19,10 +18,10 @@
     @keydown="selectFromKeyboard"
   >
     <div class="order-card__topline">
-      <span class="order-card__number manager-order-card__number">#{{ view.publicNumber }}</span>
+      <span class="order-card__number">#{{ view.publicNumber }}</span>
       <OrderStatus :status="order.status" />
     </div>
-    <div v-if="view.customerName" class="order-card__customer manager-order-card__customer">
+    <div v-if="view.customerName" class="order-card__customer">
       {{ view.customerName }}
     </div>
 
@@ -31,15 +30,11 @@
       :amount-sell="view.amountSell"
       :currency-buy="view.currencyBuy"
       :amount-buy="view.amountBuy"
-      result-prominent
+      :rate-text="view.rateText"
     />
 
-    <div v-if="view.rateText" class="order-card__rate manager-order-card__rate">
-      {{ view.rateText }}
-    </div>
-
     <div class="order-card__meta">
-      <span class="order-card__location manager-order-card__location">
+      <span class="order-card__location">
         <q-icon name="location_on" aria-hidden="true" />
         {{ view.location }}
       </span>
@@ -54,19 +49,22 @@
         <q-icon name="schedule" aria-hidden="true" />
         {{ view.createdAt }}
       </span>
-      <div v-if="visibleActions.length" class="order-card__actions manager-order-card__actions">
+      <div v-if="visibleActions.length" class="order-card__actions">
         <q-btn
           v-for="action in visibleActions"
           :key="action.key"
           flat
           round
-          :icon="action.icon"
+          padding="0"
           :class="['order-card__action', `order-card__action--${action.key}`]"
           :aria-label="t(action.labelKey)"
           :disable="isActionPending(action.key)"
           :loading="isActionPending(action.key)"
           @click.stop="emitAction(action.event)"
         >
+          <span class="order-card__action-visual">
+            <q-icon :name="action.icon" class="order-card__action-icon" aria-hidden="true" />
+          </span>
           <q-tooltip>{{ t(action.labelKey) }}</q-tooltip>
         </q-btn>
       </div>

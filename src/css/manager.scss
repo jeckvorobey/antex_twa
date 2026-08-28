@@ -515,14 +515,20 @@
 
 .manager-active-order-queue-item .order-amount-flow {
   gap: 5px;
+  margin-top: 6px;
 }
 
-.manager-active-order-queue-item .order-amount-flow__side strong {
+.manager-active-order-queue-item .order-amount-flow__source-amount {
   font-size: 14px;
   font-weight: 700;
 }
 
-.manager-active-order-queue-item .order-amount-flow__side .app-currency-mark {
+.manager-active-order-queue-item .order-amount-flow__result-amount {
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.manager-active-order-queue-item .order-amount-flow__mark {
   font-size: 14px;
 }
 

@@ -78,11 +78,20 @@ describe('shared OrderCard', () => {
       expect(wrapper.get('.order-card__number').text()).toBe('#2026080124');
       expect(wrapper.get('.order-card__status').text()).toContain('Завершена');
       expect(wrapper.get('.order-card__location').text()).toContain('Таиланд, Паттайя');
+      expect(wrapper.get('.order-amount-flow--card-stack').exists()).toBe(true);
+      expect(wrapper.find('.order-amount-flow__side').exists()).toBe(false);
+      expect(wrapper.find('.order-amount-flow__arrow').exists()).toBe(false);
+      expect(wrapper.get('.order-amount-flow__source-amount').text()).toBe('25 000');
+      expect(wrapper.get('.order-amount-flow__source-currency').text()).toBe('RUB');
+      expect(wrapper.get('.order-amount-flow__rate-inline').text()).toContain('1 THB = 2.71 RUB');
+      expect(wrapper.get('.order-amount-flow__result-amount').text()).toBe('9 237,35');
+      expect(wrapper.get('.order-amount-flow__result-currency').text()).toBe('THB');
     }
     expect(user.attributes('data-order-card-mode')).toBe('user');
     expect(manager.attributes('data-order-card-mode')).toBe('manager');
     expect(user.find('.order-card__customer').exists()).toBe(false);
     expect(manager.get('.order-card__customer').text()).toBe('Сергей Иванов');
+    expect(manager.html()).not.toContain('manager-order-card__');
   });
 
   it('places time before the right-aligned action group and emits user repeat', async () => {
@@ -111,13 +120,14 @@ describe('shared OrderCard', () => {
     expect(cancelledOrder.emitted('repeat')).toHaveLength(1);
   });
 
-  it('adds status-specific manager actions and keeps 44px action classes', async () => {
+  it('adds status-specific manager actions with compact Penpot action visuals', async () => {
     const newOrder = mountCard('manager', true, { status: 1 });
     const newDetails = newOrder.get('[aria-label="Открыть детали заявки"]');
     const newChat = newOrder.get('[aria-label="Открыть чат клиента"]');
     const take = newOrder.get('[aria-label="Взять в работу"]');
 
     expect(newOrder.findAll('.order-card__action')).toHaveLength(3);
+    expect(newOrder.findAll('.order-card__action-visual')).toHaveLength(3);
     await newDetails.trigger('click');
     await newChat.trigger('click');
     await take.trigger('click');
