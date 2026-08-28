@@ -139,7 +139,7 @@ describe('shared OrderCard', () => {
   });
 
   it('emits select from an explicitly selectable card for click and keyboard', async () => {
-    const wrapper = mountCard('manager', false);
+    const wrapper = mountCard('manager', false, { status: 3 });
     await wrapper.setProps({ selectable: true });
 
     expect(wrapper.attributes('role')).toBe('button');
@@ -147,5 +147,17 @@ describe('shared OrderCard', () => {
     await wrapper.trigger('keydown', { key: 'Enter' });
     await wrapper.trigger('keydown', { key: ' ' });
     expect(wrapper.emitted('select')).toHaveLength(2);
+  });
+
+  it('does not expose a selectable card role while action buttons are focusable', async () => {
+    const wrapper = mountCard('manager', true, { status: 2 });
+    await wrapper.setProps({ selectable: true });
+
+    expect(wrapper.findAll('.order-card__action')).toHaveLength(3);
+    expect(wrapper.classes()).not.toContain('order-card--selectable');
+    expect(wrapper.attributes('role')).toBeUndefined();
+    expect(wrapper.attributes('tabindex')).toBeUndefined();
+    await wrapper.trigger('click');
+    expect(wrapper.emitted('select')).toBeUndefined();
   });
 });

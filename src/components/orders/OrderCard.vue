@@ -7,14 +7,14 @@
       {
         'order-card--compact': compact,
         'order-card--regular': !compact,
-        'order-card--selectable': selectable,
+        'order-card--selectable': selectableCard,
         'manager-order-card': mode === 'manager',
       },
     ]"
     :data-order-card-mode="mode"
     :data-order-card-density="density"
-    :role="selectable ? 'button' : undefined"
-    :tabindex="selectable ? 0 : undefined"
+    :role="selectableCard ? 'button' : undefined"
+    :tabindex="selectableCard ? 0 : undefined"
     @click="select"
     @keydown="selectFromKeyboard"
   >
@@ -168,17 +168,18 @@ const visibleActions = computed<OrderCardAction[]>(() => {
 });
 const compact = computed(() => props.compact || visibleActions.value.length === 0);
 const density = computed(() => (compact.value ? 'compact' : 'regular'));
+const selectableCard = computed(() => props.selectable && visibleActions.value.length === 0);
 
 function emitAction(event: OrderCardEvent): void {
   emit(event);
 }
 
 function select(): void {
-  if (props.selectable) emit('select');
+  if (selectableCard.value) emit('select');
 }
 
 function selectFromKeyboard(event: KeyboardEvent): void {
-  if (!props.selectable || event.target !== event.currentTarget) return;
+  if (!selectableCard.value || event.target !== event.currentTarget) return;
   if (event.key !== 'Enter' && event.key !== ' ') return;
   event.preventDefault();
   emit('select');
