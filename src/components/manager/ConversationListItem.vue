@@ -5,7 +5,7 @@
     @click="$emit('open')"
   >
     <div class="manager-conversation-item__avatar">
-      <img v-if="conversation.user.photoUrl" :src="conversation.user.photoUrl" alt="" />
+      <img v-if="safePhotoUrl" :src="safePhotoUrl" alt="" />
       <span v-else>{{ initials }}</span>
     </div>
     <div class="manager-conversation-item__body">
@@ -34,11 +34,13 @@ import {
   managerUserDisplayName,
   managerUserInitials,
 } from '@utils/manager-chat';
+import { toSafeExternalUrl } from '@utils/safe-external-url';
 
 const props = defineProps<{ conversation: ManagerConversation }>();
 defineEmits<{ open: [] }>();
 const { locale, t } = useI18n();
 
+const safePhotoUrl = computed(() => toSafeExternalUrl(props.conversation.user.photoUrl));
 const displayName = computed(() =>
   managerUserDisplayName(
     props.conversation.user,
