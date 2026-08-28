@@ -34,6 +34,7 @@
         mode="manager"
         actions
         selectable
+        @open-details="openDetails(order.id)"
         @open-chat="openChat(order.id)"
         @select="openDetails(order.id)"
         @take="setStatus(order.id, 2)"

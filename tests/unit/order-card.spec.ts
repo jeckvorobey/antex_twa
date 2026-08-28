@@ -113,22 +113,31 @@ describe('shared OrderCard', () => {
 
   it('adds status-specific manager actions and keeps 44px action classes', async () => {
     const newOrder = mountCard('manager', true, { status: 1 });
+    const newDetails = newOrder.get('[aria-label="Открыть детали заявки"]');
+    const newChat = newOrder.get('[aria-label="Открыть чат клиента"]');
     const take = newOrder.get('[aria-label="Взять в работу"]');
 
-    expect(newOrder.findAll('.order-card__action')).toHaveLength(1);
+    expect(newOrder.findAll('.order-card__action')).toHaveLength(3);
+    await newDetails.trigger('click');
+    await newChat.trigger('click');
     await take.trigger('click');
+    expect(newOrder.emitted('openDetails')).toHaveLength(1);
+    expect(newOrder.emitted('openChat')).toHaveLength(1);
     expect(newOrder.emitted('take')).toHaveLength(1);
 
     const wrapper = mountCard('manager', true, { status: 2 });
+    const details = wrapper.get('[aria-label="Открыть детали заявки"]');
     const chat = wrapper.get('[aria-label="Открыть чат клиента"]');
     const complete = wrapper.get('[aria-label="Завершить заявку"]');
     const cancel = wrapper.get('[aria-label="Отменить заявку"]');
 
     expect(wrapper.find('[aria-label="Повторить"]').exists()).toBe(false);
-    expect(wrapper.findAll('.order-card__action')).toHaveLength(3);
+    expect(wrapper.findAll('.order-card__action')).toHaveLength(4);
+    await details.trigger('click');
     await chat.trigger('click');
     await complete.trigger('click');
     await cancel.trigger('click');
+    expect(wrapper.emitted('openDetails')).toHaveLength(1);
     expect(wrapper.emitted('openChat')).toHaveLength(1);
     expect(wrapper.emitted('complete')).toHaveLength(1);
     expect(wrapper.emitted('cancel')).toHaveLength(1);
@@ -153,7 +162,7 @@ describe('shared OrderCard', () => {
     const wrapper = mountCard('manager', true, { status: 2 });
     await wrapper.setProps({ selectable: true });
 
-    expect(wrapper.findAll('.order-card__action')).toHaveLength(3);
+    expect(wrapper.findAll('.order-card__action')).toHaveLength(4);
     expect(wrapper.classes()).not.toContain('order-card--selectable');
     expect(wrapper.attributes('role')).toBeUndefined();
     expect(wrapper.attributes('tabindex')).toBeUndefined();

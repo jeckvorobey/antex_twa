@@ -84,7 +84,7 @@ import AntexCard from '@components/ui/AntexCard.vue';
 import type { ManagerOrderSummary } from '@types/manager-chat';
 import type { MiniappOrderItem } from '@types/miniapp';
 
-type OrderCardEvent = 'repeat' | 'cancel' | 'take' | 'complete' | 'openChat';
+type OrderCardEvent = 'repeat' | 'cancel' | 'take' | 'complete' | 'openChat' | 'openDetails';
 
 interface OrderCardAction {
   key: string;
@@ -127,6 +127,18 @@ const visibleActions = computed<OrderCardAction[]>(() => {
       return props.mode === 'manager'
         ? [
             {
+              key: 'details',
+              event: 'openDetails',
+              icon: 'visibility',
+              labelKey: 'manager.orders.actions.details',
+            },
+            {
+              key: 'chat',
+              event: 'openChat',
+              icon: 'forum',
+              labelKey: 'manager.orders.actions.chat',
+            },
+            {
               key: 'take',
               event: 'take',
               icon: 'play_arrow',
@@ -137,6 +149,12 @@ const visibleActions = computed<OrderCardAction[]>(() => {
     case 2:
       return props.mode === 'manager'
         ? [
+            {
+              key: 'details',
+              event: 'openDetails',
+              icon: 'visibility',
+              labelKey: 'manager.orders.actions.details',
+            },
             {
               key: 'chat',
               event: 'openChat',

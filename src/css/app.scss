@@ -390,19 +390,23 @@ body.body--dark .q-page {
 }
 
 .order-card__bottom {
+  flex-wrap: wrap;
   min-height: 44px;
   margin-top: auto;
 }
 
 .order-card__time {
+  flex: 1 1 auto;
   color: var(--antex-text-muted);
   font-size: 10px;
 }
 
 .order-card__actions {
   display: flex;
+  max-width: 100%;
   align-items: center;
   justify-content: flex-end;
+  flex-wrap: wrap;
   gap: 6px;
   min-height: 44px;
 }
