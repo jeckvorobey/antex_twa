@@ -39,6 +39,7 @@ function mountCard(
   mode: 'user' | 'manager',
   actions = true,
   overrides: Partial<MiniappOrderItem | ManagerOrderSummary> = {},
+  pendingActions: string[] = [],
 ) {
   const i18n = createI18n({ legacy: false, locale: 'ru', messages: { ru } });
   const order: MiniappOrderItem | ManagerOrderSummary =
@@ -57,7 +58,7 @@ function mountCard(
           ...overrides,
         };
   return mount(OrderCard, {
-    props: { order, mode, actions },
+    props: { order, mode, actions, pendingActions },
     global: {
       plugins: [Quasar, i18n],
       components: { QBadge, QBtn, QCard, QIcon, QTooltip },
@@ -168,5 +169,14 @@ describe('shared OrderCard', () => {
     expect(wrapper.attributes('tabindex')).toBeUndefined();
     await wrapper.trigger('click');
     expect(wrapper.emitted('select')).toBeUndefined();
+  });
+
+  it('disables pending manager status actions without blocking details or chat', () => {
+    const wrapper = mountCard('manager', true, { status: 2 }, ['complete', 'cancel']);
+
+    expect(wrapper.get('[aria-label="Открыть детали заявки"]').attributes('disabled')).toBeUndefined();
+    expect(wrapper.get('[aria-label="Открыть чат клиента"]').attributes('disabled')).toBeUndefined();
+    expect(wrapper.get('[aria-label="Завершить заявку"]').attributes('disabled')).toBeDefined();
+    expect(wrapper.get('[aria-label="Отменить заявку"]').attributes('disabled')).toBeDefined();
   });
 });

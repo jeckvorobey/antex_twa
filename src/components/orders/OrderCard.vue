@@ -63,6 +63,8 @@
           :icon="action.icon"
           :class="['order-card__action', `order-card__action--${action.key}`]"
           :aria-label="t(action.labelKey)"
+          :disable="isActionPending(action.key)"
+          :loading="isActionPending(action.key)"
           @click.stop="emitAction(action.event)"
         >
           <q-tooltip>{{ t(action.labelKey) }}</q-tooltip>
@@ -99,9 +101,10 @@ const props = withDefaults(
     mode: OrderCardMode;
     compact?: boolean;
     actions?: boolean;
+    pendingActions?: string[];
     selectable?: boolean;
   }>(),
-  { compact: false, actions: true, selectable: false },
+  { compact: false, actions: true, pendingActions: () => [], selectable: false },
 );
 const emit = defineEmits<{
   repeat: [];
@@ -187,6 +190,11 @@ const visibleActions = computed<OrderCardAction[]>(() => {
 const compact = computed(() => props.compact || visibleActions.value.length === 0);
 const density = computed(() => (compact.value ? 'compact' : 'regular'));
 const selectableCard = computed(() => props.selectable && visibleActions.value.length === 0);
+const pendingActionKeys = computed(() => new Set(props.pendingActions));
+
+function isActionPending(key: string): boolean {
+  return pendingActionKeys.value.has(key);
+}
 
 function emitAction(event: OrderCardEvent): void {
   emit(event);
