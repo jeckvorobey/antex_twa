@@ -45,7 +45,11 @@ vi.mock('@services/manager-chat', () => ({
   updateManagerOrderStatus: vi.fn(),
 }));
 
-import { fetchManagerOrder, fetchManagerOrders } from '@services/manager-chat';
+vi.mock('@/composables/useAntexNotify', () => ({
+  useAntexNotify: () => ({ notify: vi.fn() }),
+}));
+
+import { fetchManagerOrder, fetchManagerOrders, updateManagerOrderStatus } from '@services/manager-chat';
 
 function makeOrder(id = 1): ManagerOrderSummary {
   return {
@@ -161,6 +165,39 @@ describe('manager orders workflow state', () => {
     await vi.waitFor(() => expect(fetchManagerOrders).toHaveBeenCalledTimes(2));
     await flushPromises();
     expect(wrapper.text()).toContain('Активных заявок нет');
+  });
+
+  it('locks manager status actions until the current update completes', async () => {
+    const pinia = createPinia();
+    setActivePinia(pinia);
+    let resolveUpdate: (order: ManagerOrderSummary) => void = () => undefined;
+    vi.mocked(fetchManagerOrders).mockResolvedValueOnce({ items: [makeOrder(1)] });
+    vi.mocked(updateManagerOrderStatus).mockImplementationOnce(
+      () =>
+        new Promise<ManagerOrderSummary>((resolve) => {
+          resolveUpdate = resolve;
+        }),
+    );
+    vi.mocked(updateManagerOrderStatus).mockResolvedValueOnce(makeOrder(1));
+
+    const wrapper = mount(ManagerOrdersPage, {
+      global: managerPageGlobal(pinia),
+    });
+
+    await vi.waitFor(() => expect(fetchManagerOrders).toHaveBeenCalledTimes(1));
+    await vi.waitFor(() => expect(wrapper.findComponent({ name: 'OrderCard' }).exists()).toBe(true));
+    const card = wrapper.getComponent({ name: 'OrderCard' });
+
+    card.vm.$emit('take');
+    card.vm.$emit('take');
+    await flushPromises();
+    expect(updateManagerOrderStatus).toHaveBeenCalledTimes(1);
+
+    resolveUpdate(makeOrder(1));
+    await flushPromises();
+    card.vm.$emit('take');
+    await flushPromises();
+    expect(updateManagerOrderStatus).toHaveBeenCalledTimes(2);
   });
 
   it('renders operational order details from the backend DTO', async () => {

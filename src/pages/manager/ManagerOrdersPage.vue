@@ -33,8 +33,14 @@
         :order="order"
         mode="manager"
         actions
-        @open-chat="openChat(order.id)"
+        selectable
+        :pending-actions="pendingStatusActions(order.id)"
         @open-details="openDetails(order.id)"
+        @open-chat="openChat(order.id)"
+        @select="openDetails(order.id)"
+        @take="setStatus(order.id, 2)"
+        @complete="setStatus(order.id, 3)"
+        @cancel="confirmCancel(order.id)"
       />
     </div>
   </q-page>
@@ -42,7 +48,8 @@
 
 <script setup lang="ts">
 import { useAntexNotify } from '@/composables/useAntexNotify';
-import { onMounted } from 'vue';
+import { Dialog } from 'quasar';
+import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 
@@ -56,6 +63,8 @@ const router = useRouter();
 const chatStore = useManagerChatStore();
 const { t } = useI18n();
 const { notify } = useAntexNotify();
+const statusActionLocks = ref<Set<number>>(new Set());
+const statusActionKeys = ['take', 'complete', 'cancel'];
 
 onMounted(() => {
   void loadOrders();
@@ -80,5 +89,57 @@ async function openChat(orderId: number): Promise<void> {
 
 function openDetails(orderId: number): void {
   void router.push({ name: 'managerOrder', params: { orderId } });
+}
+
+function pendingStatusActions(orderId: number): string[] {
+  return statusActionLocks.value.has(orderId) ? statusActionKeys : [];
+}
+
+function lockStatusActions(orderId: number): boolean {
+  if (statusActionLocks.value.has(orderId)) return false;
+  const nextLocks = new Set(statusActionLocks.value);
+  nextLocks.add(orderId);
+  statusActionLocks.value = nextLocks;
+  return true;
+}
+
+function unlockStatusActions(orderId: number): void {
+  const nextLocks = new Set(statusActionLocks.value);
+  nextLocks.delete(orderId);
+  statusActionLocks.value = nextLocks;
+}
+
+async function setStatus(
+  orderId: number,
+  status: number,
+  options: { lock?: boolean } = {},
+): Promise<void> {
+  const shouldLock = options.lock !== false;
+  if (shouldLock && !lockStatusActions(orderId)) return;
+  try {
+    await chatStore.changeOrderStatus(orderId, status);
+    notify('positive', t('manager.orderPage.notifications.statusUpdated'));
+  } catch {
+    notify('negative', t('manager.orderPage.notifications.statusError'));
+  } finally {
+    unlockStatusActions(orderId);
+  }
+}
+
+function confirmCancel(orderId: number): void {
+  if (!lockStatusActions(orderId)) return;
+  let confirmed = false;
+  Dialog.create({
+    title: t('manager.orderPage.cancelDialog.title'),
+    message: t('manager.orderPage.cancelDialog.text'),
+    cancel: { label: t('common.back'), flat: true },
+    ok: { label: t('manager.orderPage.actions.cancel'), color: 'negative' },
+    persistent: true,
+  }).onOk(() => {
+    confirmed = true;
+    void setStatus(orderId, 4, { lock: false });
+  }).onDismiss(() => {
+    if (!confirmed) unlockStatusActions(orderId);
+  });
 }
 </script>

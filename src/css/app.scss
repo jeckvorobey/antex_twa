@@ -317,15 +317,16 @@ body.body--dark .q-page {
   position: relative;
   display: flex;
   width: min(100%, 343px);
-  min-height: 184px;
+  max-width: 343px;
+  min-height: 172px;
+  box-sizing: border-box;
   flex-direction: column;
   padding: 12px 14px;
   background: color-mix(in srgb, var(--antex-bg-card) 94%, transparent);
 }
 
 .order-card--compact {
-  width: 100%;
-  min-height: 172px;
+  min-height: 143px;
 }
 
 .order-card__topline,
@@ -389,19 +390,23 @@ body.body--dark .q-page {
 }
 
 .order-card__bottom {
+  flex-wrap: wrap;
   min-height: 44px;
   margin-top: auto;
 }
 
 .order-card__time {
+  flex: 1 1 auto;
   color: var(--antex-text-muted);
   font-size: 10px;
 }
 
 .order-card__actions {
   display: flex;
+  max-width: 100%;
   align-items: center;
   justify-content: flex-end;
+  flex-wrap: wrap;
   gap: 6px;
   min-height: 44px;
 }
@@ -423,6 +428,16 @@ body.body--dark .q-page {
   color: var(--antex-bg-deep);
   border-color: var(--antex-border-gold);
   background: var(--antex-gold-gradient);
+}
+
+.order-card__action--complete {
+  color: var(--q-positive);
+  border-color: color-mix(in srgb, var(--q-positive) 72%, transparent);
+}
+
+.order-card__action--cancel {
+  color: var(--q-negative);
+  border-color: color-mix(in srgb, var(--q-negative) 72%, transparent);
 }
 
 .order-card--selectable {

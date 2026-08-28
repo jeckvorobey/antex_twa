@@ -328,6 +328,7 @@ export default {
     cancelled: 'Отменённые',
     refresh: 'Обновить историю',
     repeat: 'Повторить',
+    cancel: 'Отменить заявку',
     loadingMore: 'Загружаем ещё',
   },
   profile: {
