@@ -99,9 +99,8 @@ describe('shared OrderCard', () => {
 
   it('uses status-specific customer actions and compact density when there is no action', async () => {
     const newOrder = mountCard('user', true, { status: 1 });
-    await newOrder.get('[aria-label="Отменить заявку"]').trigger('click');
-    expect(newOrder.emitted('cancel')).toHaveLength(1);
-    expect(newOrder.classes()).toContain('order-card--regular');
+    expect(newOrder.findAll('.order-card__action')).toHaveLength(0);
+    expect(newOrder.classes()).toContain('order-card--compact');
 
     const activeOrder = mountCard('user', true, { status: 2 });
     expect(activeOrder.findAll('.order-card__action')).toHaveLength(0);

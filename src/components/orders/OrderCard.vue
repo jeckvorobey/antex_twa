@@ -148,7 +148,7 @@ const visibleActions = computed<OrderCardAction[]>(() => {
               labelKey: 'manager.orderPage.actions.take',
             },
           ]
-        : [{ key: 'cancel', event: 'cancel', icon: 'close', labelKey: 'history.cancel' }];
+        : [];
     case 2:
       return props.mode === 'manager'
         ? [
