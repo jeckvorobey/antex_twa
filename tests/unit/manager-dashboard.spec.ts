@@ -176,6 +176,10 @@ describe('manager dashboard contract', () => {
     await flushPromises();
     expect(wrapper.find('manager-active-order-queue-stub').exists()).toBe(true);
     expect(wrapper.text()).not.toContain('Не удалось загрузить заявки');
+    expect(wrapper.text()).toContain('Не удалось обновить заявки. Показаны последние данные.');
+
+    await wrapper.get('.manager-dashboard__refresh-retry').trigger('click');
+    expect(loadOrders).toHaveBeenCalledTimes(2);
 
     store.orders = [];
     store.ordersError = null;

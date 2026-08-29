@@ -1,20 +1,31 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
+import { createPinia, setActivePinia } from 'pinia';
 import { mount } from '@vue/test-utils';
-import { QBtn, QIcon, QInput, Quasar } from 'quasar';
-import { describe, expect, it } from 'vitest';
+import { QAvatar, QBtn, QIcon, QImg, QInput, QSpinner, Quasar } from 'quasar';
+import { createI18n } from 'vue-i18n';
+import { describe, expect, it, vi } from 'vitest';
 
+import ConnectionStatePill from '@components/manager/ConnectionStatePill.vue';
 import ManagerChatFilters from '@components/manager/ManagerChatFilters.vue';
 import ManagerChatSearch from '@components/manager/ManagerChatSearch.vue';
+import ru from '@i18n/ru';
+import ManagerChatPage from '@pages/manager/ManagerChatPage.vue';
+import ManagerProfilePage from '@pages/manager/ManagerProfilePage.vue';
 
 const pagePath = resolve(process.cwd(), 'src/pages/manager/ManagerChatsPage.vue');
-const detailPath = resolve(process.cwd(), 'src/pages/manager/ManagerChatPage.vue');
-const profilePath = resolve(process.cwd(), 'src/pages/manager/ManagerProfilePage.vue');
 const itemPath = resolve(process.cwd(), 'src/components/manager/ConversationListItem.vue');
 const searchPath = resolve(process.cwd(), 'src/components/manager/ManagerChatSearch.vue');
 const filtersPath = resolve(process.cwd(), 'src/components/manager/ManagerChatFilters.vue');
 const listPath = resolve(process.cwd(), 'src/components/manager/ManagerConversationList.vue');
+
+const routerPush = vi.fn();
+
+vi.mock('vue-router', () => ({
+  useRoute: () => ({ params: { conversationId: 'invalid' } }),
+  useRouter: () => ({ push: routerPush }),
+}));
 
 describe('manager chats Penpot composition', () => {
   it('preserves search clear and boolean filter events', async () => {
@@ -81,11 +92,31 @@ describe('manager chats Penpot composition', () => {
     expect(item).not.toContain(':src="conversation.user.photoUrl"');
   });
 
-  it('keeps search out of Chat Detail and connection state in one Profile location', () => {
-    const detail = readFileSync(detailPath, 'utf8');
-    const profile = readFileSync(profilePath, 'utf8');
+  it('keeps search out of rendered Chat Detail and connection state in one Profile location', () => {
+    const pinia = createPinia();
+    setActivePinia(pinia);
+    const global = {
+      plugins: [
+        pinia,
+        Quasar,
+        createI18n({ legacy: false, locale: 'ru', messages: { ru } }),
+      ],
+      components: { QAvatar, QBtn, QImg, QSpinner },
+      stubs: {
+        AppHeaderBar: true,
+        AntexCard: { template: '<section><slot /></section>' },
+        ChatComposer: true,
+        ManagerPageHeader: { template: '<header><slot name="trailing" /></header>' },
+        OrderCard: true,
+        QPage: { template: '<main><slot /></main>' },
+        ConnectionStatePill: { template: '<span class="connection-state-pill-stub" />' },
+      },
+    };
 
-    expect(detail).not.toContain('ManagerChatSearch');
-    expect(profile.match(/<ConnectionStatePill/g)).toHaveLength(1);
+    const detail = mount(ManagerChatPage, { global });
+    const profile = mount(ManagerProfilePage, { global });
+
+    expect(detail.findComponent(ManagerChatSearch).exists()).toBe(false);
+    expect(profile.findAllComponents(ConnectionStatePill)).toHaveLength(1);
   });
 });

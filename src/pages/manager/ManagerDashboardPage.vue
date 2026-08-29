@@ -42,6 +42,26 @@
       </div>
 
       <div
+        v-if="chatStore.ordersError && chatStore.orders.length"
+        class="manager-dashboard__refresh-error"
+        role="status"
+        aria-live="polite"
+      >
+        <span>{{ t('manager.dashboard.refreshError') }}</span>
+        <q-btn
+          flat
+          round
+          dense
+          icon="refresh"
+          class="manager-dashboard__refresh-retry"
+          :aria-label="t('common.retry')"
+          @click="loadOrders"
+        >
+          <q-tooltip>{{ t('common.retry') }}</q-tooltip>
+        </q-btn>
+      </div>
+
+      <div
         v-if="chatStore.ordersLoading && !chatStore.orders.length"
         class="manager-dashboard__loading"
       >

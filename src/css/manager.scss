@@ -531,6 +531,34 @@ body.manager-workspace-active {
   font-weight: 600;
 }
 
+.manager-dashboard__refresh-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+  padding: 4px 6px 4px 10px;
+  border: 1px solid color-mix(in srgb, var(--q-warning) 42%, transparent);
+  border-radius: 10px;
+  color: var(--antex-text-secondary);
+  background: color-mix(in srgb, var(--q-warning) 8%, var(--antex-bg-card));
+  font-family: 'Inter Tight', sans-serif;
+  font-size: 11px;
+  line-height: 1.25;
+}
+
+.manager-dashboard__refresh-error span {
+  min-width: 0;
+  flex: 1;
+}
+
+.manager-dashboard__refresh-retry {
+  width: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  flex: 0 0 44px;
+  color: var(--antex-gold-base);
+}
+
 .manager-active-order-queue {
   position: relative;
   width: 100%;
@@ -1083,6 +1111,12 @@ body.manager-workspace-active {
     grid-template-columns: minmax(0, 1fr);
     align-items: stretch;
     gap: 1px;
+    overflow: visible;
+  }
+
+  .manager-active-order-queue-item {
+    height: auto;
+    min-height: 108px;
     overflow: visible;
   }
 
