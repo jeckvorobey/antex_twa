@@ -259,10 +259,19 @@ describe('manager localized states', () => {
       global: options,
     });
 
-    expect(bubble.get('.manager-chat-bubble__delivery .q-sr-only').text()).toBe('Отправляется');
+    expect(bubble.get('.manager-chat-bubble__delivery').attributes('aria-label')).toBe(
+      'Отправляется',
+    );
 
     await bubble.setProps({ message: makeOutboundMessage('sent') });
-    expect(bubble.get('.manager-chat-bubble__delivery .q-sr-only').text()).toBe('Отправлено');
+    expect(bubble.get('.manager-chat-bubble__delivery').attributes('aria-label')).toBe(
+      'Отправлено',
+    );
+
+    await bubble.setProps({ message: makeOutboundMessage('failed') });
+    expect(bubble.get('.manager-chat-bubble__delivery').attributes('aria-label')).toBeUndefined();
+    expect(bubble.findAll('.manager-chat-bubble__failed')).toHaveLength(1);
+    expect(bubble.get('.manager-chat-bubble__failed').text()).toBe('Не доставлено');
   });
 
   it('gives the voice attachment player a localized accessible name', async () => {

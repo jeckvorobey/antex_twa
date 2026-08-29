@@ -13,12 +13,16 @@
         <span
           v-if="message.direction === 'outbound'"
           class="manager-chat-bubble__delivery"
-          role="status"
+          :role="deliveryStatusLabel ? 'status' : undefined"
+          :aria-label="deliveryStatusLabel || undefined"
         >
           <q-icon v-if="message.deliveryStatus === 'failed'" name="error_outline" size="14px" />
           <q-icon v-else-if="message.deliveryStatus === 'sent'" name="done" size="14px" />
-          <q-spinner-dots v-else-if="message.deliveryStatus === 'pending'" size="14px" />
-          <span v-if="deliveryStatusLabel" class="q-sr-only">{{ deliveryStatusLabel }}</span>
+          <q-spinner-dots
+            v-else-if="message.deliveryStatus === 'pending'"
+            size="14px"
+            aria-hidden="true"
+          />
         </span>
       </div>
       <div v-if="message.deliveryStatus === 'failed'" class="manager-chat-bubble__failed">
@@ -45,9 +49,6 @@ const deliveryStatusLabel = computed(() => {
   }
   if (props.message.deliveryStatus === 'sent') {
     return t('manager.chat.message.sent');
-  }
-  if (props.message.deliveryStatus === 'failed') {
-    return t('manager.chat.message.failed');
   }
   return '';
 });
