@@ -172,6 +172,12 @@ describe('manager dashboard contract', () => {
     await wrapper.get('.antex-empty-state__action').trigger('click');
     expect(loadOrders).toHaveBeenCalledTimes(1);
 
+    store.orders = [makeOrder(1, 'RUB', 25_000, '2026-08-21T08:00:00+03:00')];
+    await flushPromises();
+    expect(wrapper.find('manager-active-order-queue-stub').exists()).toBe(true);
+    expect(wrapper.text()).not.toContain('Не удалось загрузить заявки');
+
+    store.orders = [];
     store.ordersError = null;
     await flushPromises();
     expect(wrapper.text()).toContain('Активных заявок сейчас нет');

@@ -49,7 +49,7 @@
         <AntexSkeleton preset="cell" />
       </div>
       <AntexEmptyState
-        v-else-if="chatStore.ordersError"
+        v-else-if="chatStore.ordersError && !chatStore.orders.length"
         :title="t('manager.orders.error.title')"
         :description="t('manager.orders.error.text')"
         :action-label="t('common.retry')"
