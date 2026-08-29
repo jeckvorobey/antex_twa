@@ -6,6 +6,7 @@
       round
       dense
       icon="add"
+      class="manager-chat-composer__attach"
       :aria-label="t('manager.chat.composer.attach')"
       :disable="sending"
       @click="fileInput?.click()"

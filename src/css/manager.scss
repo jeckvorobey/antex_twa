@@ -141,6 +141,15 @@ body.manager-workspace-active {
   color: var(--antex-gold-base);
 }
 
+.manager-page-header__back,
+.manager-chat-composer__attach,
+.manager-chat-composer__send {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+}
+
 .manager-page-header__copy {
   min-width: 0;
   flex: 1;
@@ -697,6 +706,7 @@ body.manager-workspace-active {
 
 .manager-dashboard__empty {
   padding: 24px 16px;
+  border: 1px solid var(--antex-manager-outline);
   border-radius: var(--antex-radius-card);
   color: var(--antex-text-muted);
   background: color-mix(in srgb, var(--antex-bg-card) 88%, transparent);
@@ -726,6 +736,8 @@ body.manager-workspace-active {
 
 .manager-chat-load-earlier {
   align-self: center;
+  min-width: 44px;
+  min-height: 44px;
   color: var(--antex-text-muted);
 }
 
@@ -929,6 +941,7 @@ body.manager-workspace-active {
   display: grid;
   width: 52px;
   height: 52px;
+  overflow: hidden;
   place-items: center;
   border-radius: 18px;
   color: var(--antex-bg-deep);

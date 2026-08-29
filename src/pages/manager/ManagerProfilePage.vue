@@ -5,7 +5,18 @@
     <h1 class="manager-profile__title">{{ t('manager.profile.title') }}</h1>
 
     <AntexCard tag="section" class="manager-profile-card">
-      <div class="manager-profile-card__avatar">{{ initials }}</div>
+      <q-avatar class="manager-profile-card__avatar">
+        <q-img
+          v-if="profilePhotoUrl"
+          :src="profilePhotoUrl"
+          fit="cover"
+          width="100%"
+          height="100%"
+          :alt="displayName"
+          no-spinner
+        />
+        <span v-else class="manager-profile-card__initials">{{ initials }}</span>
+      </q-avatar>
       <div>
         <div class="manager-profile-card__name">{{ displayName }}</div>
         <div class="manager-profile-card__role">{{ t('manager.profile.role') }}</div>
@@ -51,10 +62,13 @@ import AntexCard from '@components/ui/AntexCard.vue';
 import AppHeaderBar from '@components/ui/AppHeaderBar.vue';
 import { useAuthStore } from '@stores/auth.store';
 import { useManagerRealtimeStore } from '@stores/manager-realtime.store';
+import { toSafeExternalUrl } from '@utils/safe-external-url';
 
 const authStore = useAuthStore();
 const realtimeStore = useManagerRealtimeStore();
 const { t } = useI18n();
+
+const profilePhotoUrl = computed(() => toSafeExternalUrl(authStore.user?.photo_url));
 
 const displayName = computed(() => {
   const user = authStore.user;
