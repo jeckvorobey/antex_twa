@@ -105,6 +105,25 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
 
   const activeConversationId = computed(() => activeConversation.value?.id ?? null);
 
+  function publishDeliveryStatus(
+    message: ManagerChatMessage,
+    previousStatus: string | undefined,
+  ): void {
+    if (
+      message.direction !== 'outbound' ||
+      previousStatus === message.deliveryStatus ||
+      !['pending', 'sent', 'failed'].includes(message.deliveryStatus)
+    ) {
+      return;
+    }
+    deliveryStatusEvent.value = {
+      sequence: ++deliveryStatusEventSequence,
+      conversationId: message.conversationId,
+      messageId: message.id,
+      deliveryStatus: message.deliveryStatus,
+    };
+  }
+
   /** Проверяет DTO диалога по фактическим search/unread фильтрам на момент события. */
   function matchesCurrentConversationFilters(conversation: ManagerConversation): boolean {
     if (unreadOnly.value && conversation.unreadCount === 0) {
@@ -189,19 +208,7 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
       next.splice(position, 0, message);
     }
     messages.value = next;
-    if (
-      announceDelivery &&
-      message.direction === 'outbound' &&
-      previousMessage?.deliveryStatus !== message.deliveryStatus &&
-      ['pending', 'sent', 'failed'].includes(message.deliveryStatus)
-    ) {
-      deliveryStatusEvent.value = {
-        sequence: ++deliveryStatusEventSequence,
-        conversationId: message.conversationId,
-        messageId: message.id,
-        deliveryStatus: message.deliveryStatus,
-      };
-    }
+    if (announceDelivery) publishDeliveryStatus(message, previousMessage?.deliveryStatus);
     if (activeConversation.value) {
       activeConversation.value.lastMessage = message;
       activeConversation.value.lastMessageAt = message.createdAt;
@@ -355,6 +362,11 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
     }
     if (activeConversation.value) {
       const conversationId = activeConversation.value.id;
+      const previousDeliveryStatuses = new Map(
+        messages.value
+          .filter((message) => message.direction === 'outbound')
+          .map((message) => [message.id, message.deliveryStatus]),
+      );
       const { controller, detach, generation } = beginActiveConversationRequest(config.signal);
       try {
         const [conversation, response] = await Promise.all([
@@ -371,6 +383,9 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
         activeConversation.value = conversation;
         messages.value = response.items;
         hasMoreMessages.value = response.hasMore;
+        for (const message of response.items) {
+          publishDeliveryStatus(message, previousDeliveryStatuses.get(message.id));
+        }
       } catch (error) {
         if (!controller.signal.aborted) {
           throw error;

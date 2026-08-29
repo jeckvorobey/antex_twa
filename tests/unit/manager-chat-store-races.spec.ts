@@ -199,6 +199,34 @@ describe('manager chat store request races', () => {
     expect(store.messages.map((item) => item.id)).toEqual([110]);
   });
 
+  it('publishes changed outbound delivery status discovered by REST reconcile', async () => {
+    const store = useManagerChatStore();
+    const pending = {
+      ...makeMessage(120, 12),
+      direction: 'outbound' as const,
+      deliveryStatus: 'pending',
+    };
+    const sent = { ...pending, deliveryStatus: 'sent' };
+    vi.mocked(fetchManagerChat).mockResolvedValue(makeConversation(12));
+    vi.mocked(fetchManagerChatMessages)
+      .mockResolvedValueOnce({ items: [pending], hasMore: false })
+      .mockResolvedValueOnce({ items: [sent], hasMore: false });
+    vi.mocked(fetchManagerChats).mockResolvedValue(makeChatList([]));
+    vi.mocked(fetchManagerOrders).mockResolvedValue({ items: [] });
+
+    await store.openConversation(12);
+    expect(store.deliveryStatusEvent).toBeNull();
+
+    await store.reconcile();
+
+    expect(store.deliveryStatusEvent).toEqual({
+      sequence: 1,
+      conversationId: 12,
+      messageId: 120,
+      deliveryStatus: 'sent',
+    });
+  });
+
   it('P2-5 поздний markRead после route leave не перезаписывает realtime unread', async () => {
     const store = useManagerChatStore();
     const readRequest = deferred<{
