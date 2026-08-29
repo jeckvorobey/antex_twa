@@ -25,6 +25,7 @@ vi.mock('@services/manager-chat', () => ({
 
 describe('ManagerLayout initial loading', () => {
   beforeEach(() => {
+    document.body.classList.remove('manager-workspace-active');
     setActivePinia(createPinia());
   });
 
@@ -60,5 +61,9 @@ describe('ManagerLayout initial loading', () => {
     expect(loadChats).not.toHaveBeenCalled();
     expect(loadOrders).not.toHaveBeenCalled();
     expect(wrapper.find('.app-layout-background').exists()).toBe(true);
+    expect(document.body.classList.contains('manager-workspace-active')).toBe(true);
+
+    wrapper.unmount();
+    expect(document.body.classList.contains('manager-workspace-active')).toBe(false);
   });
 });

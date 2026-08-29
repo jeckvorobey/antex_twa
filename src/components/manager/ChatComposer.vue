@@ -1,5 +1,5 @@
 <template>
-  <div class="manager-chat-composer antex-border-gold--muted">
+  <div class="manager-chat-composer">
     <input ref="fileInput" type="file" class="manager-chat-composer__file-input" @change="onFileChange" />
     <q-btn
       flat

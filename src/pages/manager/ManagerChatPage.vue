@@ -86,7 +86,11 @@ import OrderCard from '@components/orders/OrderCard.vue';
 import { useManagerChatStore } from '@stores/manager-chat.store';
 import { useManagerRealtimeStore } from '@stores/manager-realtime.store';
 import type { ManagerChatMessage } from '@types/manager-chat';
-import { managerUserFullName, shouldAutoScrollMessages } from '@utils/manager-chat';
+import {
+  managerScrollBehavior,
+  managerUserFullName,
+  shouldAutoScrollMessages,
+} from '@utils/manager-chat';
 import { localDateKey } from '@utils/date-groups';
 
 interface DateTimelineItem {
@@ -109,6 +113,7 @@ const chatStore = useManagerChatStore();
 const realtimeStore = useManagerRealtimeStore();
 const { locale, t } = useI18n();
 const { notify } = useAntexNotify();
+const reducedMotionQuery = window.matchMedia?.('(prefers-reduced-motion: reduce)');
 const conversationId = computed(() => Number(route.params.conversationId));
 const draftText = ref('');
 
@@ -227,7 +232,10 @@ async function sendFile(file: File): Promise<void> {
 
 async function scrollToBottom(): Promise<void> {
   await nextTick();
-  window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
+  window.scrollTo({
+    top: document.documentElement.scrollHeight,
+    behavior: managerScrollBehavior(reducedMotionQuery?.matches ?? false),
+  });
 }
 
 function goBack(): void {

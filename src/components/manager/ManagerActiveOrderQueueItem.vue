@@ -16,6 +16,7 @@
         ]"
         aria-hidden="true"
       />
+      <span class="q-sr-only">{{ t(view.statusLabelKey) }}</span>
     </div>
 
     <OrderAmountFlow
@@ -24,6 +25,10 @@
       :currency-buy="view.currencyBuy"
       :amount-buy="view.amountBuy"
     />
+
+    <div v-if="view.rateText" class="manager-active-order-queue-item__rate">
+      {{ view.rateText }}
+    </div>
 
     <div class="manager-active-order-queue-item__meta">{{ metaText }}</div>
   </article>

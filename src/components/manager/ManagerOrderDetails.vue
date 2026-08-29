@@ -1,5 +1,5 @@
 <template>
-  <section class="manager-order-details antex-border-gold">
+  <section class="manager-order-details">
     <h2 class="manager-order-details__title">{{ t('manager.orderDetails.title') }}</h2>
     <dl class="manager-order-details__list">
       <div v-if="customerName" class="manager-order-details__row">

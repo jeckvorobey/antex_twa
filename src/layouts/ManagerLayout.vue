@@ -1,12 +1,5 @@
 <template>
-  <q-layout
-    view="lHh Lpr lFf"
-    :class="[
-      'app-layout',
-      'manager-layout',
-      { 'manager-layout--dashboard': route.name === 'managerDashboard' },
-    ]"
-  >
+  <q-layout view="lHh Lpr lFf" class="app-layout manager-layout">
     <AppLayoutBackground />
     <q-page-container>
       <router-view />
@@ -17,7 +10,6 @@
 
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
 
 import AntexBottomNav from '@components/ui/AntexBottomNav.vue';
 import AppLayoutBackground from '@components/ui/AppLayoutBackground.vue';
@@ -26,9 +18,9 @@ import { useManagerRealtimeStore } from '@stores/manager-realtime.store';
 
 const chatStore = useManagerChatStore();
 const realtimeStore = useManagerRealtimeStore();
-const route = useRoute();
 
 onMounted(() => {
+  document.body.classList.add('manager-workspace-active');
   realtimeStore.start();
   if (!chatStore.chatsLoaded && !chatStore.loadingChats) {
     void chatStore.loadChats().catch(() => undefined);
@@ -39,6 +31,7 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
+  document.body.classList.remove('manager-workspace-active');
   realtimeStore.stop();
   realtimeStore.setViewing(null);
 });

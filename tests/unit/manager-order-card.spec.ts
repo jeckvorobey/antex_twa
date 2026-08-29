@@ -78,6 +78,7 @@ describe('OrderCard manager mode', () => {
     const wrapper = mountCard(makeOrder());
 
     expect(wrapper.classes()).toContain('antex-card--gold-border');
+    expect(wrapper.attributes('data-order-card-status')).toBe('2');
     expect(wrapper.classes()).not.toContain('manager-order-card');
     expect(wrapper.html()).not.toContain('manager-order-card__');
     expect(wrapper.get('.order-card__number').text()).toBe('#2026080127');

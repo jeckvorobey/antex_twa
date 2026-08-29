@@ -12,6 +12,7 @@
     ]"
     :data-order-card-mode="mode"
     :data-order-card-density="density"
+    :data-order-card-status="order.status"
     :role="selectableCard ? 'button' : undefined"
     :tabindex="selectableCard ? 0 : undefined"
     @click="select"

@@ -1,13 +1,8 @@
 <template>
-  <q-page class="manager-page">
-    <ManagerPageHeader
-      :title="t('manager.profile.title')"
-      :subtitle="t('manager.profile.subtitle')"
-    >
-      <template #trailing>
-        <ConnectionStatePill :state="realtimeStore.state" />
-      </template>
-    </ManagerPageHeader>
+  <q-page class="manager-page manager-profile">
+    <AppHeaderBar :eyebrow="t('manager.role')" profile-route-name="managerProfile" />
+
+    <h1 class="manager-profile__title">{{ t('manager.profile.title') }}</h1>
 
     <AntexCard tag="section" class="manager-profile-card">
       <div class="manager-profile-card__avatar">{{ initials }}</div>
@@ -18,24 +13,30 @@
     </AntexCard>
 
     <div class="manager-info-stack">
-      <AntexCard tag="section" class="manager-info-card">
-        <div class="manager-info-card__label">{{ t('manager.profile.realtime.label') }}</div>
-        <ConnectionStatePill :state="realtimeStore.state" />
-        <div class="manager-info-card__text">
-          {{ t('manager.profile.realtime.text') }}
+      <AntexCard tag="section" class="manager-info-card manager-info-card--realtime">
+        <div class="manager-info-card__copy">
+          <div class="manager-info-card__label">{{ t('manager.profile.realtime.label') }}</div>
+          <div class="manager-info-card__text">
+            {{ t('manager.profile.realtime.text') }}
+          </div>
         </div>
+        <ConnectionStatePill :state="realtimeStore.state" />
       </AntexCard>
 
       <AntexCard tag="section" class="manager-info-card">
-        <div class="manager-info-card__label">{{ t('manager.profile.notifications.label') }}</div>
-        <div class="manager-info-card__text">
-          {{ t('manager.profile.notifications.text') }}
+        <div class="manager-info-card__copy">
+          <div class="manager-info-card__label">{{ t('manager.profile.notifications.label') }}</div>
+          <div class="manager-info-card__text">
+            {{ t('manager.profile.notifications.text') }}
+          </div>
         </div>
       </AntexCard>
 
       <AntexCard v-if="authStore.user?.username" tag="section" class="manager-info-card">
-        <div class="manager-info-card__label">{{ t('manager.profile.telegram') }}</div>
-        <div class="manager-info-card__text">@{{ authStore.user.username }}</div>
+        <div class="manager-info-card__copy">
+          <div class="manager-info-card__label">{{ t('manager.profile.telegram') }}</div>
+          <div class="manager-info-card__text">@{{ authStore.user.username }}</div>
+        </div>
       </AntexCard>
     </div>
   </q-page>
@@ -46,8 +47,8 @@ import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 import ConnectionStatePill from '@components/manager/ConnectionStatePill.vue';
-import ManagerPageHeader from '@components/manager/ManagerPageHeader.vue';
 import AntexCard from '@components/ui/AntexCard.vue';
+import AppHeaderBar from '@components/ui/AppHeaderBar.vue';
 import { useAuthStore } from '@stores/auth.store';
 import { useManagerRealtimeStore } from '@stores/manager-realtime.store';
 

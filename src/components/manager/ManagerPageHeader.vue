@@ -1,5 +1,5 @@
 <template>
-  <header class="manager-page-header antex-border-gold--muted">
+  <header class="manager-page-header">
     <q-btn
       v-if="back"
       flat
