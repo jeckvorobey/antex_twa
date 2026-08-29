@@ -1078,6 +1078,23 @@ body.manager-workspace-active {
     bottom: 14px;
   }
 
+  .manager-active-order-queue-item .order-amount-flow {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
+    gap: 1px;
+    overflow: visible;
+  }
+
+  .manager-active-order-queue-item .order-amount-flow__row {
+    width: 100%;
+  }
+
+  .manager-active-order-queue-item .order-amount-flow__row--source,
+  .manager-active-order-queue-item .order-amount-flow__row--result {
+    flex: none;
+  }
+
   .manager-chat-composer {
     right: 12px;
     left: 12px;
