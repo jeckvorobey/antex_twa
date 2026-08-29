@@ -77,8 +77,9 @@ export default {
       unreadChats: '{count} новых',
       activeOrderTotals: 'Сумма активных заявок: {total}',
       queue: 'Очередь заявок',
-      viewAll: 'Смотреть все',
+      viewAll: 'Все заявки',
       empty: 'Активных заявок сейчас нет',
+      refreshError: 'Не удалось обновить заявки. Показаны последние данные.',
     },
     chats: {
       title: 'Чаты',

@@ -117,3 +117,7 @@ export function shouldAutoScrollMessages(
 ): boolean {
   return nextLatestId !== null && nextLatestId !== previousLatestId;
 }
+
+export function managerScrollBehavior(prefersReducedMotion: boolean): ScrollBehavior {
+  return prefersReducedMotion ? 'auto' : 'smooth';
+}

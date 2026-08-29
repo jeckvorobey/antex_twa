@@ -1,18 +1,68 @@
-.manager-layout {
-  min-height: 100vh;
-  color: var(--antex-text-primary);
-}
-
-.manager-layout--dashboard {
+.manager-layout,
+body.manager-workspace-active {
+  --antex-bg-primary: #0f2a26;
+  --antex-bg-card: #123530;
+  --antex-bg-deep: #0a1f1c;
   --antex-gold-base: #ffb300;
+  --q-primary: var(--antex-gold-base);
   --antex-gold-light: #f1c769;
   --antex-gold-dark: #c79539;
   --antex-border-gold: #ffb300;
   --antex-border-gold-muted: rgba(255, 179, 0, 0.3);
+  --antex-border-gold-subtle: rgba(255, 179, 0, 0.16);
   --antex-gold-border: var(--antex-border-gold-muted);
   --antex-gold-soft: rgba(255, 179, 0, 0.08);
   --antex-gold-gradient: linear-gradient(135deg, #f1c769, #ffb300, #c79539);
+  --antex-text-primary: #ffffff;
+  --antex-text-secondary: #cfcfcf;
   --antex-text-muted: #aab7b4;
+  --antex-separator: rgba(170, 183, 180, 0.18);
+  --antex-manager-outline: #2d4c48;
+  --antex-manager-outbound: #1e3f3b;
+  --antex-manager-outbound-outline: #3d5a55;
+  min-height: 100vh;
+  overflow-x: clip;
+  color: var(--antex-text-primary);
+}
+
+@supports (color: color-mix(in srgb, black, white)) {
+  .manager-layout,
+  body.manager-workspace-active {
+    --antex-manager-outline: color-mix(
+      in srgb,
+      var(--antex-bg-card) 82%,
+      var(--antex-text-muted) 18%
+    );
+    --antex-manager-outbound: color-mix(
+      in srgb,
+      var(--antex-bg-card) 92%,
+      var(--antex-text-muted) 8%
+    );
+    --antex-manager-outbound-outline: color-mix(
+      in srgb,
+      var(--antex-manager-outbound) 78%,
+      var(--antex-text-muted) 22%
+    );
+  }
+}
+
+body.manager-workspace-active {
+  --q-primary: var(--antex-gold-base) !important;
+}
+
+.manager-layout .app-layout-background {
+  background: var(--antex-bg-primary);
+}
+
+.manager-layout .antex-empty-state {
+  border: 1px solid var(--antex-manager-outline);
+}
+
+.manager-layout .q-btn:focus-visible,
+.manager-layout .q-field--focused .q-field__control,
+.manager-conversation-item:focus-visible {
+  outline: 2px solid var(--antex-gold-light);
+  outline-offset: 2px;
 }
 
 .manager-page {
@@ -33,7 +83,7 @@
 
 .manager-dashboard .app-header-bar {
   min-height: 44px;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
 }
 
 .manager-dashboard .app-header-bar__avatar-button,
@@ -44,7 +94,7 @@
 }
 
 .manager-dashboard__date {
-  margin: 0 0 22px;
+  margin: 0 0 16px;
   color: var(--antex-text-primary);
   font-family: 'Montserrat Alternates', 'Inter Tight', sans-serif;
   font-size: 24px;
@@ -81,15 +131,23 @@
   min-height: 66px;
   margin-bottom: 16px;
   padding: 12px 14px;
+  border: 1px solid var(--antex-manager-outline);
   border-radius: var(--antex-radius-card);
-  background: color-mix(in srgb, var(--antex-bg-deep) 88%, transparent);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
-  backdrop-filter: blur(16px);
+  background: var(--antex-bg-card);
 }
 
 .manager-page-header__back {
   flex: 0 0 auto;
   color: var(--antex-gold-base);
+}
+
+.manager-page-header__back,
+.manager-chat-composer__attach,
+.manager-chat-composer__send {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
 }
 
 .manager-page-header__copy {
@@ -186,7 +244,7 @@
 .manager-chat-toolbar {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 10px;
   margin-bottom: 12px;
 }
 
@@ -194,7 +252,8 @@
   min-height: 46px;
   padding: 0 14px;
   border-radius: 16px;
-  background: color-mix(in srgb, var(--antex-bg-deep) 88%, transparent);
+  border: 1px solid var(--antex-manager-outline);
+  background: var(--antex-bg-deep);
 }
 
 .manager-search-input .q-field__control,
@@ -205,14 +264,14 @@
 
 .manager-chat-filters {
   display: flex;
-  gap: 12px;
+  gap: 8px;
   overflow-x: auto;
   scrollbar-width: none;
 }
 
 .manager-filter-pill {
   min-height: 44px;
-  padding: 0 18px;
+  padding: 0 14px;
   border: 1px solid var(--antex-border-gold-muted);
   border-radius: 999px;
   color: var(--antex-text-muted);
@@ -356,10 +415,34 @@
   gap: 12px;
 }
 
+.manager-layout .order-card[data-order-card-mode='manager'] {
+  border: 1px solid var(--antex-manager-outline);
+  border-left: 2px solid var(--antex-gold-base);
+  background: var(--antex-bg-card);
+  box-shadow: none;
+}
+
+.manager-layout .order-card[data-order-card-mode='manager'][data-order-card-status='2'] {
+  border-left-color: var(--q-info);
+}
+
+.manager-layout .order-card[data-order-card-mode='manager'][data-order-card-status='3'] {
+  border-left-color: var(--q-positive);
+}
+
+.manager-layout .order-card[data-order-card-mode='manager'][data-order-card-status='4'] {
+  border-left-color: var(--q-negative);
+}
+
+.manager-layout .order-card[data-order-card-mode='manager'].order-card--selectable:focus-visible {
+  outline: 0;
+  box-shadow: var(--antex-focus-ring);
+}
+
 .manager-dashboard__metrics {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
+  gap: 12px;
   margin-bottom: 12px;
 }
 
@@ -371,9 +454,11 @@
   flex-direction: column;
   justify-content: space-between;
   padding: 16px;
-  border: 1px solid var(--antex-gold-base);
+  border: 1px solid var(--antex-manager-outline);
+  border-left: 2px solid var(--antex-gold-base);
   border-radius: var(--antex-radius-card);
   background: var(--antex-bg-card);
+  box-shadow: none;
 }
 
 .manager-dashboard-kpi__label {
@@ -410,7 +495,7 @@
 
 .manager-dashboard__totals {
   min-height: 16px;
-  margin: 0 0 24px;
+  margin: 0 0 14px;
   overflow: hidden;
   color: var(--antex-text-muted);
   font-family: 'Inter Tight', sans-serif;
@@ -446,26 +531,68 @@
   font-weight: 600;
 }
 
+.manager-dashboard__refresh-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+  padding: 4px 6px 4px 10px;
+  border: 1px solid color-mix(in srgb, var(--q-warning) 42%, transparent);
+  border-radius: 10px;
+  color: var(--antex-text-secondary);
+  background: color-mix(in srgb, var(--q-warning) 8%, var(--antex-bg-card));
+  font-family: 'Inter Tight', sans-serif;
+  font-size: 11px;
+  line-height: 1.25;
+}
+
+.manager-dashboard__refresh-error span {
+  min-width: 0;
+  flex: 1;
+}
+
+.manager-dashboard__refresh-retry {
+  width: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  flex: 0 0 44px;
+  color: var(--antex-gold-base);
+}
+
 .manager-active-order-queue {
   position: relative;
   width: 100%;
-  height: 344px;
+  height: 376px;
   padding: 0 8px;
   overflow: hidden auto;
-  border: 1px solid var(--antex-gold-base);
+  border: 1px solid var(--antex-manager-outline);
   border-radius: var(--antex-radius-card);
   background: var(--antex-bg-card);
-  scrollbar-color: var(--antex-gold-base) transparent;
+  scrollbar-color: var(--antex-gold-base) var(--antex-separator);
   scrollbar-width: thin;
+}
+
+.manager-active-order-queue::-webkit-scrollbar {
+  width: 2px;
+}
+
+.manager-active-order-queue::-webkit-scrollbar-track {
+  background: var(--antex-separator);
+}
+
+.manager-active-order-queue::-webkit-scrollbar-thumb {
+  background: var(--antex-gold-base);
 }
 
 .manager-active-order-queue-item {
   display: flex;
+  height: 88px;
   min-height: 88px;
+  overflow: hidden;
   flex-direction: column;
   justify-content: center;
-  gap: 4px;
-  padding: 8px;
+  gap: 3px;
+  padding: 6px 8px;
   border-radius: 8px;
   outline: none;
   cursor: pointer;
@@ -479,7 +606,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  min-height: 20px;
+  min-height: 16px;
   font-family: 'Inter Tight', sans-serif;
 }
 
@@ -521,23 +648,59 @@
   background: var(--q-negative);
 }
 
+.manager-active-order-queue-item__status-label {
+  flex: 0 0 auto;
+  color: var(--antex-text-secondary);
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
 .manager-active-order-queue-item .order-amount-flow {
+  display: flex;
+  min-width: 0;
+  align-items: center;
   gap: 5px;
-  margin-top: 6px;
+  margin-top: 0;
+  overflow: hidden;
+}
+
+.manager-active-order-queue-item .order-amount-flow__row {
+  min-width: 0;
+  flex-wrap: nowrap;
+  gap: 3px;
+}
+
+.manager-active-order-queue-item .order-amount-flow__row--source {
+  flex: 1 1 auto;
+}
+
+.manager-active-order-queue-item .order-amount-flow__row--result {
+  flex: 0 0 auto;
 }
 
 .manager-active-order-queue-item .order-amount-flow__source-amount {
-  font-size: 14px;
+  font-size: clamp(12px, 3.8vw, 13px);
   font-weight: 700;
 }
 
 .manager-active-order-queue-item .order-amount-flow__result-amount {
-  font-size: 16px;
+  font-size: clamp(13px, 4vw, 14px);
   font-weight: 800;
 }
 
 .manager-active-order-queue-item .order-amount-flow__mark {
-  font-size: 14px;
+  font-size: 12px;
+}
+
+.manager-active-order-queue-item .order-amount-flow__source-currency,
+.manager-active-order-queue-item .order-amount-flow__result-currency {
+  font-size: 10px;
+}
+
+.manager-active-order-queue-item .order-amount-flow__direction {
+  font-size: 12px;
 }
 
 .manager-active-order-queue-item__meta {
@@ -551,22 +714,24 @@
   white-space: nowrap;
 }
 
+.manager-active-order-queue-item__rate {
+  overflow: hidden;
+  color: var(--antex-text-muted);
+  font-family: 'Inter Tight', sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .manager-active-order-queue__separator {
   background: var(--antex-separator);
 }
 
-.manager-active-order-queue__expand {
-  position: sticky;
-  right: 0;
-  bottom: 4px;
-  float: right;
-  width: 44px;
-  min-height: 44px;
-  color: var(--antex-gold-base);
-}
-
 .manager-dashboard__empty {
   padding: 24px 16px;
+  border: 1px solid var(--antex-manager-outline);
   border-radius: var(--antex-radius-card);
   color: var(--antex-text-muted);
   background: color-mix(in srgb, var(--antex-bg-card) 88%, transparent);
@@ -596,6 +761,8 @@
 
 .manager-chat-load-earlier {
   align-self: center;
+  min-width: 44px;
+  min-height: 44px;
   color: var(--antex-text-muted);
 }
 
@@ -612,19 +779,19 @@
   max-width: min(82%, 460px);
   padding: 10px 12px 7px;
   border-radius: 20px;
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.14);
+  box-shadow: none;
 }
 
 .manager-chat-bubble--inbound {
-  border: 1px solid var(--antex-border-gold-subtle);
+  border: 1px solid var(--antex-manager-outline);
   border-bottom-left-radius: 7px;
-  background: #173b35;
+  background: var(--antex-bg-card);
 }
 
 .manager-chat-bubble--outbound {
-  border: 1px solid var(--antex-border-gold-muted);
+  border: 1px solid var(--antex-manager-outbound-outline);
   border-bottom-right-radius: 7px;
-  background: linear-gradient(145deg, #3a3624, #2d3225);
+  background: var(--antex-manager-outbound);
 }
 
 .manager-chat-bubble__text {
@@ -728,9 +895,9 @@
   min-height: 58px;
   padding: 7px 8px;
   border-radius: var(--antex-radius-card);
-  background: color-mix(in srgb, var(--antex-bg-deep) 94%, transparent);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(20px);
+  border: 1px solid var(--antex-manager-outline);
+  background: var(--antex-bg-deep);
+  box-shadow: none;
 }
 
 .manager-chat-composer__file-input {
@@ -752,12 +919,41 @@
   flex: 0 0 auto;
 }
 
+.manager-profile {
+  width: min(100%, 390px);
+  padding-right: 20px;
+  padding-left: 20px;
+  font-family: 'Inter Tight', sans-serif;
+}
+
+.manager-profile .app-header-bar {
+  min-height: 44px;
+  margin-bottom: 12px;
+}
+
+.manager-profile .app-header-bar__avatar-button,
+.manager-profile .app-header-bar__avatar {
+  width: 44px;
+  height: 44px;
+  min-height: 44px;
+}
+
+.manager-profile__title {
+  margin: 0 0 16px;
+  color: var(--antex-text-primary);
+  font-family: 'Montserrat Alternates', 'Inter Tight', sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
 .manager-profile-card,
 .manager-info-card {
-  padding: 18px;
+  padding: 14px 16px;
+  border: 1px solid var(--antex-manager-outline);
   border-radius: var(--antex-radius-card);
-  background: color-mix(in srgb, var(--antex-bg-card) 94%, transparent);
-  box-shadow: var(--antex-shadow-card);
+  background: var(--antex-bg-card);
+  box-shadow: none;
 }
 
 .manager-profile-card {
@@ -768,10 +964,11 @@
 
 .manager-profile-card__avatar {
   display: grid;
-  width: 58px;
-  height: 58px;
+  width: 52px;
+  height: 52px;
+  overflow: hidden;
   place-items: center;
-  border-radius: 19px;
+  border-radius: 18px;
   color: var(--antex-bg-deep);
   background: var(--antex-gold-gradient);
   font-weight: 800;
@@ -793,12 +990,25 @@
 .manager-info-stack {
   display: flex;
   flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.manager-info-card {
+  display: flex;
+  min-height: 76px;
+  align-items: center;
+  justify-content: space-between;
   gap: 12px;
-  margin-top: 14px;
+}
+
+.manager-info-card__copy {
+  min-width: 0;
+  flex: 1;
 }
 
 .manager-info-card__label {
-  margin-bottom: 10px;
+  margin-bottom: 4px;
   color: var(--antex-gold-base);
   font-size: 10px;
   font-weight: 800;
@@ -815,6 +1025,7 @@
 .manager-order-details {
   width: min(100%, 343px);
   padding: 14px;
+  border: 1px solid var(--antex-manager-outline);
   border-radius: var(--antex-radius-card);
   margin: 12px auto 0;
   background: color-mix(in srgb, var(--antex-bg-card) 94%, transparent);
@@ -865,6 +1076,73 @@
   }
   50% {
     opacity: 1;
+  }
+}
+
+@media (max-width: 359px) {
+  .manager-page,
+  .manager-dashboard,
+  .manager-chats,
+  .manager-profile {
+    padding-right: 12px;
+    padding-left: 12px;
+  }
+
+  .manager-dashboard__date,
+  .manager-profile__title {
+    font-size: 22px;
+  }
+
+  .manager-dashboard__metrics {
+    gap: 8px;
+  }
+
+  .manager-dashboard-kpi {
+    padding: 12px;
+  }
+
+  .manager-dashboard-kpi__trend {
+    right: 12px;
+    bottom: 14px;
+  }
+
+  .manager-active-order-queue-item .order-amount-flow {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
+    gap: 1px;
+    overflow: visible;
+  }
+
+  .manager-active-order-queue-item {
+    height: auto;
+    min-height: 108px;
+    overflow: visible;
+  }
+
+  .manager-active-order-queue-item .order-amount-flow__row {
+    width: 100%;
+  }
+
+  .manager-active-order-queue-item .order-amount-flow__row--source,
+  .manager-active-order-queue-item .order-amount-flow__row--result {
+    flex: none;
+  }
+
+  .manager-chat-composer {
+    right: 12px;
+    left: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .manager-layout *,
+  .manager-layout *::before,
+  .manager-layout *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
 

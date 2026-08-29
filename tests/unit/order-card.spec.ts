@@ -89,6 +89,8 @@ describe('shared OrderCard', () => {
     }
     expect(user.attributes('data-order-card-mode')).toBe('user');
     expect(manager.attributes('data-order-card-mode')).toBe('manager');
+    expect(user.attributes('data-order-card-status')).toBe('3');
+    expect(manager.attributes('data-order-card-status')).toBe('3');
     expect(user.find('.order-card__customer').exists()).toBe(false);
     expect(manager.get('.order-card__customer').text()).toBe('Сергей Иванов');
     expect(manager.html()).not.toContain('manager-order-card__');

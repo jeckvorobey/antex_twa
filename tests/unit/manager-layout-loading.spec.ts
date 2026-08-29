@@ -25,10 +25,11 @@ vi.mock('@services/manager-chat', () => ({
 
 describe('ManagerLayout initial loading', () => {
   beforeEach(() => {
+    document.body.classList.remove('manager-workspace-active');
     setActivePinia(createPinia());
   });
 
-  it('does not duplicate list requests already started by the active page', async () => {
+  it('owns the manager workspace scope without duplicating active page requests', async () => {
     const pinia = createPinia();
     setActivePinia(pinia);
     const chatStore = useManagerChatStore();
@@ -60,5 +61,9 @@ describe('ManagerLayout initial loading', () => {
     expect(loadChats).not.toHaveBeenCalled();
     expect(loadOrders).not.toHaveBeenCalled();
     expect(wrapper.find('.app-layout-background').exists()).toBe(true);
+    expect(document.body.classList.contains('manager-workspace-active')).toBe(true);
+
+    wrapper.unmount();
+    expect(document.body.classList.contains('manager-workspace-active')).toBe(false);
   });
 });

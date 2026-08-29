@@ -1,5 +1,8 @@
 <template>
-  <q-page class="manager-page manager-dashboard">
+  <q-page
+    class="manager-page manager-dashboard"
+    :aria-busy="chatStore.ordersLoading"
+  >
     <AppHeaderBar :eyebrow="t('manager.role')" profile-route-name="managerProfile" />
 
     <h1 class="manager-dashboard__date">{{ dashboardDate }}</h1>
@@ -38,12 +41,45 @@
         </q-btn>
       </div>
 
+      <div
+        v-if="chatStore.ordersError && chatStore.orders.length"
+        class="manager-dashboard__refresh-error"
+        role="status"
+        aria-live="polite"
+      >
+        <span>{{ t('manager.dashboard.refreshError') }}</span>
+        <q-btn
+          flat
+          round
+          dense
+          icon="refresh"
+          class="manager-dashboard__refresh-retry"
+          :aria-label="t('common.retry')"
+          @click="loadOrders"
+        >
+          <q-tooltip>{{ t('common.retry') }}</q-tooltip>
+        </q-btn>
+      </div>
+
+      <div
+        v-if="chatStore.ordersLoading && !chatStore.orders.length"
+        class="manager-dashboard__loading"
+      >
+        <AntexSkeleton preset="cell" />
+        <AntexSkeleton preset="cell" />
+      </div>
+      <AntexEmptyState
+        v-else-if="chatStore.ordersError && !chatStore.orders.length"
+        :title="t('manager.orders.error.title')"
+        :description="t('manager.orders.error.text')"
+        :action-label="t('common.retry')"
+        icon="cloud_off"
+        @action="loadOrders"
+      />
       <ManagerActiveOrderQueue
-        v-if="chatStore.orders.length"
+        v-else-if="chatStore.orders.length"
         :orders="chatStore.orders"
-        :view-all-label="t('manager.dashboard.viewAll')"
         @select="openOrder"
-        @view-all="openOrders"
       />
       <AntexCard v-else :elevated="false" class="manager-dashboard__empty">
         {{ t('manager.dashboard.empty') }}
@@ -60,6 +96,8 @@ import { useRouter } from 'vue-router';
 import ManagerActiveOrderQueue from '@components/manager/ManagerActiveOrderQueue.vue';
 import ManagerDashboardKpi from '@components/manager/ManagerDashboardKpi.vue';
 import AntexCard from '@components/ui/AntexCard.vue';
+import AntexEmptyState from '@components/ui/AntexEmptyState.vue';
+import AntexSkeleton from '@components/ui/AntexSkeleton.vue';
 import AppHeaderBar from '@components/ui/AppHeaderBar.vue';
 import { useManagerChatStore } from '@stores/manager-chat.store';
 import {
@@ -100,6 +138,14 @@ onBeforeUnmount(() => {
 /** Открывает полный список активных заявок. */
 function openOrders(): void {
   void router.push({ name: 'managerOrders' });
+}
+
+async function loadOrders(): Promise<void> {
+  try {
+    await chatStore.loadOrders();
+  } catch {
+    // Ошибка представлена отдельным retryable state из store.
+  }
 }
 
 /** Открывает выбранную заявку из оперативной очереди. */

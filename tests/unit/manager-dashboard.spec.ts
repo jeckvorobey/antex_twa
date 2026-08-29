@@ -1,8 +1,16 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-import { describe, expect, it } from 'vitest';
+import { createPinia, setActivePinia } from 'pinia';
+import { flushPromises, mount } from '@vue/test-utils';
+import { QBtn, QCard, QIcon, QSeparator, QSkeleton, QTooltip, Quasar } from 'quasar';
+import { createI18n } from 'vue-i18n';
+import { describe, expect, it, vi } from 'vitest';
 
+import ManagerActiveOrderQueue from '@components/manager/ManagerActiveOrderQueue.vue';
+import ru from '@i18n/ru';
+import ManagerDashboardPage from '@pages/manager/ManagerDashboardPage.vue';
+import { useManagerChatStore } from '@stores/manager-chat.store';
 import type { ManagerOrderSummary } from '@types/manager-chat';
 import {
   countTodayOrders,
@@ -22,6 +30,12 @@ const queueItemPath = resolve(
 const headerPath = resolve(process.cwd(), 'src/components/ui/AppHeaderBar.vue');
 const managerStylesPath = resolve(process.cwd(), 'src/css/manager.scss');
 const appStylesPath = resolve(process.cwd(), 'src/css/app.scss');
+
+const routerPush = vi.fn();
+
+vi.mock('vue-router', () => ({
+  useRouter: () => ({ push: routerPush }),
+}));
 
 function makeOrder(
   id: number,
@@ -98,13 +112,80 @@ describe('manager dashboard contract', () => {
     expect(source).not.toContain("import OrderCard from '@components/orders/OrderCard.vue'");
   });
 
-  it('limits the compact queue to four items and delegates each row', () => {
-    expect(existsSync(queuePath)).toBe(true);
-    const source = readFileSync(queuePath, 'utf8');
-    expect(source).toContain('orders.slice(0, 4)');
-    expect(source).toContain('<ManagerActiveOrderQueueItem');
-    expect(source).toContain("emit('select', order.id)");
-    expect(source).toContain("emit('viewAll')");
+  it('keeps every active order scrollable and exposes the exchange rate', () => {
+    const wrapper = mount(ManagerActiveOrderQueue, {
+      props: {
+        orders: [1, 2, 3, 4, 5].map((id) =>
+          makeOrder(id, 'RUB', 10_000, '2026-08-21T10:00:00+03:00'),
+        ),
+      },
+      global: {
+        plugins: [
+          Quasar,
+          createI18n({ legacy: false, locale: 'ru', messages: { ru } }),
+        ],
+        components: { QCard, QIcon, QSeparator },
+      },
+    });
+
+    expect(wrapper.findAll('.manager-active-order-queue-item')).toHaveLength(5);
+    expect(wrapper.text()).toContain('1 RUB = 0,33 THB');
+    expect(wrapper.text()).toContain('Создана');
+    expect(wrapper.get('.manager-active-order-queue-item__status-label').text()).toBe('Создана');
+    expect(wrapper.find('.manager-active-order-queue__expand').exists()).toBe(false);
+  });
+
+  it('keeps loading, retryable error and empty dashboard states distinct', async () => {
+    const pinia = createPinia();
+    setActivePinia(pinia);
+    const store = useManagerChatStore();
+    store.ordersLoading = true;
+    vi.spyOn(store, 'loadDashboardChatTotal').mockResolvedValue();
+    const loadOrders = vi.spyOn(store, 'loadOrders').mockResolvedValue();
+
+    const wrapper = mount(ManagerDashboardPage, {
+      global: {
+        plugins: [
+          pinia,
+          Quasar,
+          createI18n({ legacy: false, locale: 'ru', messages: { ru } }),
+        ],
+        stubs: {
+          AppHeaderBar: true,
+          ManagerDashboardKpi: true,
+          ManagerActiveOrderQueue: true,
+          QPage: { template: '<main><slot /></main>' },
+        },
+        components: { QBtn, QCard, QIcon, QSeparator, QSkeleton, QTooltip },
+      },
+    });
+
+    expect(wrapper.find('.manager-dashboard__loading').exists()).toBe(true);
+    expect(wrapper.text()).not.toContain('Активных заявок сейчас нет');
+
+    store.ordersLoading = false;
+    store.ordersError = 'load_failed';
+    await flushPromises();
+    expect(wrapper.text()).toContain('Не удалось загрузить заявки');
+    expect(wrapper.text()).not.toContain('Активных заявок сейчас нет');
+
+    await wrapper.get('.antex-empty-state__action').trigger('click');
+    expect(loadOrders).toHaveBeenCalledTimes(1);
+
+    store.orders = [makeOrder(1, 'RUB', 25_000, '2026-08-21T08:00:00+03:00')];
+    await flushPromises();
+    expect(wrapper.find('manager-active-order-queue-stub').exists()).toBe(true);
+    expect(wrapper.text()).not.toContain('Не удалось загрузить заявки');
+    expect(wrapper.text()).toContain('Не удалось обновить заявки. Показаны последние данные.');
+
+    await wrapper.get('.manager-dashboard__refresh-retry').trigger('click');
+    expect(loadOrders).toHaveBeenCalledTimes(2);
+
+    store.orders = [];
+    store.ordersError = null;
+    await flushPromises();
+    expect(wrapper.text()).toContain('Активных заявок сейчас нет');
+    wrapper.unmount();
   });
 
   it('keeps queue rows keyboard-accessible', () => {
@@ -149,16 +230,4 @@ describe('manager dashboard contract', () => {
     expect(appSource).toContain("font-family: 'Montserrat', 'Montserrat Alternates', sans-serif;");
   });
 
-  it('scopes the exact Penpot palette to the dashboard route shell', () => {
-    const stylesSource = readFileSync(managerStylesPath, 'utf8');
-    const layoutSource = readFileSync(
-      resolve(process.cwd(), 'src/layouts/ManagerLayout.vue'),
-      'utf8',
-    );
-    expect(layoutSource).toContain("'manager-layout--dashboard': route.name === 'managerDashboard'");
-    expect(stylesSource).toContain('.manager-layout--dashboard {');
-    expect(stylesSource).toContain('--antex-gold-base: #ffb300;');
-    expect(stylesSource).toContain('--antex-gold-light: #f1c769;');
-    expect(stylesSource).toContain('--antex-text-muted: #aab7b4;');
-  });
 });
