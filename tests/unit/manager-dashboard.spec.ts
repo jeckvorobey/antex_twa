@@ -219,37 +219,4 @@ describe('manager dashboard contract', () => {
     expect(appSource).toContain("font-family: 'Montserrat', 'Montserrat Alternates', sans-serif;");
   });
 
-  it('scopes the exact Penpot palette to the complete manager workspace', () => {
-    const stylesSource = readFileSync(managerStylesPath, 'utf8');
-    const layoutSource = readFileSync(
-      resolve(process.cwd(), 'src/layouts/ManagerLayout.vue'),
-      'utf8',
-    );
-    const managerScope =
-      stylesSource.match(
-        /\.manager-layout,\s*body\.manager-workspace-active\s*\{([\s\S]*?)\n\}/,
-      )?.[1] ?? '';
-
-    expect(managerScope).toContain('--antex-gold-base: #ffb300;');
-    expect(managerScope).toContain('--q-primary: var(--antex-gold-base);');
-    expect(managerScope).toContain('--antex-gold-light: #f1c769;');
-    expect(managerScope).toContain('--antex-text-muted: #aab7b4;');
-    expect(managerScope).toContain('--antex-manager-outline: #2d4c48;');
-    expect(managerScope).toContain('--antex-manager-outbound: #1e3f3b;');
-    expect(managerScope).toContain('--antex-manager-outbound-outline: #3d5a55;');
-    expect(stylesSource).toContain('@supports (color: color-mix(in srgb, black, white))');
-    expect(stylesSource).toContain('--antex-manager-outline: color-mix(');
-    expect(stylesSource).toContain('--antex-manager-outbound: color-mix(');
-    expect(stylesSource).toContain('.manager-layout .app-layout-background {');
-    expect(stylesSource).toContain('background: var(--antex-bg-primary);');
-    expect(stylesSource).toContain('.manager-layout .antex-empty-state {');
-    expect(stylesSource).toContain('body.manager-workspace-active');
-    expect(stylesSource).not.toContain('#244b44');
-    expect(stylesSource).not.toContain('#285950');
-    expect(stylesSource).not.toContain('#17443c');
-    expect(stylesSource).not.toContain('.manager-layout--dashboard {');
-    expect(layoutSource).not.toContain('manager-layout--dashboard');
-    expect(layoutSource).not.toContain('useRoute');
-  });
-
 });

@@ -29,7 +29,7 @@ describe('ManagerLayout initial loading', () => {
     setActivePinia(createPinia());
   });
 
-  it('does not duplicate list requests already started by the active page', async () => {
+  it('owns the manager workspace scope without duplicating active page requests', async () => {
     const pinia = createPinia();
     setActivePinia(pinia);
     const chatStore = useManagerChatStore();
