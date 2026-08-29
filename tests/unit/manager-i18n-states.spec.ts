@@ -269,9 +269,12 @@ describe('manager localized states', () => {
     );
 
     await bubble.setProps({ message: makeOutboundMessage('failed') });
-    expect(bubble.get('.manager-chat-bubble__delivery').attributes('aria-label')).toBeUndefined();
+    expect(bubble.get('.manager-chat-bubble__delivery').attributes('aria-label')).toBe(
+      'Не доставлено',
+    );
     expect(bubble.findAll('.manager-chat-bubble__failed')).toHaveLength(1);
     expect(bubble.get('.manager-chat-bubble__failed').text()).toBe('Не доставлено');
+    expect(bubble.get('.manager-chat-bubble__failed').attributes('aria-hidden')).toBe('true');
   });
 
   it('gives the voice attachment player a localized accessible name', async () => {

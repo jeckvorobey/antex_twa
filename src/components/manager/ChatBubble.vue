@@ -25,7 +25,11 @@
           />
         </span>
       </div>
-      <div v-if="message.deliveryStatus === 'failed'" class="manager-chat-bubble__failed">
+      <div
+        v-if="message.deliveryStatus === 'failed'"
+        class="manager-chat-bubble__failed"
+        aria-hidden="true"
+      >
         {{ t('manager.chat.message.failed') }}
       </div>
     </article>
@@ -49,6 +53,9 @@ const deliveryStatusLabel = computed(() => {
   }
   if (props.message.deliveryStatus === 'sent') {
     return t('manager.chat.message.sent');
+  }
+  if (props.message.deliveryStatus === 'failed') {
+    return t('manager.chat.message.failed');
   }
   return '';
 });
