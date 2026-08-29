@@ -259,17 +259,18 @@ describe('manager localized states', () => {
       global: options,
     });
 
-    expect(bubble.get('.manager-chat-bubble__delivery').attributes('aria-label')).toBe(
+    expect(bubble.get('.manager-chat-bubble__delivery .manager-visually-hidden').text()).toBe(
       'Отправляется',
     );
+    expect(bubble.get('.manager-chat-bubble__delivery').attributes('aria-label')).toBeUndefined();
 
     await bubble.setProps({ message: makeOutboundMessage('sent') });
-    expect(bubble.get('.manager-chat-bubble__delivery').attributes('aria-label')).toBe(
+    expect(bubble.get('.manager-chat-bubble__delivery .manager-visually-hidden').text()).toBe(
       'Отправлено',
     );
 
     await bubble.setProps({ message: makeOutboundMessage('failed') });
-    expect(bubble.get('.manager-chat-bubble__delivery').attributes('aria-label')).toBe(
+    expect(bubble.get('.manager-chat-bubble__delivery .manager-visually-hidden').text()).toBe(
       'Не доставлено',
     );
     expect(bubble.findAll('.manager-chat-bubble__failed')).toHaveLength(1);
