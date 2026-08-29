@@ -7,13 +7,14 @@
     <AntexCard tag="section" class="manager-profile-card">
       <q-avatar class="manager-profile-card__avatar">
         <q-img
-          v-if="profilePhotoUrl"
+          v-if="showProfilePhoto"
           :src="profilePhotoUrl"
           fit="cover"
           width="100%"
           height="100%"
           :alt="displayName"
           no-spinner
+          @error="handleProfilePhotoError"
         />
         <span v-else class="manager-profile-card__initials">{{ initials }}</span>
       </q-avatar>
@@ -54,7 +55,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 import ConnectionStatePill from '@components/manager/ConnectionStatePill.vue';
@@ -68,7 +69,17 @@ const authStore = useAuthStore();
 const realtimeStore = useManagerRealtimeStore();
 const { t } = useI18n();
 
+const profilePhotoFailed = ref(false);
 const profilePhotoUrl = computed(() => toSafeExternalUrl(authStore.user?.photo_url));
+const showProfilePhoto = computed(() => Boolean(profilePhotoUrl.value) && !profilePhotoFailed.value);
+
+watch(profilePhotoUrl, () => {
+  profilePhotoFailed.value = false;
+});
+
+function handleProfilePhotoError(): void {
+  profilePhotoFailed.value = true;
+}
 
 const displayName = computed(() => {
   const user = authStore.user;

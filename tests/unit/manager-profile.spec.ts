@@ -45,7 +45,9 @@ describe('manager profile identity', () => {
           QPage: { template: '<main><slot /></main>' },
           QImg: {
             props: ['src', 'alt'],
-            template: '<img class="manager-profile-photo-stub" :src="src" :alt="alt" />',
+            emits: ['error'],
+            template:
+              '<img class="manager-profile-photo-stub" :src="src" :alt="alt" @error="$emit(\'error\')" />',
           },
         },
       },
@@ -55,6 +57,18 @@ describe('manager profile identity', () => {
       'https://cdn.example.test/manager.jpg',
     );
     expect(wrapper.find('.manager-profile-card__initials').exists()).toBe(false);
+
+    await wrapper.get('.manager-profile-photo-stub').trigger('error');
+
+    expect(wrapper.find('.manager-profile-photo-stub').exists()).toBe(false);
+    expect(wrapper.get('.manager-profile-card__initials').text()).toBe('МИ');
+
+    authStore.user.photo_url = 'https://cdn.example.test/manager-new.jpg';
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.get('.manager-profile-photo-stub').attributes('src')).toBe(
+      'https://cdn.example.test/manager-new.jpg',
+    );
 
     authStore.user.photo_url = 'javascript:alert(1)';
     await wrapper.vm.$nextTick();
