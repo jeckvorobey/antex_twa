@@ -16,7 +16,9 @@
         ]"
         aria-hidden="true"
       />
-      <span class="q-sr-only">{{ t(view.statusLabelKey) }}</span>
+      <span class="manager-active-order-queue-item__status-label">
+        {{ t(view.statusLabelKey) }}
+      </span>
     </div>
 
     <OrderAmountFlow

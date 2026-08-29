@@ -131,6 +131,7 @@ describe('manager dashboard contract', () => {
     expect(wrapper.findAll('.manager-active-order-queue-item')).toHaveLength(5);
     expect(wrapper.text()).toContain('1 RUB = 0,33 THB');
     expect(wrapper.text()).toContain('Создана');
+    expect(wrapper.get('.manager-active-order-queue-item__status-label').text()).toBe('Создана');
     expect(wrapper.find('.manager-active-order-queue__expand').exists()).toBe(false);
   });
 
