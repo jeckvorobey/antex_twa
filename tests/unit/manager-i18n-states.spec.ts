@@ -201,7 +201,7 @@ describe('manager localized states', () => {
     wrapper.unmount();
   });
 
-  it('announces only new or changed delivery events, not loaded history', async () => {
+  it('announces reducer delivery events, not loaded history or message ids', async () => {
     const pinia = createPinia();
     setActivePinia(pinia);
     const historical = makeOutboundMessage('sent', 50);
@@ -237,13 +237,21 @@ describe('manager localized states', () => {
     await flushPromises();
     expect(announcer.text()).toBe('');
 
-    store.messages = [...store.messages, makeOutboundMessage('pending', 51)];
+    store.messages = [
+      ...store.messages,
+      { ...makeOutboundMessage('received', 100), direction: 'inbound' },
+    ];
+    await store.handleRealtimeEvent({
+      type: 'chat.message.updated',
+      payload: { message: makeOutboundMessage('pending', 51) },
+    });
     await flushPromises();
     expect(announcer.text()).toBe('Отправляется');
 
-    store.messages = store.messages.map((message) =>
-      message.id === 51 ? makeOutboundMessage('sent', 51) : message,
-    );
+    await store.handleRealtimeEvent({
+      type: 'chat.message.sent',
+      payload: { message: makeOutboundMessage('sent', 51) },
+    });
     await flushPromises();
     expect(announcer.text()).toBe('Отправлено');
   });

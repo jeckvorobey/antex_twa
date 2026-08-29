@@ -28,6 +28,13 @@ interface LinkedAbortController {
   detach: () => void;
 }
 
+interface DeliveryStatusEvent {
+  sequence: number;
+  conversationId: number;
+  messageId: number;
+  deliveryStatus: string;
+}
+
 /** Связывает локальную отмену запроса с внешним lifecycle signal. */
 function createLinkedAbortController(parentSignal?: AbortSignal): LinkedAbortController {
   const controller = new AbortController();
@@ -75,6 +82,7 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
   const activeConversationError = ref<string | null>(null);
   const hasMoreMessages = ref(false);
   const sending = ref(false);
+  const deliveryStatusEvent = ref<DeliveryStatusEvent | null>(null);
 
   const orders = ref<ManagerOrderSummary[]>([]);
   const ordersLoading = ref(false);
@@ -93,6 +101,7 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
   let ordersRequestGeneration = 0;
   let activeOrderRequestGeneration = 0;
   let unreadStateRevision = 0;
+  let deliveryStatusEventSequence = 0;
 
   const activeConversationId = computed(() => activeConversation.value?.id ?? null);
 
@@ -165,18 +174,34 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
     return low;
   }
 
-  function upsertMessage(message: ManagerChatMessage): void {
+  function upsertMessage(message: ManagerChatMessage, announceDelivery = false): void {
     if (activeConversation.value?.id !== message.conversationId) {
       return;
     }
     const position = findMessagePosition(message.id);
     const next = messages.value.slice();
-    if (messages.value[position]?.id === message.id) {
+    const previousMessage = messages.value[position]?.id === message.id
+      ? messages.value[position]
+      : undefined;
+    if (previousMessage) {
       next[position] = message;
     } else {
       next.splice(position, 0, message);
     }
     messages.value = next;
+    if (
+      announceDelivery &&
+      message.direction === 'outbound' &&
+      previousMessage?.deliveryStatus !== message.deliveryStatus &&
+      ['pending', 'sent', 'failed'].includes(message.deliveryStatus)
+    ) {
+      deliveryStatusEvent.value = {
+        sequence: ++deliveryStatusEventSequence,
+        conversationId: message.conversationId,
+        messageId: message.id,
+        deliveryStatus: message.deliveryStatus,
+      };
+    }
     if (activeConversation.value) {
       activeConversation.value.lastMessage = message;
       activeConversation.value.lastMessageAt = message.createdAt;
@@ -210,7 +235,7 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
   }
 
   function applySentMessage(message: ManagerChatMessage): void {
-    upsertMessage(message);
+    upsertMessage(message, true);
     const conversation = conversations.value.find((item) => item.id === message.conversationId);
     if (conversation) {
       conversation.lastMessage = message;
@@ -605,7 +630,7 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
           upsertConversation(conversation);
         }
         if (message) {
-          upsertMessage(message);
+          upsertMessage(message, true);
         }
         if (typeof nextUnread === 'number') {
           unreadStateRevision += 1;
@@ -697,6 +722,7 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
     activeConversationError,
     hasMoreMessages,
     sending,
+    deliveryStatusEvent,
     orders,
     ordersLoading,
     ordersError,

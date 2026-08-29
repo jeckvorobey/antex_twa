@@ -124,9 +124,6 @@ const reducedMotionQuery = window.matchMedia?.('(prefers-reduced-motion: reduce)
 const conversationId = computed(() => Number(route.params.conversationId));
 const draftText = ref('');
 const deliveryAnnouncement = ref('');
-let deliveryAnnouncementsEnabled = false;
-let knownDeliveryStatuses = new Map<number, string>();
-let latestKnownMessageId = 0;
 let deliveryAnnouncementRevision = 0;
 
 const conversationTitle = computed(() =>
@@ -188,8 +185,6 @@ async function loadConversation(): Promise<void> {
     ) {
       return;
     }
-    captureDeliveryStatuses(chatStore.messages, false);
-    deliveryAnnouncementsEnabled = true;
     await scrollToBottom();
   } catch {
     // Ошибка представлена отдельным retryable state из store.
@@ -211,14 +206,12 @@ watch(
 );
 
 watch(
-  () =>
-    chatStore.messages.map((message) => ({
-      id: message.id,
-      direction: message.direction,
-      deliveryStatus: message.deliveryStatus,
-    })),
-  (messages) => {
-    captureDeliveryStatuses(messages, deliveryAnnouncementsEnabled);
+  () => chatStore.deliveryStatusEvent?.sequence ?? 0,
+  () => {
+    const event = chatStore.deliveryStatusEvent;
+    if (!event || event.conversationId !== conversationId.value) return;
+    const label = deliveryStatusText(event.deliveryStatus);
+    if (label) announceDeliveryStatus(label);
   },
   { flush: 'post' },
 );
@@ -228,31 +221,6 @@ function deliveryStatusText(status: string): string {
   if (status === 'sent') return t('manager.chat.message.sent');
   if (status === 'failed') return t('manager.chat.message.failed');
   return '';
-}
-
-function captureDeliveryStatuses(
-  messages: Array<{ id: number; direction: string; deliveryStatus: string }>,
-  announce: boolean,
-): void {
-  const nextStatuses = new Map<number, string>();
-  let nextLatestMessageId = 0;
-  let nextAnnouncement = '';
-
-  for (const message of messages) {
-    nextLatestMessageId = Math.max(nextLatestMessageId, message.id);
-    if (message.direction !== 'outbound') continue;
-    nextStatuses.set(message.id, message.deliveryStatus);
-    const previousStatus = knownDeliveryStatuses.get(message.id);
-    const isNewLatest = previousStatus === undefined && message.id > latestKnownMessageId;
-    const statusChanged = previousStatus !== undefined && previousStatus !== message.deliveryStatus;
-    if (announce && (isNewLatest || statusChanged)) {
-      nextAnnouncement = deliveryStatusText(message.deliveryStatus) || nextAnnouncement;
-    }
-  }
-
-  knownDeliveryStatuses = nextStatuses;
-  latestKnownMessageId = nextLatestMessageId;
-  if (nextAnnouncement) announceDeliveryStatus(nextAnnouncement);
 }
 
 function announceDeliveryStatus(label: string): void {
@@ -266,9 +234,6 @@ function announceDeliveryStatus(label: string): void {
 }
 
 function resetDeliveryAnnouncements(): void {
-  deliveryAnnouncementsEnabled = false;
-  knownDeliveryStatuses = new Map();
-  latestKnownMessageId = 0;
   deliveryAnnouncementRevision += 1;
   deliveryAnnouncement.value = '';
 }
