@@ -14,7 +14,6 @@ import {
   Quasar,
 } from 'quasar';
 import { createI18n } from 'vue-i18n';
-import { nextTick } from 'vue';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import ChatComposer from '@components/manager/ChatComposer.vue';
@@ -64,9 +63,9 @@ import {
 } from '@services/manager-chat';
 import type { ManagerChatMessage } from '@types/manager-chat';
 
-function makeOutboundMessage(deliveryStatus: string): ManagerChatMessage {
+function makeOutboundMessage(deliveryStatus: string, id = 1): ManagerChatMessage {
   return {
-    id: 1,
+    id,
     conversationId: 7,
     direction: 'outbound',
     messageType: 'text',
@@ -135,6 +134,53 @@ describe('manager localized states', () => {
 
     routeHarness.route!.params.conversationId = '8';
     await vi.waitFor(() => expect(fetchManagerChat).toHaveBeenCalledWith(8, expect.anything()));
+  });
+
+  it('announces only new or changed delivery events, not loaded history', async () => {
+    const pinia = createPinia();
+    setActivePinia(pinia);
+    const historical = makeOutboundMessage('sent', 50);
+    vi.mocked(fetchManagerChat).mockResolvedValue({
+      id: 7,
+      status: 'open',
+      unreadCount: 0,
+      lastMessageAt: historical.createdAt,
+      user: {
+        id: 41,
+        telegramId: 900_041,
+        username: null,
+        firstName: 'Сергей',
+        lastName: 'Иванов',
+        photoUrl: null,
+      },
+      lastMessage: historical,
+      latestOrder: null,
+    });
+    vi.mocked(fetchManagerChatMessages).mockResolvedValue({
+      items: [historical],
+      hasMore: true,
+    });
+
+    const wrapper = mount(ManagerChatPage, { global: globalOptions(pinia) });
+    await vi.waitFor(() => expect(fetchManagerChatMessages).toHaveBeenCalled());
+    await flushPromises();
+    const announcer = wrapper.get('.manager-chat-delivery-announcer');
+    expect(announcer.text()).toBe('');
+
+    const store = useManagerChatStore();
+    store.messages = [makeOutboundMessage('failed', 10), historical];
+    await flushPromises();
+    expect(announcer.text()).toBe('');
+
+    store.messages = [...store.messages, makeOutboundMessage('pending', 51)];
+    await flushPromises();
+    expect(announcer.text()).toBe('Отправляется');
+
+    store.messages = store.messages.map((message) =>
+      message.id === 51 ? makeOutboundMessage('sent', 51) : message,
+    );
+    await flushPromises();
+    expect(announcer.text()).toBe('Отправлено');
   });
 
   it('tracks a failed chat list separately from an empty successful result', async () => {
@@ -253,20 +299,17 @@ describe('manager localized states', () => {
     expect((composer.get('textarea').element as HTMLTextAreaElement).value).toBe('Важный черновик');
   });
 
-  it('announces pending and sent delivery states to assistive technology', async () => {
+  it('exposes static delivery states to assistive technology', async () => {
     const options = globalOptions();
     const bubble = mount(ChatBubble, {
       props: { message: makeOutboundMessage('pending') },
       global: options,
     });
 
-    expect(bubble.get('.manager-chat-bubble__delivery .manager-visually-hidden').text()).toBe('');
-    await nextTick();
-    await nextTick();
     expect(bubble.get('.manager-chat-bubble__delivery .manager-visually-hidden').text()).toBe(
       'Отправляется',
     );
-    expect(bubble.get('.manager-chat-bubble__delivery').attributes('aria-label')).toBeUndefined();
+    expect(bubble.get('.manager-chat-bubble__delivery').attributes('role')).toBeUndefined();
 
     await bubble.setProps({ message: makeOutboundMessage('sent') });
     expect(bubble.get('.manager-chat-bubble__delivery .manager-visually-hidden').text()).toBe(
