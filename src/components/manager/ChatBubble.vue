@@ -13,7 +13,9 @@
         <span
           v-if="message.direction === 'outbound'"
           class="manager-chat-bubble__delivery"
-          :role="deliveryStatusLabel ? 'status' : undefined"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
         >
           <q-icon
             v-if="message.deliveryStatus === 'failed'"
@@ -32,8 +34,8 @@
             size="14px"
             aria-hidden="true"
           />
-          <span v-if="deliveryStatusLabel" class="manager-visually-hidden">
-            {{ deliveryStatusLabel }}
+          <span class="manager-visually-hidden">
+            {{ deliveryAnnouncement }}
           </span>
         </span>
       </div>
@@ -49,7 +51,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 import ChatAttachmentCard from '@components/manager/ChatAttachmentCard.vue';
@@ -71,6 +73,21 @@ const deliveryStatusLabel = computed(() => {
   }
   return '';
 });
+const deliveryAnnouncement = ref('');
+
+onMounted(() => {
+  void nextTick(() => {
+    deliveryAnnouncement.value = deliveryStatusLabel.value;
+  });
+});
+
+watch(
+  deliveryStatusLabel,
+  (label) => {
+    deliveryAnnouncement.value = label;
+  },
+  { flush: 'sync' },
+);
 const time = computed(() =>
   new Intl.DateTimeFormat(locale.value, { hour: '2-digit', minute: '2-digit' }).format(
     Date.parse(props.message.createdAt),

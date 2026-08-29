@@ -14,6 +14,7 @@ import {
   Quasar,
 } from 'quasar';
 import { createI18n } from 'vue-i18n';
+import { nextTick } from 'vue';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import ChatComposer from '@components/manager/ChatComposer.vue';
@@ -259,6 +260,9 @@ describe('manager localized states', () => {
       global: options,
     });
 
+    expect(bubble.get('.manager-chat-bubble__delivery .manager-visually-hidden').text()).toBe('');
+    await nextTick();
+    await nextTick();
     expect(bubble.get('.manager-chat-bubble__delivery .manager-visually-hidden').text()).toBe(
       'Отправляется',
     );
