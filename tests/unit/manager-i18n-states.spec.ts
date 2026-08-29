@@ -1,10 +1,24 @@
 import { createPinia, setActivePinia } from 'pinia';
 import { flushPromises, mount } from '@vue/test-utils';
-import { QAvatar, QBtn, QCard, QIcon, QImg, QInput, QSpinner, QTooltip, Quasar } from 'quasar';
+import {
+  QAvatar,
+  QBtn,
+  QCard,
+  QIcon,
+  QImg,
+  QInput,
+  QSkeleton,
+  QSpinner,
+  QSpinnerDots,
+  QTooltip,
+  Quasar,
+} from 'quasar';
 import { createI18n } from 'vue-i18n';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import ChatComposer from '@components/manager/ChatComposer.vue';
+import ChatAttachmentCard from '@components/manager/ChatAttachmentCard.vue';
+import ChatBubble from '@components/manager/ChatBubble.vue';
 import ConnectionStatePill from '@components/manager/ConnectionStatePill.vue';
 import OrderStatusChip from '@components/manager/OrderStatusChip.vue';
 import ru from '@i18n/ru';
@@ -42,10 +56,30 @@ vi.mock('@services/manager-chat', () => ({
 }));
 
 import {
+  fetchManagerAttachment,
   fetchManagerChat,
   fetchManagerChatMessages,
   fetchManagerChats,
 } from '@services/manager-chat';
+import type { ManagerChatMessage } from '@types/manager-chat';
+
+function makeOutboundMessage(deliveryStatus: string): ManagerChatMessage {
+  return {
+    id: 1,
+    conversationId: 7,
+    direction: 'outbound',
+    messageType: 'text',
+    text: 'Проверка',
+    caption: null,
+    deliveryStatus,
+    telegramMessageId: null,
+    replyToMessageId: null,
+    edited: false,
+    createdAt: '2026-08-29T07:00:00+03:00',
+    updatedAt: '2026-08-29T07:00:00+03:00',
+    attachments: [],
+  };
+}
 
 function globalOptions(pinia = createPinia()) {
   return {
@@ -54,7 +88,18 @@ function globalOptions(pinia = createPinia()) {
       Quasar,
       createI18n({ legacy: false, locale: 'ru', messages: { ru } }),
     ],
-    components: { QAvatar, QBtn, QCard, QIcon, QImg, QInput, QSpinner, QTooltip },
+    components: {
+      QAvatar,
+      QBtn,
+      QCard,
+      QIcon,
+      QImg,
+      QInput,
+      QSkeleton,
+      QSpinner,
+      QSpinnerDots,
+      QTooltip,
+    },
     stubs: {
       ManagerPageHeader: true,
       ConnectionStatePill: true,
@@ -205,5 +250,49 @@ describe('manager localized states', () => {
 
     expect(composer.emitted('send')).toEqual([['Важный черновик']]);
     expect((composer.get('textarea').element as HTMLTextAreaElement).value).toBe('Важный черновик');
+  });
+
+  it('announces pending and sent delivery states to assistive technology', async () => {
+    const options = globalOptions();
+    const bubble = mount(ChatBubble, {
+      props: { message: makeOutboundMessage('pending') },
+      global: options,
+    });
+
+    expect(bubble.get('.manager-chat-bubble__delivery .q-sr-only').text()).toBe('Отправляется');
+
+    await bubble.setProps({ message: makeOutboundMessage('sent') });
+    expect(bubble.get('.manager-chat-bubble__delivery .q-sr-only').text()).toBe('Отправлено');
+  });
+
+  it('gives the voice attachment player a localized accessible name', async () => {
+    Object.defineProperty(URL, 'createObjectURL', {
+      configurable: true,
+      value: vi.fn(() => 'blob:voice-message'),
+    });
+    Object.defineProperty(URL, 'revokeObjectURL', {
+      configurable: true,
+      value: vi.fn(),
+    });
+    vi.mocked(fetchManagerAttachment).mockResolvedValue(new Blob(['voice']));
+
+    const attachment = mount(ChatAttachmentCard, {
+      props: {
+        attachment: {
+          id: 11,
+          kind: 'voice',
+          fileId: 'voice-id',
+          fileUniqueId: null,
+          filename: null,
+          mimeType: 'audio/ogg',
+          size: 5,
+        },
+      },
+      global: globalOptions(),
+    });
+    await flushPromises();
+
+    const player = attachment.get('audio[controls]');
+    expect(player.attributes('aria-label')).toBe('Голосовое сообщение');
   });
 });

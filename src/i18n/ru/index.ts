@@ -126,6 +126,8 @@ export default {
       message: {
         edited: 'изменено',
         failed: 'Не доставлено',
+        pending: 'Отправляется',
+        sent: 'Отправлено',
       },
       preview: {
         ready: 'Диалог готов к сообщению',
@@ -140,6 +142,7 @@ export default {
         downloadName: 'вложение',
         document: 'Документ',
         unavailable: 'Вложение недоступно',
+        voicePlayer: 'Голосовое сообщение',
       },
       notifications: {
         loadEarlierError: 'Не удалось загрузить предыдущие сообщения',

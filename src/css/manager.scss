@@ -848,7 +848,7 @@ body.manager-workspace-active {
 
 .manager-chat-attachment__audio {
   width: min(100%, 300px);
-  height: 38px;
+  min-height: 44px;
 }
 
 .manager-chat-attachment__file,

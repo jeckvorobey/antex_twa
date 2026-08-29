@@ -21,6 +21,7 @@
         controls
         preload="metadata"
         class="manager-chat-attachment__audio"
+        :aria-label="t('manager.chat.attachment.voicePlayer')"
       />
       <a
         v-else
