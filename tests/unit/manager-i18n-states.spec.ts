@@ -61,7 +61,24 @@ import {
   fetchManagerChatMessages,
   fetchManagerChats,
 } from '@services/manager-chat';
-import type { ManagerChatMessage } from '@types/manager-chat';
+import type {
+  ManagerChatMessage,
+  ManagerChatMessagesResponse,
+  ManagerConversation,
+} from '@types/manager-chat';
+
+interface Deferred<T> {
+  promise: Promise<T>;
+  resolve: (value: T) => void;
+}
+
+function deferred<T>(): Deferred<T> {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((nextResolve) => {
+    resolve = nextResolve;
+  });
+  return { promise, resolve };
+}
 
 function makeOutboundMessage(deliveryStatus: string, id = 1): ManagerChatMessage {
   return {
@@ -134,6 +151,54 @@ describe('manager localized states', () => {
 
     routeHarness.route!.params.conversationId = '8';
     await vi.waitFor(() => expect(fetchManagerChat).toHaveBeenCalledWith(8, expect.anything()));
+  });
+
+  it('does not enable delivery announcements from a cancelled route load', async () => {
+    const pinia = createPinia();
+    setActivePinia(pinia);
+    const oldConversation = deferred<ManagerConversation>();
+    const oldMessages = deferred<ManagerChatMessagesResponse>();
+    const nextConversation = deferred<ManagerConversation>();
+    const nextMessages = deferred<ManagerChatMessagesResponse>();
+    const conversation = (id: number, lastMessage: ManagerChatMessage | null): ManagerConversation => ({
+      id,
+      status: 'open',
+      unreadCount: 0,
+      lastMessageAt: lastMessage?.createdAt ?? null,
+      user: {
+        id: 40 + id,
+        telegramId: 900_000 + id,
+        username: null,
+        firstName: 'Сергей',
+        lastName: 'Иванов',
+        photoUrl: null,
+      },
+      lastMessage,
+      latestOrder: null,
+    });
+    vi.mocked(fetchManagerChat)
+      .mockReturnValueOnce(oldConversation.promise)
+      .mockReturnValueOnce(nextConversation.promise);
+    vi.mocked(fetchManagerChatMessages)
+      .mockReturnValueOnce(oldMessages.promise)
+      .mockReturnValueOnce(nextMessages.promise);
+
+    const wrapper = mount(ManagerChatPage, { global: globalOptions(pinia) });
+    await vi.waitFor(() => expect(fetchManagerChat).toHaveBeenCalledWith(7, expect.anything()));
+    routeHarness.route!.params.conversationId = '8';
+    await vi.waitFor(() => expect(fetchManagerChat).toHaveBeenCalledWith(8, expect.anything()));
+
+    oldConversation.resolve(conversation(7, null));
+    oldMessages.resolve({ items: [], hasMore: false });
+    await flushPromises();
+
+    const historical = { ...makeOutboundMessage('sent', 80), conversationId: 8 };
+    nextConversation.resolve(conversation(8, historical));
+    nextMessages.resolve({ items: [historical], hasMore: false });
+    await flushPromises();
+
+    expect(wrapper.get('.manager-chat-delivery-announcer').text()).toBe('');
+    wrapper.unmount();
   });
 
   it('announces only new or changed delivery events, not loaded history', async () => {

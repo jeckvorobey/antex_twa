@@ -178,9 +178,16 @@ watch(conversationId, (nextId, previousId) => {
 });
 
 async function loadConversation(): Promise<void> {
+  const requestedConversationId = conversationId.value;
   resetDeliveryAnnouncements();
   try {
-    await chatStore.openConversation(conversationId.value);
+    await chatStore.openConversation(requestedConversationId);
+    if (
+      conversationId.value !== requestedConversationId ||
+      chatStore.activeConversation?.id !== requestedConversationId
+    ) {
+      return;
+    }
     captureDeliveryStatuses(chatStore.messages, false);
     deliveryAnnouncementsEnabled = true;
     await scrollToBottom();
