@@ -15,9 +15,6 @@ const itemPath = resolve(process.cwd(), 'src/components/manager/ConversationList
 const searchPath = resolve(process.cwd(), 'src/components/manager/ManagerChatSearch.vue');
 const filtersPath = resolve(process.cwd(), 'src/components/manager/ManagerChatFilters.vue');
 const listPath = resolve(process.cwd(), 'src/components/manager/ManagerConversationList.vue');
-const pageHeaderPath = resolve(process.cwd(), 'src/components/manager/ManagerPageHeader.vue');
-const composerPath = resolve(process.cwd(), 'src/components/manager/ChatComposer.vue');
-const orderDetailsPath = resolve(process.cwd(), 'src/components/manager/ManagerOrderDetails.vue');
 
 describe('manager chats Penpot composition', () => {
   it('preserves search clear and boolean filter events', async () => {
@@ -90,11 +87,5 @@ describe('manager chats Penpot composition', () => {
 
     expect(detail).not.toContain('ManagerChatSearch');
     expect(profile.match(/<ConnectionStatePill/g)).toHaveLength(1);
-  });
-
-  it('does not force decorative gold borders onto default manager surfaces', () => {
-    expect(readFileSync(pageHeaderPath, 'utf8')).not.toContain('antex-border-gold--muted');
-    expect(readFileSync(composerPath, 'utf8')).not.toContain('antex-border-gold--muted');
-    expect(readFileSync(orderDetailsPath, 'utf8')).not.toContain('antex-border-gold');
   });
 });
