@@ -621,14 +621,11 @@ body.manager-workspace-active {
 }
 
 .manager-active-order-queue-item__status-label {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  border: 0;
-  margin: -1px;
+  flex: 0 0 auto;
+  color: var(--antex-text-secondary);
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1.2;
   white-space: nowrap;
 }
 
