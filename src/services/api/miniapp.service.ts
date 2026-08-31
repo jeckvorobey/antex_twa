@@ -102,7 +102,10 @@ export async function applyReferralCode(code: string) {
 }
 
 export async function transferAex(payload: { orderId: number; amount: number }) {
-  const response = await api.post<{ success: boolean }>('/api/miniapp/aex/transfer', payload);
+  const response = await api.post<{ ok: boolean; entry_id: number; amount: string }>(
+    '/api/aex/transfer',
+    payload,
+  );
   return response.data;
 }
 
