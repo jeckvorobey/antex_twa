@@ -13,4 +13,13 @@ describe('production security headers', () => {
       'Permissions-Policy "camera=(), microphone=(), geolocation=()" always',
     );
   });
+
+  it('allows framing only from the Mini App origin and Telegram Web', () => {
+    const policy =
+      'Content-Security-Policy "frame-ancestors \'self\' https://web.telegram.org https://*.web.telegram.org" always';
+
+    expect(nginxSource.match(new RegExp(policy.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'))).toHaveLength(
+      2,
+    );
+  });
 });

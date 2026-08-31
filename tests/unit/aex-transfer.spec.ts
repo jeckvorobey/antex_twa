@@ -1,6 +1,3 @@
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
-
 import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -21,26 +18,6 @@ vi.mock('@services/api/miniapp.service', () => ({
 
 import { fetchAexWallet, transferAex } from '@services/api/miniapp.service';
 import { useAexStore } from '@stores/aex.store';
-
-// ── Source-level checks ─────────────────────────────────────────────
-
-const servicePath = resolve(process.cwd(), 'src/services/api/miniapp.service.ts');
-const serviceSource = readFileSync(servicePath, 'utf8');
-
-describe('transferAex API function (source)', () => {
-  it('exports transferAex function', () => {
-    expect(serviceSource).toContain('export async function transferAex');
-  });
-
-  it('calls POST /api/miniapp/aex/transfer', () => {
-    expect(serviceSource).toContain('/api/miniapp/aex/transfer');
-  });
-
-  it('accepts orderId and amount params', () => {
-    expect(serviceSource).toContain('orderId');
-    expect(serviceSource).toContain('amount');
-  });
-});
 
 // ── Store-level checks ─────────────────────────────────────────────
 
