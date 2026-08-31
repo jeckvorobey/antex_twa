@@ -49,6 +49,50 @@ const routes: RouteRecordRaw[] = [
       },
     ],
   },
+  {
+    path: '/manager',
+    component: () => import('@layouts/ManagerLayout.vue'),
+    meta: { managerOnly: true },
+    children: [
+      { path: '', redirect: { name: 'managerDashboard' } },
+      {
+        path: 'dashboard',
+        name: 'managerDashboard',
+        component: () => import('@pages/manager/ManagerDashboardPage.vue'),
+        meta: { managerOnly: true, title: 'manager.dashboard.title' },
+      },
+      {
+        path: 'chats',
+        name: 'managerChats',
+        component: () => import('@pages/manager/ManagerChatsPage.vue'),
+        meta: { managerOnly: true, title: 'manager.chats.title' },
+      },
+      {
+        path: 'chats/:conversationId',
+        name: 'managerChat',
+        component: () => import('@pages/manager/ManagerChatPage.vue'),
+        meta: { managerOnly: true, title: 'manager.chat.title' },
+      },
+      {
+        path: 'orders',
+        name: 'managerOrders',
+        component: () => import('@pages/manager/ManagerOrdersPage.vue'),
+        meta: { managerOnly: true, title: 'manager.orders.title' },
+      },
+      {
+        path: 'orders/:orderId',
+        name: 'managerOrder',
+        component: () => import('@pages/manager/ManagerOrderPage.vue'),
+        meta: { managerOnly: true, title: 'manager.orderPage.title' },
+      },
+      {
+        path: 'profile',
+        name: 'managerProfile',
+        component: () => import('@pages/manager/ManagerProfilePage.vue'),
+        meta: { managerOnly: true, title: 'manager.profile.title' },
+      },
+    ],
+  },
   { path: '/:catchAll(.*)*', redirect: '/' },
 ];
 

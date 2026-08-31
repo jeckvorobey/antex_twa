@@ -7,22 +7,24 @@ const historyPagePath = resolve(process.cwd(), 'src/pages/HistoryPage.vue');
 const historySource = readFileSync(historyPagePath, 'utf8');
 
 describe('HistoryPage pagination and repeat contract', () => {
-  it('uses Quasar infinite scroll with dots loader and manual refresh button', () => {
+  it('uses Quasar infinite scroll with card skeletons and manual refresh button', () => {
     expect(historySource).toContain('<q-infinite-scroll');
-    expect(historySource).toContain('<q-spinner-dots');
+    expect(historySource).toContain('<AntexSkeleton preset="order-card"');
     expect(historySource).toContain('icon="refresh"');
     expect(historySource).toContain(':aria-label="t(\'history.refresh\')"');
     expect(historySource).toContain(':scroll-target="historyScrollRef"');
     expect(historySource).toContain('ref="historyScrollRef"');
     expect(historySource).toContain('app-page--history');
+    expect(historySource).toContain(':aria-busy="ordersStore.loading || ordersStore.refreshing"');
+    expect(historySource).toContain('ordersStore.loading && !ordersStore.items.length');
   });
 
-  it('keeps cancelled filter and repeat action in the page source', () => {
+  it('keeps cancelled filter and delegates repeat action to shared OrderCard', () => {
     expect(historySource).toContain("value: 'cancelled'");
     expect(historySource).toContain("t('history.cancelled')");
-    expect(historySource).toContain('icon="autorenew"');
-    expect(historySource).toContain(':label="t(\'history.repeat\')"');
-    expect(historySource).not.toContain(':aria-label="t(\'history.repeat\')"');
+    expect(historySource).toContain('<OrderCard');
+    expect(historySource).toContain('mode="user"');
+    expect(historySource).toContain('@repeat="repeatOrder(item)"');
     expect(historySource).not.toContain('{{ item.currencySell }} → {{ item.currencyBuy }}');
   });
 
@@ -37,12 +39,10 @@ describe('HistoryPage pagination and repeat contract', () => {
     expect(historySource).not.toContain('rate: item.rate');
   });
 
-  it('keeps history card amount, status, and time split across Quasar rows', () => {
-    expect(historySource).toContain('class="row justify-center no-wrap"');
-    expect(historySource).toContain('class="col-12 app-history-item__amount text-center ellipsis"');
-    expect(historySource).toContain('class="row items-center no-wrap q-mt-xs"');
-    expect(historySource).toContain('class="col-4 row justify-start"');
-    expect(historySource).toContain('class="col-4 row justify-center"');
-    expect(historySource).toContain('class="col-4 app-history-item__time text-right"');
+  it('renders every history order through the shared card instead of inline markup', () => {
+    expect(historySource).toContain('class="app-history-card app-card-shadow"');
+    expect(historySource).toContain(':order="item"');
+    expect(historySource).not.toContain('class="app-history-card__number"');
+    expect(historySource).not.toContain('<AntexCard class="app-history-list">');
   });
 });

@@ -1,25 +1,18 @@
 <template>
-  <q-dialog
+  <AntexBottomSheet
+    ref="sheetRef"
     :model-value="modelValue"
-    position="bottom"
     persistent
-    class="app-dialog--bottom app-dialog--order"
+    :aria-label="t('common.submit')"
+    :content-class="`app-sheet--order q-pt-sm q-px-md${sheetDragging ? ' app-sheet--dragging' : ''}`"
+    :content-style="sheetDragStyle"
+    draggable
     @update:model-value="$emit('update:modelValue', $event)"
+    @touchstart.passive="startSheetDrag"
+    @touchmove="trackSheetDrag"
+    @touchend="finishSheetDrag"
+    @touchcancel="cancelSheetDrag"
   >
-    <AppSurface
-      ref="sheetRef"
-      class="app-sheet app-sheet--order q-pt-sm q-px-md"
-      :class="{ 'app-sheet--dragging': sheetDragging }"
-      :style="sheetDragStyle"
-      @touchstart.passive="startSheetDrag"
-      @touchmove="trackSheetDrag"
-      @touchend="finishSheetDrag"
-      @touchcancel="cancelSheetDrag"
-    >
-      <div class="app-sheet__header">
-        <div class="app-sheet-handle" />
-      </div>
-
       <div ref="sheetScrollRef" class="app-sheet__scroll">
         <AppWarningNotice>
           <template #title class="q-pr-md">{{ t('order.rateNoticeTitle') }}</template>
@@ -50,20 +43,19 @@
           :available-methods="currentQuoteMethods"
         />
 
-        <AppButton
+        <AntexButton
           block
           :loading="exchangeStore.submitting || submitFlowPending"
           :disable="!canSubmit || submitFlowPending"
           @click="submit"
         >
           {{ t('common.submit') }}
-        </AppButton>
+        </AntexButton>
       </div>
-    </AppSurface>
-  </q-dialog>
+  </AntexBottomSheet>
 
   <q-dialog v-model="offlineConfirmVisible" persistent class="app-dialog--confirm">
-    <AppSurface class="app-sheet app-sheet--confirm q-pa-md">
+    <AntexCard class="app-sheet app-sheet--confirm q-pa-md">
       <div class="text-subtitle1">{{ t('order.offlineTitle') }}</div>
       <div class="text-body2 text-grey-5 q-mt-sm">{{ t('order.offlineText') }}</div>
       <div class="text-body2 q-mt-sm">
@@ -71,34 +63,35 @@
       </div>
       <div class="row q-col-gutter-sm q-mt-lg">
         <div class="col-12 col-sm">
-          <AppButton
+          <AntexButton
             block
             :loading="exchangeStore.submitting || submitFlowPending"
             @click="confirmOffline"
-            >{{ t('common.yes') }}</AppButton
+            >{{ t('common.yes') }}</AntexButton
           >
         </div>
         <div class="col-12 col-sm">
-          <AppButton block variant="secondary" @click="cancelOffline">{{
+          <AntexButton block variant="secondary" @click="cancelOffline">{{
             t('common.cancel')
-          }}</AppButton>
+          }}</AntexButton>
         </div>
       </div>
-    </AppSurface>
+    </AntexCard>
   </q-dialog>
 </template>
 
 <script setup lang="ts">
-import { Notify } from 'quasar';
+import { useAntexNotify } from '@/composables/useAntexNotify';
 import { computed, ref, watch } from 'vue';
 import type { ComponentPublicInstance, CSSProperties } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 
-import AppButton from '@components/ui/AppButton.vue';
+import AntexButton from '@components/ui/AntexButton.vue';
+import AntexBottomSheet from '@components/ui/AntexBottomSheet.vue';
 import ExchangeOrderDetails from '@components/orders/ExchangeOrderDetails.vue';
 import AppOfflineNotice from '@components/ui/AppOfflineNotice.vue';
-import AppSurface from '@components/ui/AppSurface.vue';
+import AntexCard from '@components/ui/AntexCard.vue';
 import AppWarningNotice from '@components/ui/AppWarningNotice.vue';
 import { useExchangeStore } from '@stores/exchange.store';
 import { useHomeStore } from '@stores/home.store';
@@ -128,6 +121,7 @@ const emit = defineEmits<{
 }>();
 
 const { t } = useI18n();
+const { notify } = useAntexNotify();
 const router = useRouter();
 const exchangeStore = useExchangeStore();
 const homeStore = useHomeStore();
@@ -146,7 +140,8 @@ const syncingState = ref(false);
 const offlineConfirmVisible = ref(false);
 const offlineConfirmed = ref(false);
 const submitFlowPending = ref(false);
-const sheetRef = ref<ComponentPublicInstance | null>(null);
+type BottomSheetRef = ComponentPublicInstance & { contentElement?: HTMLElement };
+const sheetRef = ref<BottomSheetRef | null>(null);
 const sheetScrollRef = ref<HTMLElement | null>(null);
 const sheetDragStartY = ref<number | null>(null);
 const sheetDragDeltaY = ref(0);
@@ -406,7 +401,7 @@ async function refreshQuoteForCurrentState() {
     } catch (error: unknown) {
       amountBuy.value = null;
       const code = getMiniappErrorCode(error);
-      Notify.create({ type: 'negative', message: t(getMiniappErrorMessageKey(code)) });
+      notify('negative', t(getMiniappErrorMessageKey(code)));
       return;
     }
     if (
@@ -491,13 +486,13 @@ function resetFormToDefaults(options: { clearContext?: boolean } = {}) {
 async function submit() {
   let quote = resolveCurrentQuote();
   if (!amountSell.value || amountSell.value <= 0 || !amountBuy.value || !quote) {
-    Notify.create({ type: 'negative', message: t('exchange.quoteUnavailable') });
+    notify('negative', t('exchange.quoteUnavailable'));
     return;
   }
 
   const validation = preliminaryValidation.value;
   if (!validation.valid) {
-    Notify.create({ type: 'negative', message: t(validation.messageKey, validation.params) });
+    notify('negative', t(validation.messageKey, validation.params));
     return;
   }
 
@@ -517,10 +512,7 @@ async function submit() {
     }
     const refreshedValidation = preliminaryValidation.value;
     if (!refreshedValidation.valid) {
-      Notify.create({
-        type: 'negative',
-        message: t(refreshedValidation.messageKey, refreshedValidation.params),
-      });
+      notify('negative', t(refreshedValidation.messageKey, refreshedValidation.params));
       return;
     }
     if (!selectedCountry.value) {
@@ -528,7 +520,7 @@ async function submit() {
     }
     quote = await refreshQuoteBeforeSubmit();
     if (!quote) {
-      Notify.create({ type: 'negative', message: t('exchange.quoteUnavailable') });
+      notify('negative', t('exchange.quoteUnavailable'));
       return;
     }
     amountBuy.value = quote.amountBuy;
@@ -549,10 +541,7 @@ async function submit() {
     } catch {
       // Экран истории повторит загрузку.
     }
-    Notify.create({
-      type: 'positive',
-      message: t('order.success'),
-    });
+    notify('positive', t('order.success'));
     emit('update:modelValue', false);
     await router.push({ name: 'history' });
   } catch (error: unknown) {
@@ -566,7 +555,7 @@ async function submit() {
       code === 'MIN_AMOUNT'
         ? t(messageKey, { amount: params.minAmount, currency: params.currency })
         : t(messageKey);
-    Notify.create({ type: 'negative', message });
+    notify('negative', message);
   } finally {
     submitFlowPending.value = false;
   }
@@ -667,7 +656,7 @@ function resetSheetDrag() {
 async function animateAndCloseSheet() {
   sheetClosingByDrag.value = true;
   sheetDragging.value = false;
-  const sheetElement = sheetRef.value?.$el as HTMLElement | undefined;
+  const sheetElement = sheetRef.value?.contentElement;
   sheetDragDeltaY.value = Math.max(window.innerHeight, sheetElement?.offsetHeight ?? 0) + 32;
   await new Promise((resolve) => window.setTimeout(resolve, 240));
   resetAndCloseSheet();

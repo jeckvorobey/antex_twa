@@ -12,7 +12,7 @@ export default defineConfig((ctx) => {
   return {
     boot: ['telegram', 'i18n', 'axios', 'init', 'referral'],
     css: ['app.scss'],
-    extras: ['roboto-font', 'fontawesome-v6', 'mdi-v7', 'material-icons'],
+    extras: ['fontawesome-v6', 'mdi-v7', 'material-icons'],
     build: {
       target: {
         browser: ['es2022', 'firefox115', 'chrome115', 'safari14'],

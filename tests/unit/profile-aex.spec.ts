@@ -20,7 +20,7 @@ const i18nSource = readFileSync(i18nPath, 'utf8');
 
 describe('AexBalanceCard shared component', () => {
   it('owns the ATXG balance card layout, label, amount formatting and currency mark', () => {
-    expect(balanceCardSource).toContain('<AppSurface');
+    expect(balanceCardSource).toContain('<AntexCard');
     expect(balanceCardSource).toContain('padded');
     expect(balanceCardSource).toContain('app-aex-balance-card');
     expect(balanceCardSource).toContain('displayLabel');

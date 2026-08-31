@@ -15,6 +15,7 @@
       </div>
       <div class="app-header-bar__title">{{ t('common.brand') }}</div>
     </div>
+    <div v-if="eyebrow" class="app-header-bar__eyebrow">{{ eyebrow }}</div>
     <q-btn
       round
       flat
@@ -24,13 +25,14 @@
     >
       <q-avatar class="app-header-bar__avatar">
         <q-img
-          v-if="userPhotoUrl"
+          v-if="showUserPhoto"
           :src="userPhotoUrl"
           fit="cover"
           width="100%"
           height="100%"
           :alt="t('nav.profile')"
           no-spinner
+          @error="handleUserPhotoError"
         />
         <span v-else>{{ userInitials }}</span>
       </q-avatar>
@@ -39,7 +41,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 
@@ -47,6 +49,14 @@ import AppBackButton from '@components/ui/AppBackButton.vue';
 import { useAuthStore } from '@stores/auth.store';
 import { toSafeExternalUrl } from '@utils/safe-external-url';
 import logoImage from '../../assets/images/logo.PNG';
+
+const props = withDefaults(
+  defineProps<{
+    eyebrow?: string | null;
+    profileRouteName?: string;
+  }>(),
+  { eyebrow: null, profileRouteName: 'profile' },
+);
 
 const { t } = useI18n();
 const route = useRoute();
@@ -58,7 +68,17 @@ const backRouteName = computed(() => {
   return typeof target === 'string' ? target : null;
 });
 
+const userPhotoFailed = ref(false);
 const userPhotoUrl = computed(() => toSafeExternalUrl(authStore.user?.photo_url));
+const showUserPhoto = computed(() => Boolean(userPhotoUrl.value) && !userPhotoFailed.value);
+
+watch(userPhotoUrl, () => {
+  userPhotoFailed.value = false;
+});
+
+function handleUserPhotoError(): void {
+  userPhotoFailed.value = true;
+}
 
 const userInitials = computed(() => {
   const user = authStore.user;
@@ -80,7 +100,7 @@ const userInitials = computed(() => {
 
 /** Открывает профиль из постоянного правого avatar action. */
 function openProfile() {
-  void router.push({ name: 'profile' });
+  void router.push({ name: props.profileRouteName });
 }
 
 /** Возвращает на объявленный в route meta родительский экран. */

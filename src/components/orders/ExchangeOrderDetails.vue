@@ -1,6 +1,6 @@
 <template>
   <div class="column q-gutter-y-md">
-    <AppSurface class="app-exchange-calculator">
+    <AntexCard class="app-exchange-calculator">
       <div class="column q-gutter-sm">
         <div>
           <div class="app-exchange-calculator__label">{{ t('exchange.payAmount') }}</div>
@@ -71,7 +71,7 @@
           })
         }}
       </div>
-    </AppSurface>
+    </AntexCard>
 
     <div
       v-if="countryOptions.length && !internalExchange"
@@ -87,7 +87,7 @@
       />
     </div>
 
-    <AppSurface class="q-pa-md">
+    <AntexCard class="q-pa-md">
       <div class="app-order-sheet__fields">
         <div class="app-order-sheet__field">
           <div class="app-order-sheet__label">{{ receiveLocationTitle }}</div>
@@ -124,7 +124,7 @@
           </div>
         </div>
       </div>
-    </AppSurface>
+    </AntexCard>
   </div>
 </template>
 
@@ -133,7 +133,7 @@ import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 import AppFlagOptionButton from '@components/ui/AppFlagOptionButton.vue';
-import AppSurface from '@components/ui/AppSurface.vue';
+import AntexCard from '@components/ui/AntexCard.vue';
 import { getMinAmount } from '@constants/limits';
 import type { MiniappReceiveMethod } from '@types/miniapp';
 import { formatReadableNumber, parseReadableNumber } from '@utils/formatters';

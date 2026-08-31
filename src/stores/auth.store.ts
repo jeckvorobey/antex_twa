@@ -5,12 +5,20 @@ import { api } from '@boot/axios';
 import { tg } from '@boot/telegram';
 import { setAppLocale } from '@i18n';
 import type {
+  MiniappNavigationItem,
   MiniappUser,
   TelegramAuthResponse,
   TelegramWriteAccessOutcome,
   TelegramWriteAccessResponse,
   TrustedContactState,
 } from '@types/miniapp';
+
+export const DEFAULT_USER_NAVIGATION: MiniappNavigationItem[] = [
+  { name: 'home', icon: 'home', label: 'Главная', route: 'home' },
+  { name: 'exchange', icon: 'currency_exchange', label: 'Обмен', route: 'exchange' },
+  { name: 'history', icon: 'history', label: 'История', route: 'history' },
+  { name: 'profile', icon: 'person_outline', label: 'Профиль', route: 'profile' },
+];
 
 export type TelegramWriteAccessState =
   | 'idle'
@@ -39,6 +47,9 @@ export const useAuthStore = defineStore('auth', () => {
     () => Boolean(tg?.initData) && (!isAuthenticated.value || !telegramWriteAccess.value),
   );
   const canUseApp = computed(() => !requiresTelegramWriteAccess.value);
+  const navigation = computed<MiniappNavigationItem[]>(() => {
+    return user.value?.navigation ?? DEFAULT_USER_NAVIGATION;
+  });
 
   async function init() {
     try {
@@ -194,6 +205,7 @@ export const useAuthStore = defineStore('auth', () => {
       trusted_contact: telegramUser?.username ?? null,
       trusted_contact_source: telegramUser?.username ? 'username' : null,
       trusted_contact_ready: Boolean(telegramUser?.username),
+      navigation: DEFAULT_USER_NAVIGATION,
     };
     setAppLocale(user.value.language_code ?? 'ru');
   }
@@ -210,6 +222,7 @@ export const useAuthStore = defineStore('auth', () => {
     trustedContactReady,
     requiresTelegramWriteAccess,
     canUseApp,
+    navigation,
     init,
     login,
     fetchUser,
