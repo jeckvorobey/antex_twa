@@ -93,6 +93,7 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
   let ordersRequestGeneration = 0;
   let activeOrderRequestGeneration = 0;
   let unreadStateRevision = 0;
+  const orderRevisions = new Map<number, number>();
 
   const activeConversationId = computed(() => activeConversation.value?.id ?? null);
 
@@ -185,6 +186,7 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
 
   /** Сохраняет detail snapshot, но исключает terminal заявки из active списка. */
   function upsertOrder(order: ManagerOrderSummary): void {
+    orderRevisions.set(order.id, (orderRevisions.get(order.id) ?? 0) + 1);
     // Realtime/status result новее уже запущенного active-orders snapshot.
     ordersRequestGeneration += 1;
     ordersRequestController?.abort();
@@ -533,7 +535,15 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
       if (generation !== ordersRequestGeneration || controller.signal.aborted) {
         return;
       }
-      orders.value = response.items.filter((order) => !TERMINAL_ORDER_STATUSES.has(order.status));
+      const nextOrders = response.items.filter((order) => !TERMINAL_ORDER_STATUSES.has(order.status));
+      const refreshedOrderIds = new Set([
+        ...orders.value.map((order) => order.id),
+        ...response.items.map((order) => order.id),
+      ]);
+      for (const orderId of refreshedOrderIds) {
+        orderRevisions.set(orderId, (orderRevisions.get(orderId) ?? 0) + 1);
+      }
+      orders.value = nextOrders;
     } catch (error) {
       if (!controller.signal.aborted) {
         ordersError.value = 'load_failed';
@@ -574,7 +584,28 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
   }
 
   async function changeOrderStatus(orderId: number, status: number): Promise<ManagerOrderSummary> {
-    const order = await updateManagerOrderStatus(orderId, status);
+    let order: ManagerOrderSummary;
+    try {
+      order = await updateManagerOrderStatus(orderId, status);
+    } catch (error) {
+      const responseStatus = (error as { response?: { status?: number } })?.response?.status;
+      if (responseStatus === 409) {
+        const revision = orderRevisions.get(orderId) ?? 0;
+        const listGeneration = ordersRequestGeneration;
+        try {
+          const current = await fetchManagerOrder(orderId);
+          if (
+            (orderRevisions.get(orderId) ?? 0) === revision &&
+            ordersRequestGeneration === listGeneration
+          ) {
+            upsertOrder(current);
+          }
+        } catch {
+          // Сверка best-effort: вызывающий код должен получить исходный 409.
+        }
+      }
+      throw error;
+    }
     upsertOrder(order);
     const conversation = conversations.value.find(
       (item) => item.latestOrder?.id === order.id || item.user.id === order.user?.id,
