@@ -227,6 +227,7 @@ describe('manager dashboard contract', () => {
     expect(appSource).toContain('.app-layout-background {');
     expect(source).toContain("font-family: 'Montserrat Alternates', 'Segoe UI', sans-serif;");
     expect(source).not.toContain("font-family: 'Inter Tight', sans-serif;");
+    expect(source).toContain('.manager-layout .app-header-bar__eyebrow');
     expect(appSource).toContain("font-family: 'Montserrat', 'Montserrat Alternates', sans-serif;");
   });
 

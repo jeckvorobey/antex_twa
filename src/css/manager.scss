@@ -59,6 +59,10 @@ body.manager-workspace-active {
   border: 1px solid var(--antex-manager-outline);
 }
 
+.manager-layout .app-header-bar__eyebrow {
+  font-family: 'Montserrat Alternates', 'Segoe UI', sans-serif;
+}
+
 .manager-layout .q-btn:focus-visible,
 .manager-layout .q-field--focused .q-field__control,
 .manager-conversation-item:focus-visible {
