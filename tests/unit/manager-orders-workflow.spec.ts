@@ -200,6 +200,25 @@ describe('manager orders workflow state', () => {
     expect(updateManagerOrderStatus).toHaveBeenCalledTimes(2);
   });
 
+  it('reconciles the order from backend after a workflow conflict', async () => {
+    const pinia = createPinia();
+    setActivePinia(pinia);
+    const store = useManagerChatStore();
+    vi.mocked(fetchManagerOrders).mockResolvedValueOnce({ items: [makeOrder(1)] });
+    await store.loadOrders();
+    vi.mocked(updateManagerOrderStatus).mockRejectedValueOnce({
+      response: { status: 409, data: { code: 'ORDER_STATUS_CONFLICT' } },
+    });
+    vi.mocked(fetchManagerOrder).mockResolvedValueOnce({ ...makeOrder(1), status: 3 });
+
+    await expect(store.changeOrderStatus(1, 4)).rejects.toMatchObject({
+      response: { status: 409 },
+    });
+
+    expect(fetchManagerOrder).toHaveBeenCalledWith(1);
+    expect(store.orders).toEqual([]);
+  });
+
   it('renders operational order details from the backend DTO', async () => {
     const pinia = createPinia();
     setActivePinia(pinia);

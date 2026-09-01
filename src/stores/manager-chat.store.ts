@@ -574,7 +574,17 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
   }
 
   async function changeOrderStatus(orderId: number, status: number): Promise<ManagerOrderSummary> {
-    const order = await updateManagerOrderStatus(orderId, status);
+    let order: ManagerOrderSummary;
+    try {
+      order = await updateManagerOrderStatus(orderId, status);
+    } catch (error) {
+      const responseStatus = (error as { response?: { status?: number } })?.response?.status;
+      if (responseStatus === 409) {
+        const current = await fetchManagerOrder(orderId);
+        upsertOrder(current);
+      }
+      throw error;
+    }
     upsertOrder(order);
     const conversation = conversations.value.find(
       (item) => item.latestOrder?.id === order.id || item.user.id === order.user?.id,
