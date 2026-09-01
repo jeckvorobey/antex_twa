@@ -591,9 +591,13 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
       const responseStatus = (error as { response?: { status?: number } })?.response?.status;
       if (responseStatus === 409) {
         const revision = orderRevisions.get(orderId) ?? 0;
+        const listGeneration = ordersRequestGeneration;
         try {
           const current = await fetchManagerOrder(orderId);
-          if ((orderRevisions.get(orderId) ?? 0) === revision) {
+          if (
+            (orderRevisions.get(orderId) ?? 0) === revision &&
+            ordersRequestGeneration === listGeneration
+          ) {
             upsertOrder(current);
           }
         } catch {

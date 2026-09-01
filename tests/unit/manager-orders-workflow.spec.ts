@@ -284,6 +284,40 @@ describe('manager orders workflow state', () => {
     expect(store.orders).toEqual([]);
   });
 
+  it('does not abort a pending list refresh during conflict reconciliation', async () => {
+    const store = useManagerChatStore();
+    vi.mocked(fetchManagerOrders).mockResolvedValueOnce({ items: [makeOrder(1)] });
+    await store.loadOrders();
+    const conflict = {
+      response: { status: 409, data: { code: 'ORDER_STATUS_CONFLICT' } },
+    };
+    vi.mocked(updateManagerOrderStatus).mockRejectedValueOnce(conflict);
+    let resolveReconciliation: (order: ManagerOrderSummary) => void = () => undefined;
+    vi.mocked(fetchManagerOrder).mockImplementationOnce(
+      () =>
+        new Promise<ManagerOrderSummary>((resolve) => {
+          resolveReconciliation = resolve;
+        }),
+    );
+
+    const update = store.changeOrderStatus(1, 4);
+    await vi.waitFor(() => expect(fetchManagerOrder).toHaveBeenCalledWith(1));
+    let resolveList: (response: { items: ManagerOrderSummary[] }) => void = () => undefined;
+    vi.mocked(fetchManagerOrders).mockImplementationOnce(
+      () =>
+        new Promise<{ items: ManagerOrderSummary[] }>((resolve) => {
+          resolveList = resolve;
+        }),
+    );
+    const refresh = store.loadOrders();
+    resolveReconciliation(makeOrder(1));
+    await expect(update).rejects.toBe(conflict);
+    resolveList({ items: [] });
+    await refresh;
+
+    expect(store.orders).toEqual([]);
+  });
+
   it('renders operational order details from the backend DTO', async () => {
     const pinia = createPinia();
     setActivePinia(pinia);
