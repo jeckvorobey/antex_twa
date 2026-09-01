@@ -140,4 +140,42 @@ describe('manager profile identity', () => {
     expect(wrapper.find('.app-header-bar__avatar .header-image-stub').exists()).toBe(false);
     expect(wrapper.get('.app-header-bar__avatar span').text()).toBe('МИ');
   });
+
+  it('keeps the operational profile focused on identity and one client-connection state', () => {
+    const authStore = useAuthStore();
+    authStore.user = {
+      id: 1,
+      username: 'manager',
+      phone: null,
+      first_name: 'Мария',
+      last_name: 'Иванова',
+      language_code: 'ru',
+      photo_url: null,
+      is_bot: false,
+      is_premium: false,
+      telegram_write_access: true,
+      role: 'manager',
+      trusted_contact: null,
+      trusted_contact_source: null,
+      trusted_contact_ready: false,
+    };
+
+    const wrapper = mount(ManagerProfilePage, {
+      global: {
+        plugins: [Quasar, createI18n({ legacy: false, locale: 'ru', messages: { ru } })],
+        components: { QAvatar, QCard },
+        stubs: {
+          AppHeaderBar: true,
+          ConnectionStatePill: { template: '<span>На связи</span>' },
+          QPage: { template: '<main><slot /></main>' },
+          QImg: true,
+        },
+      },
+    });
+
+    expect(wrapper.findAll('.manager-info-card')).toHaveLength(1);
+    expect(wrapper.text()).toContain('Связь с клиентами');
+    expect(wrapper.text()).not.toContain('Уведомления');
+    expect(wrapper.text()).not.toContain('@manager');
+  });
 });

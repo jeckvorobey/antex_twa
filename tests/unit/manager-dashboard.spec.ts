@@ -225,8 +225,8 @@ describe('manager dashboard contract', () => {
     const layoutBlock = source.match(/\.manager-layout\s*\{([\s\S]*?)\n\}/)?.[1] ?? '';
     expect(layoutBlock).not.toContain('background:');
     expect(appSource).toContain('.app-layout-background {');
-    expect(source).toContain("font-family: 'Montserrat Alternates', 'Inter Tight', sans-serif;");
-    expect(source).toContain("font-family: 'Inter Tight', sans-serif;");
+    expect(source).toContain("font-family: 'Montserrat Alternates', 'Segoe UI', sans-serif;");
+    expect(source).not.toContain("font-family: 'Inter Tight', sans-serif;");
     expect(appSource).toContain("font-family: 'Montserrat', 'Montserrat Alternates', sans-serif;");
   });
 

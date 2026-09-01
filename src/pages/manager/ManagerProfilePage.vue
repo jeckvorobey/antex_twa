@@ -35,21 +35,6 @@
         <ConnectionStatePill :state="realtimeStore.state" />
       </AntexCard>
 
-      <AntexCard tag="section" class="manager-info-card">
-        <div class="manager-info-card__copy">
-          <div class="manager-info-card__label">{{ t('manager.profile.notifications.label') }}</div>
-          <div class="manager-info-card__text">
-            {{ t('manager.profile.notifications.text') }}
-          </div>
-        </div>
-      </AntexCard>
-
-      <AntexCard v-if="authStore.user?.username" tag="section" class="manager-info-card">
-        <div class="manager-info-card__copy">
-          <div class="manager-info-card__label">{{ t('manager.profile.telegram') }}</div>
-          <div class="manager-info-card__text">@{{ authStore.user.username }}</div>
-        </div>
-      </AntexCard>
     </div>
   </q-page>
 </template>
