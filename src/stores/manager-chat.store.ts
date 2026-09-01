@@ -535,7 +535,15 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
       if (generation !== ordersRequestGeneration || controller.signal.aborted) {
         return;
       }
-      orders.value = response.items.filter((order) => !TERMINAL_ORDER_STATUSES.has(order.status));
+      const nextOrders = response.items.filter((order) => !TERMINAL_ORDER_STATUSES.has(order.status));
+      const refreshedOrderIds = new Set([
+        ...orders.value.map((order) => order.id),
+        ...response.items.map((order) => order.id),
+      ]);
+      for (const orderId of refreshedOrderIds) {
+        orderRevisions.set(orderId, (orderRevisions.get(orderId) ?? 0) + 1);
+      }
+      orders.value = nextOrders;
     } catch (error) {
       if (!controller.signal.aborted) {
         ordersError.value = 'load_failed';
