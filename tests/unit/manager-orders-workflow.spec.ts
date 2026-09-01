@@ -219,6 +219,45 @@ describe('manager orders workflow state', () => {
     expect(store.orders).toEqual([]);
   });
 
+  it('preserves the original workflow conflict when reconciliation fails', async () => {
+    const store = useManagerChatStore();
+    const conflict = {
+      response: { status: 409, data: { code: 'ORDER_STATUS_CONFLICT' } },
+    };
+    vi.mocked(updateManagerOrderStatus).mockRejectedValueOnce(conflict);
+    vi.mocked(fetchManagerOrder).mockRejectedValueOnce(new Error('network unavailable'));
+
+    await expect(store.changeOrderStatus(1, 4)).rejects.toBe(conflict);
+  });
+
+  it('does not overwrite a newer realtime order during conflict reconciliation', async () => {
+    const store = useManagerChatStore();
+    vi.mocked(fetchManagerOrders).mockResolvedValueOnce({ items: [makeOrder(1)] });
+    await store.loadOrders();
+    const conflict = {
+      response: { status: 409, data: { code: 'ORDER_STATUS_CONFLICT' } },
+    };
+    vi.mocked(updateManagerOrderStatus).mockRejectedValueOnce(conflict);
+    let resolveReconciliation: (order: ManagerOrderSummary) => void = () => undefined;
+    vi.mocked(fetchManagerOrder).mockImplementationOnce(
+      () =>
+        new Promise<ManagerOrderSummary>((resolve) => {
+          resolveReconciliation = resolve;
+        }),
+    );
+
+    const update = store.changeOrderStatus(1, 4);
+    await vi.waitFor(() => expect(fetchManagerOrder).toHaveBeenCalledWith(1));
+    await store.handleRealtimeEvent({
+      type: 'chat.order.updated',
+      payload: { order: { ...makeOrder(1), status: 3 } },
+    });
+    resolveReconciliation(makeOrder(1));
+
+    await expect(update).rejects.toBe(conflict);
+    expect(store.orders).toEqual([]);
+  });
+
   it('renders operational order details from the backend DTO', async () => {
     const pinia = createPinia();
     setActivePinia(pinia);

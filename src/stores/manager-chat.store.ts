@@ -93,6 +93,7 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
   let ordersRequestGeneration = 0;
   let activeOrderRequestGeneration = 0;
   let unreadStateRevision = 0;
+  const orderRevisions = new Map<number, number>();
 
   const activeConversationId = computed(() => activeConversation.value?.id ?? null);
 
@@ -185,6 +186,7 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
 
   /** Сохраняет detail snapshot, но исключает terminal заявки из active списка. */
   function upsertOrder(order: ManagerOrderSummary): void {
+    orderRevisions.set(order.id, (orderRevisions.get(order.id) ?? 0) + 1);
     // Realtime/status result новее уже запущенного active-orders snapshot.
     ordersRequestGeneration += 1;
     ordersRequestController?.abort();
@@ -580,8 +582,15 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
     } catch (error) {
       const responseStatus = (error as { response?: { status?: number } })?.response?.status;
       if (responseStatus === 409) {
-        const current = await fetchManagerOrder(orderId);
-        upsertOrder(current);
+        const revision = orderRevisions.get(orderId) ?? 0;
+        try {
+          const current = await fetchManagerOrder(orderId);
+          if ((orderRevisions.get(orderId) ?? 0) === revision) {
+            upsertOrder(current);
+          }
+        } catch {
+          // Сверка best-effort: вызывающий код должен получить исходный 409.
+        }
       }
       throw error;
     }
