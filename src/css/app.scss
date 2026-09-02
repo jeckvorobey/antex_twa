@@ -2193,8 +2193,8 @@ body.body--light .q-page,
 
 .order-amount-flow {
   display: grid;
-  gap: 2px;
-  margin-top: 6px;
+  gap: 0;
+  margin-top: 0;
 }
 
 .order-amount-flow__row {
@@ -2223,12 +2223,12 @@ body.body--light .q-page,
 }
 
 .order-amount-flow__source-amount {
-  font-size: clamp(20px, 5.5vw, 22px);
+  font-size: clamp(19px, 5.25vw, 21px);
   font-weight: 800;
 }
 
 .order-amount-flow__result-amount {
-  font-size: clamp(28px, 7.6vw, 31px);
+  font-size: clamp(27px, 7.35vw, 30px);
   font-weight: 900;
   letter-spacing: 0.01em;
 }
