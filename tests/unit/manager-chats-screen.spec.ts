@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 
 import { createPinia, setActivePinia } from 'pinia';
 import { mount } from '@vue/test-utils';
-import { QAvatar, QBtn, QIcon, QImg, QInput, QSpinner, Quasar } from 'quasar';
+import { QAvatar, QBtn, QChip, QIcon, QImg, QInput, QSpinner, Quasar } from 'quasar';
 import { createI18n } from 'vue-i18n';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -29,7 +29,7 @@ vi.mock('vue-router', () => ({
 
 describe('manager chats Penpot composition', () => {
   it('preserves search clear and boolean filter events', async () => {
-    const global = { plugins: [Quasar], components: { QBtn, QIcon, QInput } };
+    const global = { plugins: [Quasar], components: { QChip, QIcon, QInput } };
     const search = mount(ManagerChatSearch, {
       props: { modelValue: 'Сергей', placeholder: 'Поиск' },
       global,
@@ -51,10 +51,13 @@ describe('manager chats Penpot composition', () => {
       },
       global,
     });
-    const buttons = filters.findAllComponents(QBtn);
+    const buttons = filters.findAll('[role="button"]');
     await buttons[0]!.trigger('click');
     await buttons[1]!.trigger('click');
     expect(filters.emitted('change')).toEqual([[false], [true]]);
+    await filters.setProps({ unreadOnly: true });
+    expect(buttons[0]!.attributes('aria-pressed')).toBe('false');
+    expect(buttons[1]!.attributes('aria-pressed')).toBe('true');
   });
 
   it('delegates search, filters and repeated rows to reusable components', () => {
@@ -96,11 +99,7 @@ describe('manager chats Penpot composition', () => {
     const pinia = createPinia();
     setActivePinia(pinia);
     const global = {
-      plugins: [
-        pinia,
-        Quasar,
-        createI18n({ legacy: false, locale: 'ru', messages: { ru } }),
-      ],
+      plugins: [pinia, Quasar, createI18n({ legacy: false, locale: 'ru', messages: { ru } })],
       components: { QAvatar, QBtn, QImg, QSpinner },
       stubs: {
         AppHeaderBar: true,

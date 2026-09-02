@@ -1,6 +1,7 @@
 <template>
   <q-card
     :tag="tag"
+    :flat="!elevated"
     :class="[
       'antex-card',
       'antex-card--gold-border',

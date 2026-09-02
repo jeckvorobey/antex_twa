@@ -1,7 +1,7 @@
 <template>
   <q-input
     :model-value="modelValue"
-    borderless
+    outlined
     dense
     clearable
     clear-icon="close"
@@ -21,6 +21,7 @@ const emit = defineEmits<{
   search: [];
 }>();
 
+/** Сохраняет строковый запрос при вводе и очистке поля Quasar. */
 function updateValue(value: string | number | null): void {
   emit('update:modelValue', String(value ?? ''));
   emit('search');

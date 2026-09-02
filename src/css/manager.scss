@@ -255,42 +255,43 @@ body.manager-workspace-active {
   margin-bottom: 12px;
 }
 
-.manager-search-input {
-  min-height: 46px;
+.manager-search-input .q-field__control {
+  height: 46px;
   padding: 0 14px;
-  border-radius: 16px;
-  border: 1px solid var(--antex-manager-outline);
+  border-radius: var(--antex-radius-btn);
   background: var(--antex-bg-deep);
 }
 
-.manager-search-input .q-field__control,
+.manager-search-input .q-field__marginal {
+  height: 46px;
+}
+
+.manager-search-input .q-field__control::before {
+  border-color: var(--antex-manager-outline);
+}
+
+.manager-layout .manager-search-input.q-field--focused .q-field__control {
+  // Фокус показывает штатная скруглённая граница QInput, без второго outline.
+  outline: none;
+}
+
+.manager-search-input.q-field--focused .q-field__control::after {
+  border-color: var(--antex-gold-base);
+}
+
 .manager-search-input .q-field__native,
-.manager-search-input .q-field__prepend {
+.manager-search-input .q-field__marginal {
   color: var(--antex-text-primary);
 }
 
-.manager-chat-filters {
-  display: flex;
-  gap: 8px;
+.manager-chat-filters.app-chip-row {
+  flex-wrap: nowrap;
   overflow-x: auto;
   scrollbar-width: none;
 }
 
-.manager-filter-pill {
-  min-height: 44px;
-  padding: 0 14px;
-  border: 1px solid var(--antex-border-gold-muted);
-  border-radius: 999px;
-  color: var(--antex-text-muted);
-  background: var(--antex-bg-deep);
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.manager-filter-pill--active {
-  color: var(--antex-gold-base);
-  border-color: var(--antex-gold-border);
-  background: var(--antex-gold-soft);
+.manager-chat-filters > .q-chip {
+  flex: 0 0 auto;
 }
 
 .manager-conversation-list {

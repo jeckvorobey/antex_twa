@@ -1,19 +1,21 @@
 <template>
-  <div class="manager-chat-filters" role="group" :aria-label="ariaLabel">
-    <q-btn
-      no-caps
-      unelevated
-      :class="['manager-filter-pill', { 'manager-filter-pill--active': !unreadOnly }]"
-      :label="allLabel"
+  <div class="app-chip-row manager-chat-filters" role="group" :aria-label="ariaLabel">
+    <q-chip
+      clickable
+      :class="['app-chip', { 'app-chip--active': !unreadOnly }]"
+      :aria-pressed="!unreadOnly"
       @click="$emit('change', false)"
-    />
-    <q-btn
-      no-caps
-      unelevated
-      :class="['manager-filter-pill', { 'manager-filter-pill--active': unreadOnly }]"
-      :label="unreadLabel"
+    >
+      {{ allLabel }}
+    </q-chip>
+    <q-chip
+      clickable
+      :class="['app-chip', { 'app-chip--active': unreadOnly }]"
+      :aria-pressed="unreadOnly"
       @click="$emit('change', true)"
-    />
+    >
+      {{ unreadLabel }}
+    </q-chip>
   </div>
 </template>
 
