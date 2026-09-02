@@ -1,9 +1,6 @@
 <template>
   <q-page class="manager-page manager-chats">
-    <AppHeaderBar
-      :eyebrow="t('manager.role')"
-      profile-route-name="managerProfile"
-    />
+    <AppHeaderBar :eyebrow="t('manager.role')" profile-route-name="managerProfile" />
 
     <div class="manager-chat-toolbar">
       <ManagerChatSearch
@@ -35,9 +32,7 @@
       v-else-if="!chatStore.conversations.length"
       :title="t('manager.chats.empty.title')"
       :description="
-        chatStore.unreadOnly
-          ? t('manager.chats.empty.unreadText')
-          : t('manager.chats.empty.text')
+        chatStore.unreadOnly ? t('manager.chats.empty.unreadText') : t('manager.chats.empty.text')
       "
       icon="forum"
     />
@@ -45,6 +40,13 @@
       v-else
       :conversations="chatStore.conversations"
       @open="openConversation"
+    />
+    <ManagerListMore
+      v-if="!chatStore.chatsError"
+      :has-more="chatStore.hasMoreChats"
+      :loading="chatStore.loadingChats"
+      :error="Boolean(chatStore.chatsMoreError)"
+      @load="loadMoreChats"
     />
   </q-page>
 </template>
@@ -57,6 +59,7 @@ import { useRouter } from 'vue-router';
 import ManagerChatFilters from '@components/manager/ManagerChatFilters.vue';
 import ManagerChatSearch from '@components/manager/ManagerChatSearch.vue';
 import ManagerConversationList from '@components/manager/ManagerConversationList.vue';
+import ManagerListMore from '@components/manager/ManagerListMore.vue';
 import AntexEmptyState from '@components/ui/AntexEmptyState.vue';
 import AppHeaderBar from '@components/ui/AppHeaderBar.vue';
 import { useManagerChatStore } from '@stores/manager-chat.store';
@@ -95,5 +98,13 @@ async function loadChats(): Promise<void> {
 
 function openConversation(conversationId: number): void {
   void router.push({ name: 'managerChat', params: { conversationId } });
+}
+
+async function loadMoreChats(): Promise<void> {
+  try {
+    await chatStore.loadMoreChats();
+  } catch {
+    // Повтор страницы доступен под сохранённым списком.
+  }
 }
 </script>

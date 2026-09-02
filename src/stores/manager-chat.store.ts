@@ -19,11 +19,13 @@ import type {
   ChatAttachmentOptions,
   ManagerChatMessage,
   ManagerConversation,
+  ManagerOrderListResponse,
   ManagerOrderSummary,
   ManagerRealtimeEnvelope,
 } from '@types/manager-chat';
 
 const TERMINAL_ORDER_STATUSES = new Set([3, 4]);
+const PAGE_SIZE = 50;
 
 interface LinkedAbortController {
   controller: AbortController;
@@ -68,6 +70,11 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
   const loadingChats = ref(false);
   const chatsLoaded = ref(false);
   const chatsError = ref<string | null>(null);
+  const hasMoreChats = ref(false);
+  const chatsMoreError = ref<string | null>(null);
+  let chatsOffset = 0;
+  let chatsPaginationDirty = false;
+  let chatsStateRevision = 0;
   const query = ref('');
   const unreadOnly = ref(false);
 
@@ -85,6 +92,16 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
   const orders = ref<ManagerOrderSummary[]>([]);
   const ordersLoading = ref(false);
   const ordersError = ref<string | null>(null);
+  const hasMoreOrders = ref(false);
+  const ordersMoreError = ref<string | null>(null);
+  const ordersTotal = ref(0);
+  const ordersTodayTotal = ref(0);
+  const ordersAmountTotals = ref<Record<string, number>>({});
+  let ordersOffset = 0;
+  let ordersPaginationDirty = false;
+  let ordersSummaryAvailable = false;
+  let ordersSummaryGeneration = 0;
+  let ordersSummaryController: AbortController | null = null;
   const activeOrder = ref<ManagerOrderSummary | null>(null);
   const activeOrderError = ref<string | null>(null);
 
@@ -127,6 +144,8 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
 
   /** Обновляет active conversation всегда, а список — только по его текущему predicate. */
   function upsertConversation(conversation: ManagerConversation): void {
+    chatsPaginationDirty = true;
+    chatsStateRevision += 1;
     if (activeConversation.value?.id === conversation.id) {
       activeConversation.value = conversation;
     }
@@ -192,6 +211,12 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
 
   /** Сохраняет detail snapshot, но исключает terminal заявки из active списка. */
   function upsertOrder(order: ManagerOrderSummary): void {
+    ordersPaginationDirty = true;
+    if (ordersSummaryAvailable) {
+      void refreshOrdersSummary().catch(() => {
+        ordersError.value = 'load_failed';
+      });
+    }
     orderRevisions.set(order.id, (orderRevisions.get(order.id) ?? 0) + 1);
     // Realtime/status result новее уже запущенного active-orders snapshot.
     ordersRequestGeneration += 1;
@@ -228,34 +253,66 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
   }
 
   /** Загружает список по snapshot фильтров и применяет только последнюю generation. */
-  async function loadChats(config: { signal?: AbortSignal } = {}): Promise<void> {
+  async function loadChats(
+    config: { signal?: AbortSignal; append?: boolean; preservePages?: boolean } = {},
+  ): Promise<void> {
+    const append = config.append === true;
+    if (append && (loadingChats.value || !hasMoreChats.value)) return;
+    const offset = append ? chatsOffset : 0;
+    const windowSize = config.preservePages ? chatsOffset : 0;
+    const stateRevision = chatsStateRevision;
     chatsRequestController?.abort();
     const { controller, detach } = createLinkedAbortController(config.signal);
     const generation = ++chatsRequestGeneration;
     chatsRequestController = controller;
     loadingChats.value = true;
     chatsError.value = null;
+    chatsMoreError.value = null;
     try {
       const search = query.value.trim();
-      const response = await fetchManagerChats(
-        {
-          unreadOnly: unreadOnly.value,
-          limit: 100,
-          offset: 0,
-          ...(search ? { query: search } : {}),
-        },
-        { signal: controller.signal },
-      );
+      const params = {
+        unreadOnly: unreadOnly.value,
+        limit: PAGE_SIZE,
+        offset,
+        ...(search ? { query: search } : {}),
+      };
+      let response = await fetchManagerChats(params, { signal: controller.signal });
+      const pageItems = [...response.items];
+      while (
+        !append &&
+        pageItems.length < windowSize &&
+        pageItems.length < response.total &&
+        response.items.length
+      ) {
+        if (generation !== chatsRequestGeneration || controller.signal.aborted) return;
+        response = await fetchManagerChats(
+          { ...params, offset: pageItems.length },
+          { signal: controller.signal },
+        );
+        pageItems.push(...response.items);
+      }
       if (generation !== chatsRequestGeneration || controller.signal.aborted) {
         return;
       }
-      conversations.value = sortConversations(response.items);
+      if (stateRevision !== chatsStateRevision) {
+        chatsPaginationDirty = true;
+        hasMoreChats.value = true;
+        return;
+      }
+      chatsPaginationDirty = false;
+      const items = append ? [...conversations.value, ...pageItems] : pageItems;
+      conversations.value = sortConversations([
+        ...new Map(items.map((item) => [item.id, item])).values(),
+      ]);
+      chatsOffset = offset + pageItems.length;
+      hasMoreChats.value = response.items.length > 0 && chatsOffset < response.total;
       total.value = response.total;
       unreadTotal.value = response.unreadTotal;
       chatsLoaded.value = true;
     } catch (error) {
       if (!controller.signal.aborted) {
-        chatsError.value = 'load_failed';
+        if (append) chatsMoreError.value = 'load_failed';
+        else chatsError.value = 'load_failed';
         throw error;
       }
     } finally {
@@ -267,6 +324,12 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
       }
       detach();
     }
+  }
+
+  /** Продолжает список; после realtime-сдвига сначала обновляет первую страницу. */
+  async function loadMoreChats(): Promise<void> {
+    if (loadingChats.value || !hasMoreChats.value) return;
+    await loadChats({ append: !chatsPaginationDirty });
   }
 
   /** Загружает нефильтрованный total для KPI Dashboard независимо от состояния списка. */
@@ -328,7 +391,11 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
 
   /** Сверяет REST state после reconnect, не позволяя route leave вернуть старый диалог. */
   async function reconcile(config: { signal?: AbortSignal } = {}): Promise<void> {
-    await Promise.all([loadChats(config), loadDashboardChatTotal(config), loadOrders(config)]);
+    await Promise.all([
+      loadChats({ ...config, preservePages: true }),
+      loadDashboardChatTotal(config),
+      loadOrders({ ...config, preservePages: true }),
+    ]);
     if (config.signal?.aborted) {
       return;
     }
@@ -585,32 +652,64 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
   }
 
   /** Загружает active orders только для последней request/state generation. */
-  async function loadOrders(config: { signal?: AbortSignal } = {}): Promise<void> {
+  async function loadOrders(
+    config: { signal?: AbortSignal; append?: boolean; preservePages?: boolean } = {},
+  ): Promise<void> {
+    const append = config.append === true;
+    if (append && (ordersLoading.value || !hasMoreOrders.value)) return;
+    const offset = append ? ordersOffset : 0;
+    const windowSize = config.preservePages ? ordersOffset : 0;
+    const summaryGeneration = ++ordersSummaryGeneration;
+    ordersSummaryController?.abort();
     ordersRequestController?.abort();
     const { controller, detach } = createLinkedAbortController(config.signal);
     const generation = ++ordersRequestGeneration;
     ordersRequestController = controller;
     ordersLoading.value = true;
     ordersError.value = null;
+    ordersMoreError.value = null;
     try {
-      const response = await fetchManagerOrders({ signal: controller.signal });
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      let response = await fetchManagerOrders(
+        { limit: PAGE_SIZE, offset, todayFrom: today.toISOString() },
+        { signal: controller.signal },
+      );
+      const pageItems = [...response.items];
+      while (
+        !append &&
+        pageItems.length < windowSize &&
+        pageItems.length < (response.total ?? 0) &&
+        response.items.length
+      ) {
+        if (generation !== ordersRequestGeneration || controller.signal.aborted) return;
+        response = await fetchManagerOrders(
+          { limit: PAGE_SIZE, offset: pageItems.length, todayFrom: today.toISOString() },
+          { signal: controller.signal },
+        );
+        pageItems.push(...response.items);
+      }
       if (generation !== ordersRequestGeneration || controller.signal.aborted) {
         return;
       }
-      const nextOrders = response.items.filter(
-        (order) => !TERMINAL_ORDER_STATUSES.has(order.status),
-      );
+      ordersPaginationDirty = false;
+      const nextOrders = pageItems.filter((order) => !TERMINAL_ORDER_STATUSES.has(order.status));
       const refreshedOrderIds = new Set([
         ...orders.value.map((order) => order.id),
-        ...response.items.map((order) => order.id),
+        ...pageItems.map((order) => order.id),
       ]);
       for (const orderId of refreshedOrderIds) {
         orderRevisions.set(orderId, (orderRevisions.get(orderId) ?? 0) + 1);
       }
-      orders.value = nextOrders;
+      const items = append ? [...orders.value, ...nextOrders] : nextOrders;
+      orders.value = [...new Map(items.map((item) => [item.id, item])).values()];
+      ordersOffset = offset + pageItems.length;
+      if (summaryGeneration === ordersSummaryGeneration) applyOrdersSummary(response, today);
+      hasMoreOrders.value = response.items.length > 0 && ordersOffset < ordersTotal.value;
     } catch (error) {
       if (!controller.signal.aborted) {
-        ordersError.value = 'load_failed';
+        if (append) ordersMoreError.value = 'load_failed';
+        else ordersError.value = 'load_failed';
         throw error;
       }
     } finally {
@@ -622,6 +721,52 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
       }
       detach();
     }
+  }
+
+  /** Применяет серверные агрегаты; fallback нужен только для старого backend при deploy. */
+  function applyOrdersSummary(response: ManagerOrderListResponse, today: Date): void {
+    ordersSummaryAvailable = response.total !== undefined;
+    ordersTotal.value = response.total ?? response.items.length;
+    ordersTodayTotal.value =
+      response.todayTotal ??
+      response.items.filter((item) => new Date(item.createdAt) >= today).length;
+    ordersAmountTotals.value =
+      response.amountTotals ??
+      response.items.reduce<Record<string, number>>((totals, item) => {
+        totals[item.currencySell] = (totals[item.currencySell] ?? 0) + item.amountSell;
+        return totals;
+      }, {});
+  }
+
+  /** Сверяет KPI после status/realtime, сохраняя уже загруженные страницы. */
+  async function refreshOrdersSummary(): Promise<void> {
+    ordersSummaryController?.abort();
+    const controller = new AbortController();
+    ordersSummaryController = controller;
+    const generation = ++ordersSummaryGeneration;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    try {
+      const response = await fetchManagerOrders(
+        { limit: 1, todayFrom: today.toISOString() },
+        { signal: controller.signal },
+      );
+      if (controller.signal.aborted || generation !== ordersSummaryGeneration) return;
+      applyOrdersSummary(response, today);
+      hasMoreOrders.value = ordersPaginationDirty
+        ? orders.value.length < ordersTotal.value
+        : ordersOffset < ordersTotal.value;
+    } catch (error) {
+      if (!controller.signal.aborted && generation === ordersSummaryGeneration) throw error;
+    } finally {
+      if (ordersSummaryController === controller) ordersSummaryController = null;
+    }
+  }
+
+  /** Загружает продолжение активных заявок только по запросу пользователя. */
+  async function loadMoreOrders(): Promise<void> {
+    if (ordersLoading.value || !hasMoreOrders.value) return;
+    await loadOrders({ append: !ordersPaginationDirty });
   }
 
   async function loadOrder(orderId: number): Promise<void> {
@@ -783,6 +928,8 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
     loadingChats,
     chatsLoaded,
     chatsError,
+    hasMoreChats,
+    chatsMoreError,
     query,
     unreadOnly,
     activeConversation,
@@ -795,9 +942,15 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
     orders,
     ordersLoading,
     ordersError,
+    hasMoreOrders,
+    ordersMoreError,
+    ordersTotal,
+    ordersTodayTotal,
+    ordersAmountTotals,
     activeOrder,
     activeOrderError,
     loadChats,
+    loadMoreChats,
     loadDashboardChatTotal,
     cancelChatsLoad,
     reconcile,
@@ -809,6 +962,7 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
     markRead,
     closeConversation,
     loadOrders,
+    loadMoreOrders,
     loadOrder,
     ensureOrderChat,
     changeOrderStatus,

@@ -120,10 +120,7 @@ describe('manager dashboard contract', () => {
         ),
       },
       global: {
-        plugins: [
-          Quasar,
-          createI18n({ legacy: false, locale: 'ru', messages: { ru } }),
-        ],
+        plugins: [Quasar, createI18n({ legacy: false, locale: 'ru', messages: { ru } })],
         components: { QCard, QIcon, QSeparator },
       },
     });
@@ -145,11 +142,7 @@ describe('manager dashboard contract', () => {
 
     const wrapper = mount(ManagerDashboardPage, {
       global: {
-        plugins: [
-          pinia,
-          Quasar,
-          createI18n({ legacy: false, locale: 'ru', messages: { ru } }),
-        ],
+        plugins: [pinia, Quasar, createI18n({ legacy: false, locale: 'ru', messages: { ru } })],
         stubs: {
           AppHeaderBar: true,
           ManagerDashboardKpi: true,
@@ -210,8 +203,8 @@ describe('manager dashboard contract', () => {
   it('derives the date, KPI trends and totals from real store data', () => {
     const source = readFileSync(dashboardPath, 'utf8');
     expect(source).toContain('formatManagerDashboardDate');
-    expect(source).toContain('countTodayOrders');
-    expect(source).toContain('formatActiveOrderTotals');
+    expect(source).toContain('chatStore.ordersTodayTotal');
+    expect(source).toContain('chatStore.ordersAmountTotals');
     expect(source).toContain('chatStore.dashboardChatTotal');
     expect(source).toContain('chatStore.unreadTotal');
     expect(source).toContain('chatStore.loadDashboardChatTotal()');
@@ -230,5 +223,4 @@ describe('manager dashboard contract', () => {
     expect(source).toContain('.manager-layout .app-header-bar__eyebrow');
     expect(appSource).toContain("font-family: 'Montserrat', 'Montserrat Alternates', sans-serif;");
   });
-
 });

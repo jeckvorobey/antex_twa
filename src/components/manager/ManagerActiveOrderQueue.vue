@@ -8,6 +8,7 @@
           class="manager-active-order-queue__separator"
         />
       </template>
+      <slot name="pagination" />
     </div>
   </AntexCard>
 </template>

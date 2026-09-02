@@ -43,6 +43,13 @@
         @cancel="confirmCancel(order.id)"
       />
     </div>
+    <ManagerListMore
+      v-if="!chatStore.ordersError"
+      :has-more="chatStore.hasMoreOrders"
+      :loading="chatStore.ordersLoading"
+      :error="Boolean(chatStore.ordersMoreError)"
+      @load="loadMoreOrders"
+    />
   </q-page>
 </template>
 
@@ -54,6 +61,7 @@ import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 
 import ManagerPageHeader from '@components/manager/ManagerPageHeader.vue';
+import ManagerListMore from '@components/manager/ManagerListMore.vue';
 import OrderCard from '@components/orders/OrderCard.vue';
 import AntexEmptyState from '@components/ui/AntexEmptyState.vue';
 import AntexSkeleton from '@components/ui/AntexSkeleton.vue';
@@ -75,6 +83,14 @@ async function loadOrders(): Promise<void> {
     await chatStore.loadOrders();
   } catch {
     // Ошибка представлена отдельным retryable state из store.
+  }
+}
+
+async function loadMoreOrders(): Promise<void> {
+  try {
+    await chatStore.loadMoreOrders();
+  } catch {
+    // Повтор страницы доступен под сохранённым списком.
   }
 }
 
@@ -135,11 +151,13 @@ function confirmCancel(orderId: number): void {
     cancel: { label: t('common.back'), flat: true },
     ok: { label: t('manager.orderPage.actions.cancel'), color: 'negative' },
     persistent: true,
-  }).onOk(() => {
-    confirmed = true;
-    void setStatus(orderId, 4, { lock: false });
-  }).onDismiss(() => {
-    if (!confirmed) unlockStatusActions(orderId);
-  });
+  })
+    .onOk(() => {
+      confirmed = true;
+      void setStatus(orderId, 4, { lock: false });
+    })
+    .onDismiss(() => {
+      if (!confirmed) unlockStatusActions(orderId);
+    });
 }
 </script>

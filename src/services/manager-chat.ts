@@ -143,8 +143,14 @@ export async function closeManagerChat(conversationId: number) {
 }
 
 /** Загружает active заявки с поддержкой cancellation для reconciliation/page lifecycle. */
-export async function fetchManagerOrders(config: { signal?: AbortSignal } = {}) {
-  const response = await api.get<ManagerOrderListResponse>('/api/manager/orders', config);
+export async function fetchManagerOrders(
+  params: { limit?: number; offset?: number; todayFrom?: string } = {},
+  config: { signal?: AbortSignal } = {},
+) {
+  const response = await api.get<ManagerOrderListResponse>('/api/manager/orders', {
+    params,
+    ...config,
+  });
   return response.data;
 }
 

@@ -32,6 +32,7 @@ import {
   fetchManagerOrder,
   fetchManagerOrders,
   markManagerChatRead,
+  updateManagerOrderStatus,
 } from '@services/manager-chat';
 
 interface Deferred<T> {
@@ -130,6 +131,190 @@ describe('manager chat store request races', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     vi.resetAllMocks();
+  });
+
+  it('сохраняет необходимость сверки offset после ошибки refresh', async () => {
+    const store = useManagerChatStore();
+    vi.mocked(fetchManagerChats)
+      .mockResolvedValueOnce({
+        ...makeChatList([makeConversation(3), makeConversation(2)]),
+        total: 3,
+      })
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockResolvedValueOnce({
+        ...makeChatList([makeConversation(3), makeConversation(2)]),
+        total: 3,
+      });
+    await store.loadChats();
+    await store.handleRealtimeEvent({
+      type: 'chat.conversation.updated',
+      payload: { conversation: makeConversation(3) },
+    });
+    await expect(store.loadMoreChats()).rejects.toThrow('offline');
+    await store.loadMoreChats();
+    expect(fetchManagerChats).toHaveBeenLastCalledWith(
+      expect.objectContaining({ offset: 0 }),
+      expect.anything(),
+    );
+    expect(store.hasMoreChats).toBe(true);
+  });
+
+  it('reconcile сохраняет уже загруженные страницы при новом сообщении', async () => {
+    const store = useManagerChatStore();
+    const first = Array.from({ length: 50 }, (_, i) => makeConversation(i + 1));
+    vi.mocked(fetchManagerChats)
+      .mockResolvedValueOnce({ ...makeChatList(first), total: 51 })
+      .mockResolvedValueOnce({ ...makeChatList([makeConversation(51)]), total: 51 })
+      .mockImplementation(async (params) =>
+        params?.limit === 1
+          ? { items: [], total: 51, unreadTotal: 0 }
+          : { ...makeChatList(params?.offset ? [makeConversation(51)] : first), total: 51 },
+      );
+    vi.mocked(fetchManagerOrders).mockResolvedValue({ items: [] });
+    await store.loadChats();
+    await store.loadMoreChats();
+    await store.reconcile();
+    expect(store.conversations).toHaveLength(51);
+    expect(store.hasMoreChats).toBe(false);
+  });
+
+  it('reconcile сохраняет страницы заявок, а не только первую порцию', async () => {
+    const store = useManagerChatStore();
+    const first = Array.from({ length: 50 }, (_, i) => makeOrder(i + 1, 1));
+    vi.mocked(fetchManagerChats).mockResolvedValue(makeChatList([]));
+    vi.mocked(fetchManagerOrders)
+      .mockResolvedValueOnce({ items: first, total: 51 })
+      .mockResolvedValueOnce({ items: [makeOrder(51, 2)], total: 51 })
+      .mockImplementation(async (params) => ({
+        items: params?.offset ? [makeOrder(51, 2)] : first,
+        total: 51,
+      }));
+    await store.loadOrders();
+    await store.loadMoreOrders();
+    await store.reconcile();
+    expect(store.orders).toHaveLength(51);
+    expect(store.ordersTotal).toBe(51);
+    expect(store.hasMoreOrders).toBe(false);
+  });
+
+  it('не даёт позднему ответу summary откатить более свежие показатели', async () => {
+    const store = useManagerChatStore();
+    const stale = deferred<ManagerOrderListResponse>();
+    vi.mocked(fetchManagerOrders)
+      .mockResolvedValueOnce({ items: [makeOrder(1, 2)], total: 2 })
+      .mockReturnValueOnce(stale.promise)
+      .mockResolvedValueOnce({ items: [], total: 0, todayTotal: 0, amountTotals: {} });
+    await store.loadOrders();
+    await store.handleRealtimeEvent({
+      type: 'chat.order.updated',
+      payload: { order: makeOrder(1, 3) },
+    });
+    await store.loadOrders();
+    stale.resolve({ items: [], total: 1, todayTotal: 1, amountTotals: { RUB: 10000 } });
+    await Promise.resolve();
+    expect(store.ordersTotal).toBe(0);
+    expect(store.ordersAmountTotals).toEqual({});
+  });
+
+  it('не скрывает оставшуюся страницу после завершения заявки в загруженном окне', async () => {
+    const store = useManagerChatStore();
+    vi.mocked(fetchManagerOrders)
+      .mockResolvedValueOnce({ items: [makeOrder(3, 2), makeOrder(2, 2)], total: 3 })
+      .mockResolvedValueOnce({ items: [makeOrder(2, 2)], total: 2 })
+      .mockResolvedValueOnce({ items: [makeOrder(2, 2), makeOrder(1, 1)], total: 2 });
+    vi.mocked(updateManagerOrderStatus).mockResolvedValueOnce(makeOrder(3, 3));
+    await store.loadOrders();
+    await store.changeOrderStatus(3, 3);
+    await vi.waitFor(() => expect(store.ordersTotal).toBe(2));
+    expect(store.hasMoreOrders).toBe(true);
+    await store.loadMoreOrders();
+    expect(store.orders.map((item) => item.id)).toEqual([2, 1]);
+  });
+
+  it('обновляет общие KPI после HTTP смены статуса, не загружая все заявки', async () => {
+    const store = useManagerChatStore();
+    vi.mocked(fetchManagerOrders)
+      .mockResolvedValueOnce({
+        items: [makeOrder(1, 2)],
+        total: 1,
+        todayTotal: 1,
+        amountTotals: { RUB: 10000 },
+      })
+      .mockResolvedValueOnce({ items: [], total: 0, todayTotal: 0, amountTotals: {} });
+    vi.mocked(updateManagerOrderStatus).mockResolvedValueOnce(makeOrder(1, 3));
+    await store.loadOrders();
+    await store.changeOrderStatus(1, 3);
+    await vi.waitFor(() => expect(store.ordersTotal).toBe(0));
+    expect(store.ordersTodayTotal).toBe(0);
+    expect(store.ordersAmountTotals).toEqual({});
+    expect(fetchManagerOrders).toHaveBeenLastCalledWith(
+      expect.objectContaining({ limit: 1 }),
+      expect.anything(),
+    );
+  });
+
+  it('догружает чаты без дублей и останавливается в конце списка', async () => {
+    const store = useManagerChatStore();
+    vi.mocked(fetchManagerChats)
+      .mockResolvedValueOnce({
+        ...makeChatList([makeConversation(3), makeConversation(2)]),
+        total: 4,
+      })
+      .mockResolvedValueOnce({
+        ...makeChatList([makeConversation(2), makeConversation(1)]),
+        total: 4,
+      });
+    await store.loadChats();
+    expect(store.hasMoreChats).toBe(true);
+    await store.loadMoreChats();
+    expect(store.conversations.map((item) => item.id)).toEqual([3, 2, 1]);
+    expect(fetchManagerChats).toHaveBeenLastCalledWith(
+      expect.objectContaining({ limit: 50, offset: 2 }),
+      expect.anything(),
+    );
+    expect(store.hasMoreChats).toBe(false);
+    await store.loadMoreChats();
+    expect(fetchManagerChats).toHaveBeenCalledTimes(2);
+  });
+
+  it('не применяет догрузку предыдущего фильтра', async () => {
+    const store = useManagerChatStore();
+    const pending = deferred<ManagerChatListResponse>();
+    vi.mocked(fetchManagerChats)
+      .mockResolvedValueOnce({ ...makeChatList([makeConversation(1)]), total: 3 })
+      .mockReturnValueOnce(pending.promise)
+      .mockResolvedValueOnce(makeChatList([makeConversation(9, { firstName: 'Анна' })]));
+    await store.loadChats();
+    const more = store.loadMoreChats();
+    store.query = 'Анна';
+    await store.loadChats();
+    pending.resolve(makeChatList([makeConversation(2)]));
+    await more;
+    expect(store.conversations.map((item) => item.id)).toEqual([9]);
+    expect(store.hasMoreChats).toBe(false);
+  });
+
+  it('догружает заявки, сохраняя полные KPI и повторяя ошибочную страницу', async () => {
+    const store = useManagerChatStore();
+    const summary = { total: 3, todayTotal: 2, amountTotals: { RUB: 30000 } };
+    vi.mocked(fetchManagerOrders)
+      .mockResolvedValueOnce({ items: [makeOrder(3, 1), makeOrder(2, 2)], ...summary })
+      .mockRejectedValueOnce(new Error('network'))
+      .mockResolvedValueOnce({ items: [makeOrder(1, 1)], ...summary });
+    await store.loadOrders();
+    expect(store.ordersTotal).toBe(3);
+    expect(store.ordersTodayTotal).toBe(2);
+    await expect(store.loadMoreOrders()).rejects.toThrow('network');
+    expect(store.orders).toHaveLength(2);
+    await store.loadMoreOrders();
+    expect(store.orders.map((item) => item.id)).toEqual([3, 2, 1]);
+    expect(store.hasMoreOrders).toBe(false);
+    expect(fetchManagerOrders).toHaveBeenLastCalledWith(
+      expect.objectContaining({ limit: 50, offset: 2, todayFrom: expect.any(String) }),
+      expect.anything(),
+    );
+    await store.loadMoreOrders();
+    expect(fetchManagerOrders).toHaveBeenCalledTimes(3);
   });
 
   it('keeps the Dashboard chat total independent from list filters', async () => {

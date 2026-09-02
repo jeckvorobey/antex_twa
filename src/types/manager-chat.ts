@@ -95,6 +95,10 @@ export interface ManagerChatReadResponse {
 
 export interface ManagerOrderListResponse {
   items: ManagerOrderSummary[];
+  // Необязательны на время последовательного развёртывания backend и Mini App.
+  total?: number;
+  todayTotal?: number;
+  amountTotals?: Record<string, number>;
 }
 
 export interface ManagerRealtimeEnvelope {

@@ -10,8 +10,8 @@
     <section class="manager-dashboard__metrics" :aria-label="t('manager.dashboard.title')">
       <ManagerDashboardKpi
         :label="t('manager.dashboard.active')"
-        :value="chatStore.orders.length"
-        :trend="t('manager.dashboard.ordersToday', { count: ordersToday })"
+        :value="chatStore.ordersTotal"
+        :trend="t('manager.dashboard.ordersToday', { count: chatStore.ordersTodayTotal })"
         tone="positive"
       />
       <ManagerDashboardKpi
@@ -80,7 +80,16 @@
         v-else-if="chatStore.orders.length"
         :orders="chatStore.orders"
         @select="openOrder"
-      />
+      >
+        <template #pagination>
+          <ManagerListMore
+            :has-more="chatStore.hasMoreOrders"
+            :loading="chatStore.ordersLoading"
+            :error="Boolean(chatStore.ordersMoreError)"
+            @load="loadMoreOrders"
+          />
+        </template>
+      </ManagerActiveOrderQueue>
       <AntexCard v-else :elevated="false" class="manager-dashboard__empty">
         {{ t('manager.dashboard.empty') }}
       </AntexCard>
@@ -95,14 +104,13 @@ import { useRouter } from 'vue-router';
 
 import ManagerActiveOrderQueue from '@components/manager/ManagerActiveOrderQueue.vue';
 import ManagerDashboardKpi from '@components/manager/ManagerDashboardKpi.vue';
+import ManagerListMore from '@components/manager/ManagerListMore.vue';
 import AntexCard from '@components/ui/AntexCard.vue';
 import AntexEmptyState from '@components/ui/AntexEmptyState.vue';
 import AntexSkeleton from '@components/ui/AntexSkeleton.vue';
 import AppHeaderBar from '@components/ui/AppHeaderBar.vue';
 import { useManagerChatStore } from '@stores/manager-chat.store';
 import {
-  countTodayOrders,
-  formatActiveOrderTotals,
   formatManagerDashboardDate,
   millisecondsUntilNextLocalDay,
 } from '@utils/manager-dashboard';
@@ -115,15 +123,22 @@ let dayRefreshTimer: ReturnType<typeof setTimeout> | undefined;
 const dashboardDate = computed(() =>
   formatManagerDashboardDate(now.value, locale.value, t('manager.dashboard.today')),
 );
-const ordersToday = computed(() => countTodayOrders(chatStore.orders, now.value));
 const activeOrderTotals = computed(() =>
-  formatActiveOrderTotals(chatStore.orders, locale.value),
+  Object.entries(chatStore.ordersAmountTotals)
+    .map(
+      ([currency, amount]) =>
+        `${new Intl.NumberFormat(locale.value, { maximumFractionDigits: 2 }).format(amount)} ${currency}`,
+    )
+    .join(' · '),
 );
 
 function scheduleNextDayRefresh(): void {
   const current = new Date();
   now.value = current;
-  dayRefreshTimer = setTimeout(scheduleNextDayRefresh, millisecondsUntilNextLocalDay(current));
+  dayRefreshTimer = setTimeout(() => {
+    void loadOrders();
+    scheduleNextDayRefresh();
+  }, millisecondsUntilNextLocalDay(current));
 }
 
 onMounted(() => {
@@ -145,6 +160,14 @@ async function loadOrders(): Promise<void> {
     await chatStore.loadOrders();
   } catch {
     // Ошибка представлена отдельным retryable state из store.
+  }
+}
+
+async function loadMoreOrders(): Promise<void> {
+  try {
+    await chatStore.loadMoreOrders();
+  } catch {
+    // Повтор страницы доступен внутри очереди.
   }
 }
 
