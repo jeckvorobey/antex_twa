@@ -1,13 +1,26 @@
 <template>
-  <div class="manager-chat-bubble-row" :class="`manager-chat-bubble-row--${message.direction}`">
+  <div
+    class="manager-chat-bubble-row"
+    :class="[
+      `manager-chat-bubble-row--${message.direction}`,
+      { 'manager-chat-bubble-row--group-end': groupEnd },
+    ]"
+  >
     <article
       ref="bubble"
       v-touch-hold:600="openMenu"
       class="manager-chat-bubble"
-      :class="`manager-chat-bubble--${message.direction}`"
+      :class="[
+        `manager-chat-bubble--${message.direction}`,
+        {
+          'manager-chat-bubble--group-start': groupStart,
+          'manager-chat-bubble--group-end': groupEnd,
+        },
+      ]"
       @contextmenu.prevent="openMenu"
     >
       <svg
+        v-if="groupEnd"
         class="manager-chat-bubble__tail"
         viewBox="0 0 12 16"
         aria-hidden="true"
@@ -79,7 +92,15 @@ import { useAntexNotify } from '@/composables/useAntexNotify';
 import ChatAttachmentCard from '@components/manager/ChatAttachmentCard.vue';
 import type { ManagerChatMessage } from '@types/manager-chat';
 
-const props = defineProps<{ message: ManagerChatMessage; replyLabel?: string }>();
+const props = withDefaults(
+  defineProps<{
+    message: ManagerChatMessage;
+    replyLabel?: string;
+    groupStart?: boolean;
+    groupEnd?: boolean;
+  }>(),
+  { groupStart: true, groupEnd: true },
+);
 const emit = defineEmits<{
   reply: [message: ManagerChatMessage];
   forward: [message: ManagerChatMessage];

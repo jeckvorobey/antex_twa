@@ -768,16 +768,11 @@ body.manager-workspace-active {
   box-shadow: 0 6px 18px rgba(212, 175, 55, 0.19);
 }
 
-.manager-chat-context {
-  margin-bottom: 12px;
-}
-
 .manager-chat-timeline {
   display: flex;
   flex: 1;
   flex-direction: column;
   justify-content: flex-end;
-  gap: 8px;
   min-height: 360px;
   padding: 8px 0 14px;
 }
@@ -794,6 +789,11 @@ body.manager-workspace-active {
   width: 100%;
   align-items: flex-end;
   gap: var(--antex-space-xs);
+  padding-bottom: var(--antex-space-xs);
+}
+
+.manager-chat-bubble-row--group-end {
+  padding-bottom: var(--antex-space-sm);
 }
 
 .manager-chat-bubble-row--outbound {
@@ -813,7 +813,6 @@ body.manager-workspace-active {
   --chat-bubble-fill: var(--antex-bg-card);
   --chat-bubble-edge: var(--antex-manager-outline);
   border: 1px solid var(--chat-bubble-edge);
-  border-bottom-left-radius: 0;
   background: var(--chat-bubble-fill);
 }
 
@@ -821,8 +820,27 @@ body.manager-workspace-active {
   --chat-bubble-fill: var(--antex-manager-outbound);
   --chat-bubble-edge: var(--antex-manager-outbound-outline);
   border: 1px solid var(--chat-bubble-edge);
-  border-bottom-right-radius: 0;
   background: var(--chat-bubble-fill);
+}
+
+// Внутренние стыки компактны; острый нижний угол нужен только рядом с хвостом.
+.manager-chat-bubble--inbound:not(.manager-chat-bubble--group-start) {
+  border-top-left-radius: var(--antex-space-xs);
+}
+.manager-chat-bubble--outbound:not(.manager-chat-bubble--group-start) {
+  border-top-right-radius: var(--antex-space-xs);
+}
+.manager-chat-bubble--inbound:not(.manager-chat-bubble--group-end) {
+  border-bottom-left-radius: var(--antex-space-xs);
+}
+.manager-chat-bubble--outbound:not(.manager-chat-bubble--group-end) {
+  border-bottom-right-radius: var(--antex-space-xs);
+}
+.manager-chat-bubble--inbound.manager-chat-bubble--group-end {
+  border-bottom-left-radius: 0;
+}
+.manager-chat-bubble--outbound.manager-chat-bubble--group-end {
+  border-bottom-right-radius: 0;
 }
 
 // Хвост закрывает внутренний стык, обводка есть только по внешней кривой.

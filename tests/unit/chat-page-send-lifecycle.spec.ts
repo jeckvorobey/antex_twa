@@ -4,6 +4,8 @@ import { QBtn, QInput, QIcon, QTooltip, QSpinner, Quasar } from 'quasar';
 import { createI18n } from 'vue-i18n';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import ChatComposer from '@components/manager/ChatComposer.vue';
+import ChatBubble from '@components/manager/ChatBubble.vue';
+import { useManagerChatStore } from '@stores/manager-chat.store';
 import ManagerChatPage from '@pages/manager/ManagerChatPage.vue';
 import {
   fetchManagerChat,
@@ -170,6 +172,49 @@ describe('жизненный цикл отправки страницы чата
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
   });
+
+  it.each(['inbound', 'outbound'] as const)(
+    'пересчитывает границы группы %s при загрузке истории и новых сообщениях',
+    async (direction) => {
+      const wrapper = await setup();
+      const store = useManagerChatStore();
+      store.messages = [
+        { ...message(), id: 1, direction, createdAt: '2026-09-02T10:00:00' },
+        { ...message(), id: 2, direction, createdAt: '2026-09-02T21:00:00' },
+      ];
+      await flushPromises();
+      const boundaries = () =>
+        wrapper.findAllComponents(ChatBubble).map((bubble) => ({
+          start: bubble.props('groupStart'),
+          end: bubble.props('groupEnd'),
+        }));
+      expect(boundaries()).toEqual([
+        { start: true, end: false },
+        { start: false, end: true },
+      ]);
+      store.messages.unshift({ ...store.messages[0]!, id: 0 });
+      store.messages.push({ ...store.messages[1]!, id: 3 });
+      await flushPromises();
+      expect(boundaries()).toEqual([
+        { start: true, end: false },
+        { start: false, end: false },
+        { start: false, end: false },
+        { start: false, end: true },
+      ]);
+      store.messages.push(
+        { ...message(), id: 4, direction: direction === 'inbound' ? 'outbound' : 'inbound' },
+        { ...message(), id: 5, direction, createdAt: '2026-09-03T00:01:00' },
+        { ...message(), id: 6, direction, createdAt: '2026-09-04T00:01:00' },
+      );
+      await flushPromises();
+      expect(boundaries().slice(3)).toEqual([
+        { start: false, end: true },
+        { start: true, end: true },
+        { start: true, end: true },
+        { start: true, end: true },
+      ]);
+    },
+  );
 
   it.each(['failed', 'pending'])(
     'сохраняет текст и reply при %s, очищает после sent',

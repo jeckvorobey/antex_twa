@@ -31,15 +31,6 @@
     />
 
     <template v-else-if="chatStore.activeConversation">
-      <div v-if="chatStore.activeConversation.latestOrder" class="manager-chat-context">
-        <OrderCard
-          :order="chatStore.activeConversation.latestOrder"
-          mode="manager"
-          compact
-          :actions="false"
-        />
-      </div>
-
       <div class="manager-chat-timeline">
         <q-btn
           v-if="chatStore.hasMoreMessages"
@@ -58,6 +49,8 @@
           <ChatBubble
             v-else
             :message="item.message"
+            :group-start="item.groupStart"
+            :group-end="item.groupEnd"
             :reply-label="replyPreview(item.message.replyToMessageId)"
             @reply="replyTo = $event"
             @forward="selectForward"
@@ -128,7 +121,6 @@ import ChatDateDivider from '@components/manager/ChatDateDivider.vue';
 import ConnectionStatePill from '@components/manager/ConnectionStatePill.vue';
 import AntexEmptyState from '@components/ui/AntexEmptyState.vue';
 import ManagerPageHeader from '@components/manager/ManagerPageHeader.vue';
-import OrderCard from '@components/orders/OrderCard.vue';
 import { useManagerChatStore } from '@stores/manager-chat.store';
 import { useManagerRealtimeStore } from '@stores/manager-realtime.store';
 import type { ManagerChatMessage } from '@types/manager-chat';
@@ -150,6 +142,8 @@ interface MessageTimelineItem {
   kind: 'message';
   key: string;
   message: ManagerChatMessage;
+  groupStart: boolean;
+  groupEnd: boolean;
 }
 
 type TimelineItem = DateTimelineItem | MessageTimelineItem;
@@ -219,17 +213,35 @@ const conversationSubtitle = computed(() => {
   return user.username ? `@${user.username}` : t('manager.customerFallback', { id: user.id });
 });
 
+/** Объединяет соседей одного направления, не пересекая разделитель даты. */
+function sameMessageGroup(
+  message: ManagerChatMessage,
+  neighbor: ManagerChatMessage | undefined,
+): boolean {
+  return (
+    !!neighbor &&
+    message.direction === neighbor.direction &&
+    localDateKey(new Date(message.createdAt)) === localDateKey(new Date(neighbor.createdAt))
+  );
+}
+
 const timelineItems = computed<TimelineItem[]>(() => {
   const result: TimelineItem[] = [];
   let lastDay = '';
-  for (const message of chatStore.messages) {
+  for (const [index, message] of chatStore.messages.entries()) {
     const date = new Date(message.createdAt);
     const day = localDateKey(date);
     if (day !== lastDay) {
       result.push({ kind: 'date', key: `date-${day}`, label: formatDay(date) });
       lastDay = day;
     }
-    result.push({ kind: 'message', key: `message-${message.id}`, message });
+    result.push({
+      kind: 'message',
+      key: `message-${message.id}`,
+      message,
+      groupStart: !sameMessageGroup(message, chatStore.messages[index - 1]),
+      groupEnd: !sameMessageGroup(message, chatStore.messages[index + 1]),
+    });
   }
   return result;
 });
