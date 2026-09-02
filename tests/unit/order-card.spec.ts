@@ -130,8 +130,10 @@ describe('shared OrderCard', () => {
     const newOrder = mountCard('manager', true, { status: 1 });
     const take = newOrder.get('[aria-label="Взять в работу"]');
 
-    expect(newOrder.findAll('.order-card__action')).toHaveLength(1);
-    expect(newOrder.findAll('.order-card__action-visual')).toHaveLength(1);
+    expect(newOrder.findAll('.order-card__action')).toHaveLength(2);
+    expect(newOrder.findAll('.order-card__action-visual')).toHaveLength(2);
+    await newOrder.get('[aria-label="Открыть детали заявки"]').trigger('click');
+    expect(newOrder.emitted('openDetails')).toHaveLength(1);
     await take.trigger('click');
     expect(newOrder.emitted('take')).toHaveLength(1);
 
@@ -141,7 +143,12 @@ describe('shared OrderCard', () => {
     const cancel = wrapper.get('[aria-label="Отменить заявку"]');
 
     expect(wrapper.find('[aria-label="Повторить"]').exists()).toBe(false);
-    expect(wrapper.findAll('.order-card__action')).toHaveLength(3);
+    expect(wrapper.findAll('.order-card__action')).toHaveLength(4);
+    await wrapper.get('[aria-label="Открыть детали заявки"]').trigger('click');
+    expect(wrapper.emitted('openDetails')).toHaveLength(1);
+    expect(wrapper.emitted('openChat')).toBeUndefined();
+    expect(wrapper.emitted('complete')).toBeUndefined();
+    expect(wrapper.emitted('cancel')).toBeUndefined();
     await chat.trigger('click');
     await complete.trigger('click');
     await cancel.trigger('click');
@@ -184,7 +191,7 @@ describe('shared OrderCard', () => {
     const wrapper = mountCard('manager', true, { status: 2 });
     await wrapper.setProps({ selectable: true });
 
-    expect(wrapper.findAll('.order-card__action')).toHaveLength(3);
+    expect(wrapper.findAll('.order-card__action')).toHaveLength(4);
     expect(wrapper.classes()).not.toContain('order-card--selectable');
     expect(wrapper.attributes('role')).toBeUndefined();
     expect(wrapper.attributes('tabindex')).toBeUndefined();
@@ -196,6 +203,7 @@ describe('shared OrderCard', () => {
     const wrapper = mountCard('manager', true, { status: 2 }, ['complete', 'cancel']);
 
     expect(wrapper.get('[aria-label="Открыть чат клиента"]').attributes('disabled')).toBeUndefined();
+    expect(wrapper.get('[aria-label="Открыть детали заявки"]').attributes('disabled')).toBeUndefined();
     expect(wrapper.get('[aria-label="Завершить заявку"]').attributes('disabled')).toBeDefined();
     expect(wrapper.get('[aria-label="Отменить заявку"]').attributes('disabled')).toBeDefined();
   });

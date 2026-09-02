@@ -314,6 +314,10 @@ body.body--dark .q-page {
 }
 
 .order-card {
+  // Область нажатия 44px из общей шкалы; видимый зазор задаёт space-sm.
+  --order-card-action-target-size: calc(
+    var(--antex-space-xl) + var(--antex-space-sm) + var(--antex-space-xs)
+  );
   position: relative;
   display: flex;
   width: 100%;
@@ -432,7 +436,7 @@ body.body--dark .q-page {
   bottom: 7px;
   left: 14px;
   flex-wrap: wrap;
-  min-height: 44px;
+  min-height: var(--order-card-action-target-size);
 }
 
 .order-card__time {
@@ -447,14 +451,14 @@ body.body--dark .q-page {
   align-items: center;
   justify-content: flex-end;
   flex-wrap: wrap;
-  min-height: 44px;
+  min-height: var(--order-card-action-target-size);
 }
 
 .order-card__action {
-  width: 44px;
-  min-width: 44px;
-  height: 44px;
-  min-height: 44px;
+  width: var(--order-card-action-target-size);
+  min-width: var(--order-card-action-target-size);
+  height: var(--order-card-action-target-size);
+  min-height: var(--order-card-action-target-size);
   padding: 0;
   color: var(--antex-gold-base);
   background: transparent;
@@ -467,18 +471,14 @@ body.body--dark .q-page {
 
 .order-card__action-visual {
   display: inline-flex;
-  width: 28px;
-  height: 28px;
+  width: calc(var(--order-card-action-target-size) - var(--antex-space-sm));
+  height: calc(var(--order-card-action-target-size) - var(--antex-space-sm));
   align-items: center;
   justify-content: center;
   color: currentcolor;
   border: 1px solid currentcolor;
-  border-radius: 9px;
+  border-radius: var(--antex-radius-btn);
   background: color-mix(in srgb, var(--antex-bg-card) 80%, transparent);
-}
-
-.order-card__action-icon {
-  font-size: 18px;
 }
 
 .order-card__action:focus-visible {

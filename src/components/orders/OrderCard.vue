@@ -61,7 +61,12 @@
           @click.stop="emitAction(action.event)"
         >
           <span class="order-card__action-visual">
-            <q-icon :name="action.icon" class="order-card__action-icon" aria-hidden="true" />
+            <q-icon
+              :name="action.icon"
+              size="var(--antex-space-md)"
+              class="order-card__action-icon"
+              aria-hidden="true"
+            />
           </span>
           <q-tooltip>{{ t(action.labelKey) }}</q-tooltip>
         </q-btn>
@@ -73,6 +78,12 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import {
+  symOutlinedChatBubble,
+  symOutlinedCheck,
+  symOutlinedClose,
+  symOutlinedVisibility,
+} from '@quasar/extras/material-symbols-outlined';
 
 import { toManagerOrderCard, toUserOrderCard } from '@components/orders/order-card.adapters';
 import type { OrderCardMode } from '@components/orders/order-card.model';
@@ -132,10 +143,19 @@ const statusClass = computed(() => {
 const visibleActions = computed<OrderCardAction[]>(() => {
   if (!props.actions) return [];
 
+  // Просмотр не меняет заявку: используется существующий маршрут деталей.
+  const detailsAction: OrderCardAction = {
+    key: 'details',
+    event: 'openDetails',
+    icon: symOutlinedVisibility,
+    labelKey: 'manager.orders.actions.details',
+  };
+
   switch (props.order.status) {
     case 1:
       return props.mode === 'manager'
         ? [
+            detailsAction,
             {
               key: 'take',
               event: 'take',
@@ -147,22 +167,23 @@ const visibleActions = computed<OrderCardAction[]>(() => {
     case 2:
       return props.mode === 'manager'
         ? [
+            detailsAction,
             {
               key: 'chat',
               event: 'openChat',
-              icon: 'chat_bubble_outline',
+              icon: symOutlinedChatBubble,
               labelKey: 'manager.orders.actions.chat',
             },
             {
               key: 'complete',
               event: 'complete',
-              icon: 'check',
+              icon: symOutlinedCheck,
               labelKey: 'manager.orderPage.actions.complete',
             },
             {
               key: 'cancel',
               event: 'cancel',
-              icon: 'close',
+              icon: symOutlinedClose,
               labelKey: 'manager.orderPage.actions.cancel',
             },
           ]
@@ -181,18 +202,22 @@ const density = computed(() => (compact.value ? 'compact' : 'regular'));
 const selectableCard = computed(() => props.selectable && visibleActions.value.length === 0);
 const pendingActionKeys = computed(() => new Set(props.pendingActions));
 
+/** Блокирует только действия, для которых выполняется запрос. */
 function isActionPending(key: string): boolean {
   return pendingActionKeys.value.has(key);
 }
 
+/** Передаёт выбранное действие странице, не меняя статус из карточки. */
 function emitAction(event: OrderCardEvent): void {
   emit(event);
 }
 
+/** Открывает карточку без вложенных кнопок, если разрешён выбор. */
 function select(): void {
   if (selectableCard.value) emit('select');
 }
 
+/** Обрабатывает клавиатуру только на самой выбираемой карточке. */
 function selectFromKeyboard(event: KeyboardEvent): void {
   if (!selectableCard.value || event.target !== event.currentTarget) return;
   if (event.key !== 'Enter' && event.key !== ' ') return;

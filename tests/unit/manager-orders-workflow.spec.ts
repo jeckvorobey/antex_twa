@@ -2,11 +2,12 @@ import { createPinia, setActivePinia } from 'pinia';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { flushPromises, mount } from '@vue/test-utils';
-import { QBtn, QCard, QIcon, QSkeleton, QSpinner, Quasar } from 'quasar';
+import { QBadge, QBtn, QCard, QIcon, QSkeleton, QSpinner, Quasar } from 'quasar';
 import { createI18n } from 'vue-i18n';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import ManagerOrdersPage from '@pages/manager/ManagerOrdersPage.vue';
+import OrderCard from '@components/orders/OrderCard.vue';
 import ManagerOrderPage from '@pages/manager/ManagerOrderPage.vue';
 import { useManagerChatStore } from '@stores/manager-chat.store';
 import type { ManagerOrderSummary } from '@types/manager-chat';
@@ -49,7 +50,7 @@ vi.mock('@/composables/useAntexNotify', () => ({
   useAntexNotify: () => ({ notify: vi.fn() }),
 }));
 
-import { fetchManagerOrder, fetchManagerOrders, updateManagerOrderStatus } from '@services/manager-chat';
+import { ensureManagerOrderChat, fetchManagerOrder, fetchManagerOrders, updateManagerOrderStatus } from '@services/manager-chat';
 
 function makeOrder(id = 1): ManagerOrderSummary {
   return {
@@ -99,6 +100,25 @@ describe('manager orders workflow state', () => {
     setActivePinia(createPinia());
     vi.resetAllMocks();
     routeHarness.route!.params.orderId = '1';
+  });
+
+  it.each([1, 2])('opens the correct order from the real view button for status %s without mutations', async (status) => {
+    const pinia = createPinia();
+    vi.mocked(fetchManagerOrders).mockResolvedValueOnce({ items: [{ ...makeOrder(17), status }] });
+    const global = managerPageGlobal(pinia);
+    const wrapper = mount(ManagerOrdersPage, {
+      global: {
+        ...global,
+        components: { ...global.components, QBadge, OrderCard },
+        stubs: { ...global.stubs, OrderCard: false, QTooltip: true },
+      },
+    });
+    await flushPromises();
+    await wrapper.get('[aria-label="Открыть детали заявки"]').trigger('click');
+    expect(routerPush).toHaveBeenCalledExactlyOnceWith({ name: 'managerOrder', params: { orderId: 17 } });
+    expect(updateManagerOrderStatus).not.toHaveBeenCalled();
+    expect(ensureManagerOrderChat).not.toHaveBeenCalled();
+    wrapper.unmount();
   });
 
   it('reloads order details when Vue reuses the page for another route id', async () => {
