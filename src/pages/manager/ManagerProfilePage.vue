@@ -5,51 +5,24 @@
     <h1 class="manager-profile__title">{{ t('manager.profile.title') }}</h1>
 
     <AntexCard tag="section" class="manager-profile-card">
-      <q-avatar class="manager-profile-card__avatar">
-        <q-img
-          v-if="showProfilePhoto"
-          :src="profilePhotoUrl"
-          fit="cover"
-          width="100%"
-          height="100%"
-          :alt="displayName"
-          no-spinner
-          @error="handleProfilePhotoError"
-        />
-        <span v-else class="manager-profile-card__initials">{{ initials }}</span>
-      </q-avatar>
       <div>
         <div class="manager-profile-card__name">{{ displayName }}</div>
         <div class="manager-profile-card__role">{{ t('manager.profile.role') }}</div>
       </div>
     </AntexCard>
-
   </q-page>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 import AntexCard from '@components/ui/AntexCard.vue';
 import AppHeaderBar from '@components/ui/AppHeaderBar.vue';
 import { useAuthStore } from '@stores/auth.store';
-import { toSafeExternalUrl } from '@utils/safe-external-url';
 
 const authStore = useAuthStore();
 const { t } = useI18n();
-
-const profilePhotoFailed = ref(false);
-const profilePhotoUrl = computed(() => toSafeExternalUrl(authStore.user?.photo_url));
-const showProfilePhoto = computed(() => Boolean(profilePhotoUrl.value) && !profilePhotoFailed.value);
-
-watch(profilePhotoUrl, () => {
-  profilePhotoFailed.value = false;
-});
-
-function handleProfilePhotoError(): void {
-  profilePhotoFailed.value = true;
-}
 
 const displayName = computed(() => {
   const user = authStore.user;
@@ -61,14 +34,5 @@ const displayName = computed(() => {
     user.username ||
     t('manager.profile.fallbackName')
   );
-});
-
-const initials = computed(() => {
-  const value = displayName.value.replace('@', '').trim();
-  const parts = value.split(/\s+/).filter(Boolean);
-  return parts
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? '')
-    .join('');
 });
 </script>

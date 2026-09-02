@@ -60,6 +60,7 @@ body.manager-workspace-active {
 }
 
 .manager-layout .app-header-bar__eyebrow {
+  margin-right: var(--antex-space-md);
   font-family: 'Montserrat Alternates', 'Segoe UI', sans-serif;
 }
 
@@ -112,7 +113,7 @@ body.manager-workspace-active {
 .manager-page--chat {
   display: flex;
   flex-direction: column;
-  padding-bottom: calc(94px + var(--chat-composer-height, 54px) + var(--antex-safe-area-bottom));
+  padding-bottom: calc(94px + var(--chat-composer-height, 50px) + var(--antex-safe-area-bottom));
 }
 
 .manager-unread-badge {
@@ -256,14 +257,14 @@ body.manager-workspace-active {
 }
 
 .manager-search-input .q-field__control {
-  height: 46px;
-  padding: 0 14px;
+  height: var(--antex-field-height);
+  padding: 0 var(--antex-field-padding-x);
   border-radius: var(--antex-radius-btn);
   background: var(--antex-bg-deep);
 }
 
 .manager-search-input .q-field__marginal {
-  height: 46px;
+  height: var(--antex-field-height);
 }
 
 .manager-search-input .q-field__control::before {
@@ -1035,9 +1036,9 @@ body.manager-workspace-active {
   display: flex;
   flex-direction: column;
   gap: var(--antex-space-xs);
-  min-height: 54px;
-  padding: var(--antex-space-xs);
-  border-radius: var(--antex-radius-card);
+  min-height: 50px;
+  padding: calc(var(--antex-space-xs) / 2);
+  border-radius: var(--antex-space-lg);
   border: 1px solid var(--antex-manager-outline);
   background: var(--antex-bg-deep);
   box-shadow: none;
@@ -1067,7 +1068,7 @@ body.manager-workspace-active {
   min-height: 44px;
 }
 .manager-chat-composer__input .q-field__native {
-  padding: 10px 0;
+  padding: var(--antex-space-sm) 0;
 }
 
 .manager-chat-composer__file-input {
@@ -1123,24 +1124,6 @@ body.manager-workspace-active {
   border-radius: var(--antex-radius-card);
   background: var(--antex-bg-card);
   box-shadow: none;
-}
-
-.manager-profile-card {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-
-.manager-profile-card__avatar {
-  display: grid;
-  width: 52px;
-  height: 52px;
-  overflow: hidden;
-  place-items: center;
-  border-radius: 18px;
-  color: var(--antex-bg-deep);
-  background: var(--antex-gold-gradient);
-  font-weight: 800;
 }
 
 .manager-profile-card__name {

@@ -47,6 +47,8 @@
   --antex-space-md: 16px;
   --antex-space-lg: 24px;
   --antex-space-xl: 32px;
+  --antex-field-height: 44px;
+  --antex-field-padding-x: 12px;
   --antex-radius-btn: 14px;
   --antex-radius-card: 18px;
   --antex-radius-chip: 20px;
@@ -1230,8 +1232,13 @@ body.body--dark .q-page {
 }
 
 .app-field .q-field__control {
-  min-height: 48px;
-  padding: 0 14px;
+  height: var(--antex-field-height);
+  min-height: var(--antex-field-height);
+  padding: 0 var(--antex-field-padding-x);
+}
+
+.app-field .q-field__marginal {
+  height: var(--antex-field-height);
 }
 
 .app-header-shell {
@@ -2015,8 +2022,8 @@ body.body--light .q-page,
   display: flex;
   align-items: center;
   gap: 8px;
-  min-height: 54px;
-  padding: 0 12px;
+  min-height: var(--antex-field-height);
+  padding: 0 var(--antex-field-padding-x);
   border: 1px solid rgba(212, 175, 55, 0.14);
   border-radius: 16px;
   background: rgba(10, 31, 28, 0.92);
@@ -2367,8 +2374,8 @@ body.body--light .q-page,
 .app-order-sheet__control {
   display: flex;
   align-items: center;
-  min-height: 52px;
-  padding: 0 14px;
+  min-height: var(--antex-field-height);
+  padding: 0 var(--antex-field-padding-x);
   border: 1px solid rgba(212, 175, 55, 0.16);
   border-radius: 16px;
   background: rgba(10, 31, 28, 0.92);
