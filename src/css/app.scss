@@ -318,10 +318,12 @@ body.body--dark .q-page {
   display: flex;
   width: min(100%, 343px);
   max-width: 343px;
+  height: 172px;
   min-height: 172px;
   box-sizing: border-box;
   flex-direction: column;
   margin-inline: auto;
+  overflow: hidden;
   padding: 12px 14px;
   border-left: 2px solid var(--antex-gold-base);
   background: color-mix(in srgb, var(--antex-bg-card) 94%, transparent);
@@ -344,6 +346,7 @@ body.body--dark .q-page {
 }
 
 .order-card--compact {
+  height: 143px;
   min-height: 143px;
 }
 
@@ -353,6 +356,33 @@ body.body--dark .q-page {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+}
+
+.order-card--regular .order-card__meta {
+  position: absolute;
+  right: 14px;
+  bottom: 46px;
+  left: 14px;
+  margin-top: 0;
+}
+
+.order-card--compact .order-card__meta {
+  position: absolute;
+  bottom: 13px;
+  left: 14px;
+  max-width: calc(100% - 92px);
+  margin-top: 0;
+}
+
+.order-card--compact .order-card__bottom {
+  right: 14px;
+  bottom: 7px;
+  left: auto;
+  min-height: 28px;
+}
+
+.order-card--compact .order-card__time {
+  flex: 0 0 auto;
 }
 
 .order-card__number {
@@ -377,7 +407,7 @@ body.body--dark .q-page {
   min-width: 0;
   align-items: center;
   gap: 10px;
-  margin-top: 8px;
+  margin-top: 4px;
   color: var(--antex-text-secondary);
   font-size: 10px;
 }
@@ -398,9 +428,12 @@ body.body--dark .q-page {
 }
 
 .order-card__bottom {
+  position: absolute;
+  right: 14px;
+  bottom: 7px;
+  left: 14px;
   flex-wrap: wrap;
   min-height: 44px;
-  margin-top: auto;
 }
 
 .order-card__time {
@@ -2160,8 +2193,8 @@ body.body--light .q-page,
 
 .order-amount-flow {
   display: grid;
-  gap: 6px;
-  margin-top: 12px;
+  gap: 2px;
+  margin-top: 6px;
 }
 
 .order-amount-flow__row {
@@ -2185,17 +2218,17 @@ body.body--light .q-page,
 .order-amount-flow__result-amount {
   color: var(--antex-text-primary);
   font-family: 'Montserrat Alternates', 'Inter Tight', sans-serif;
-  line-height: 1.12;
+  line-height: 1;
   white-space: nowrap;
 }
 
 .order-amount-flow__source-amount {
-  font-size: clamp(20px, 6vw, 24px);
+  font-size: clamp(20px, 5.5vw, 22px);
   font-weight: 800;
 }
 
 .order-amount-flow__result-amount {
-  font-size: clamp(28px, 8.4vw, 34px);
+  font-size: clamp(28px, 7.6vw, 31px);
   font-weight: 900;
   letter-spacing: 0.01em;
 }
