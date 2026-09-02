@@ -16,7 +16,7 @@ import { useI18n } from 'vue-i18n';
 
 import AntexNotice from '@components/ui/AntexNotice.vue';
 
-withDefaults(defineProps<{ dismissible?: boolean }>(), { dismissible: true });
+withDefaults(defineProps<{ dismissible?: boolean }>(), { dismissible: false });
 const emit = defineEmits<{ dismiss: [] }>();
 const { t } = useI18n();
 </script>

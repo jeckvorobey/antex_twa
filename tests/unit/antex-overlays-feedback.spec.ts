@@ -41,7 +41,7 @@ describe('Antex overlays and feedback', () => {
     expect(document.body.querySelector('.antex-bottom-sheet__title')).toBeNull();
   });
 
-  it('normalizes Quasar Notify above bottom navigation and safe area', () => {
+  it('показывает уведомление сверху с доступным закрытием', () => {
     const create = vi.fn();
     const { notify } = useAntexNotify(create);
 
@@ -51,9 +51,29 @@ describe('Antex overlays and feedback', () => {
       expect.objectContaining({
         type: 'negative',
         message: 'Не удалось выполнить действие',
-        position: 'bottom',
+        position: 'top',
+        color: undefined,
+        textColor: undefined,
+        icon: 'error_outline',
+        attrs: { role: 'alert' },
+        actions: [expect.objectContaining({ icon: 'close', 'aria-label': 'Закрыть' })],
         classes: 'antex-notify antex-notify--negative',
       }),
     );
   });
+
+  it.each(['positive', 'warning', 'info'] as const)(
+    'объявляет %s без прерывания чтения',
+    (tone) => {
+      const create = vi.fn();
+      useAntexNotify(create).notify(tone, 'Сообщение');
+      expect(create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          position: 'top',
+          attrs: { role: 'status' },
+          html: false,
+        }),
+      );
+    },
+  );
 });

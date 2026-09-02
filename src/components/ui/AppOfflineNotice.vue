@@ -1,8 +1,10 @@
 <template>
   <AntexNotice tone="offline" class="app-offline-notice">
     <template #title><slot name="title" /></template>
-    <span><slot /></span>
-    <span class="app-offline-notice__hours">{{ compactBusinessHours }}</span>
+    <slot />
+    <template v-if="compactBusinessHours" #aside>
+      <q-badge class="app-offline-notice__hours">{{ compactBusinessHours }}</q-badge>
+    </template>
   </AntexNotice>
 </template>
 

@@ -87,7 +87,7 @@
       />
     </div>
 
-    <AntexCard class="q-pa-md">
+    <AntexCard class="app-exchange-receive q-pa-md" :elevated="false">
       <div class="app-order-sheet__fields">
         <div class="app-order-sheet__field">
           <div class="app-order-sheet__label">{{ receiveLocationTitle }}</div>
@@ -107,6 +107,8 @@
             class="app-order-sheet__methods q-mt-xs"
             :options="methodOptions"
             color="warning"
+            dense
+            size="36px"
           />
         </div>
 
