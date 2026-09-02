@@ -34,6 +34,8 @@ function setup() {
 }
 beforeEach(() => {
   vi.useFakeTimers();
+  // Happy DOM принимает только собственный MediaStream; устройства здесь подменены.
+  vi.spyOn(HTMLMediaElement.prototype, 'srcObject', 'set').mockImplementation(() => {});
   stopTrack = vi.fn();
   stream = { getTracks: () => [{ stop: stopTrack }] } as unknown as MediaStream;
   getUserMedia = vi.fn().mockResolvedValue(stream);
@@ -176,6 +178,60 @@ function mountRecorder() {
   });
 }
 describe('ChatRecorder', () => {
+  it.each(['voice', 'video_note'] as const)(
+    'continues %s after permission even when the initiating pointer is released or cancelled',
+    async (kind) => {
+      for (const event of ['pointerup', 'pointercancel', 'lostpointercapture']) {
+        let grant!: (value: MediaStream) => void;
+        getUserMedia.mockClear();
+        stopTrack.mockClear();
+        getUserMedia.mockReturnValue(
+          new Promise<MediaStream>((resolve) => {
+            grant = resolve;
+          }),
+        );
+        const wrapper = mountRecorder();
+        if (kind === 'video_note')
+          await wrapper.get('[aria-label="manager.chat.recorder.switchToVideo"]').trigger('click');
+        const button = wrapper.get('[data-testid="record"]');
+        await button.trigger('pointerdown', {
+          pointerId: 1,
+          button: 0,
+          clientX: 100,
+          clientY: 100,
+        });
+        await button.trigger(event, { pointerId: 1 });
+        // Повторные события во время системного окна не запрашивают второе разрешение.
+        await button.trigger('pointerdown', { pointerId: 2, button: 0 });
+        grant(stream);
+        await flushPromises();
+        expect(getUserMedia).toHaveBeenCalledTimes(1);
+        expect(stopTrack).not.toHaveBeenCalled();
+        expect(wrapper.find('[data-testid="stop-recording"]').exists()).toBe(true);
+        expect(wrapper.text()).toContain('manager.chat.recorder.locked');
+        expect(wrapper.emitted('send')).toBeUndefined();
+        await wrapper.get('[data-testid="stop-recording"]').trigger('click');
+        expect(wrapper.find('[data-testid="send-recording"]').exists()).toBe(true);
+        wrapper.unmount();
+      }
+    },
+  );
+  it('still cancels a pending permission explicitly', async () => {
+    let grant!: (value: MediaStream) => void;
+    getUserMedia.mockReturnValue(
+      new Promise<MediaStream>((resolve) => {
+        grant = resolve;
+      }),
+    );
+    const wrapper = mountRecorder();
+    await wrapper.get('[data-testid="record"]').trigger('pointerdown', { pointerId: 1, button: 0 });
+    await wrapper.get('[aria-label="manager.chat.recorder.cancel"]').trigger('click');
+    grant(stream);
+    await flushPromises();
+    expect(stopTrack).toHaveBeenCalledTimes(1);
+    expect(wrapper.find('[data-testid="stop-recording"]').exists()).toBe(false);
+    wrapper.unmount();
+  });
   it('keeps the recorder expanded on permission failure and allows closing back to text', async () => {
     getUserMedia.mockRejectedValue(new DOMException('Denied', 'NotAllowedError'));
     const wrapper = mountRecorder();

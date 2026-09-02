@@ -810,38 +810,45 @@ body.manager-workspace-active {
 }
 
 .manager-chat-bubble--inbound {
-  border: 1px solid var(--antex-manager-outline);
-  border-bottom-left-radius: 4px;
-  background: var(--antex-bg-card);
+  --chat-bubble-fill: var(--antex-bg-card);
+  --chat-bubble-edge: var(--antex-manager-outline);
+  border: 1px solid var(--chat-bubble-edge);
+  border-bottom-left-radius: 0;
+  background: var(--chat-bubble-fill);
 }
 
 .manager-chat-bubble--outbound {
-  border: 1px solid var(--antex-manager-outbound-outline);
-  border-bottom-right-radius: 4px;
-  background: var(--antex-manager-outbound);
+  --chat-bubble-fill: var(--antex-manager-outbound);
+  --chat-bubble-edge: var(--antex-manager-outbound-outline);
+  border: 1px solid var(--chat-bubble-edge);
+  border-bottom-right-radius: 0;
+  background: var(--chat-bubble-fill);
 }
 
-// Хвостик продолжает фон и внешнюю рамку пузырька без перекрытия текста.
-.manager-chat-bubble::before {
-  content: '';
+// Хвост закрывает внутренний стык, обводка есть только по внешней кривой.
+.manager-chat-bubble__tail {
   position: absolute;
   bottom: -1px;
-  width: 8px;
-  height: 12px;
-  background: inherit;
-  border-bottom: inherit;
+  left: -9px;
+  width: 12px;
+  height: 16px;
+  overflow: visible;
+  pointer-events: none;
 }
-.manager-chat-bubble--inbound::before {
-  left: -5px;
-  border-left: inherit;
-  border-bottom-left-radius: 8px 12px;
-  transform: skewX(-20deg);
+.manager-chat-bubble--outbound .manager-chat-bubble__tail {
+  left: auto;
+  right: -9px;
+  transform: scaleX(-1);
 }
-.manager-chat-bubble--outbound::before {
-  right: -5px;
-  border-right: inherit;
-  border-bottom-right-radius: 8px 12px;
-  transform: skewX(20deg);
+.manager-chat-bubble__tail-fill {
+  fill: var(--chat-bubble-fill);
+}
+.manager-chat-bubble__tail-edge {
+  fill: none;
+  stroke: var(--chat-bubble-edge);
+  stroke-width: 1;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 .manager-chat-bubble-actions {
   min-width: 44px;
@@ -929,6 +936,22 @@ body.manager-workspace-active {
 
 .manager-chat-attachment {
   margin-bottom: 7px;
+}
+
+.manager-chat-attachment__open {
+  display: block;
+  max-width: 100%;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 14px;
+  background: transparent;
+  cursor: zoom-in;
+}
+.manager-chat-attachment__open:focus-visible {
+  outline: 2px solid var(--q-primary);
+  outline-offset: 3px;
 }
 
 .manager-chat-attachment__skeleton,

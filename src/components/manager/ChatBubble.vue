@@ -7,6 +7,15 @@
       :class="`manager-chat-bubble--${message.direction}`"
       @contextmenu.prevent="openMenu"
     >
+      <svg
+        class="manager-chat-bubble__tail"
+        viewBox="0 0 12 16"
+        aria-hidden="true"
+        focusable="false"
+      >
+        <path class="manager-chat-bubble__tail-fill" d="M9 0C9 8 6 12 1 15C4 16 8 16 12 15V0Z" />
+        <path class="manager-chat-bubble__tail-edge" d="M9 0C9 8 6 12 1 15C4 16 8 16 12 15" />
+      </svg>
       <div v-if="message.forwardSourceLabel" class="manager-chat-bubble__quote">
         {{ t('manager.chat.message.forwarded', { name: message.forwardSourceLabel }) }}
       </div>

@@ -191,6 +191,10 @@ export default {
       },
       attachment: {
         photoAlt: 'Фото клиента',
+        openImage: 'Открыть изображение на весь экран',
+        closeImage: 'Закрыть просмотр',
+        zoomImage: 'Увеличить изображение',
+        fitImage: 'Вписать изображение в экран',
         downloadName: 'вложение',
         document: 'Документ',
         unavailable: 'Вложение недоступно',

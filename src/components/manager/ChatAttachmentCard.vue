@@ -2,14 +2,24 @@
   <div class="manager-chat-attachment">
     <q-skeleton v-if="loading" type="rect" class="manager-chat-attachment__skeleton" />
     <template v-else-if="objectUrl">
-      <img
-        v-if="
-          attachment.kind === 'photo' ||
-          (attachment.kind === 'sticker' && attachment.mimeType?.startsWith('image/'))
-        "
+      <button
+        v-if="isImage"
+        type="button"
+        class="manager-chat-attachment__open"
+        :aria-label="t('manager.chat.attachment.openImage')"
+        @click.stop="openImage"
+      >
+        <img
+          :src="objectUrl"
+          :alt="attachment.filename || t('manager.chat.attachment.photoAlt')"
+          class="manager-chat-attachment__image"
+        />
+      </button>
+      <ChatImageViewer
+        v-if="isImage"
+        v-model="imageOpen"
         :src="objectUrl"
         :alt="attachment.filename || t('manager.chat.attachment.photoAlt')"
-        class="manager-chat-attachment__image"
       />
       <video
         v-else-if="attachment.kind === 'video' || attachment.kind === 'animation'"
@@ -53,11 +63,23 @@ import { fetchManagerAttachment } from '@services/manager-chat';
 import type { ChatAttachment } from '@types/manager-chat';
 import { formatFileSize } from '@utils/manager-chat';
 import ChatMediaPlayer from './ChatMediaPlayer.vue';
+import ChatImageViewer from './ChatImageViewer.vue';
 
 const props = defineProps<{ attachment: ChatAttachment }>();
 const { t } = useI18n();
 
 const loading = ref(true);
+const imageOpen = ref(false);
+const isImage = computed(
+  () =>
+    props.attachment.kind === 'photo' ||
+    (['document', 'sticker'].includes(props.attachment.kind) &&
+      props.attachment.mimeType?.startsWith('image/')),
+);
+/** Открывает загруженное изображение, не повторяя защищённый сетевой запрос. */
+function openImage() {
+  imageOpen.value = true;
+}
 const objectUrl = ref<string | null>(null);
 let disposed = false;
 const sizeLabel = computed(() =>

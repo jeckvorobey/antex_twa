@@ -27,7 +27,8 @@
         @pointerdown="beginHold"
         @pointermove="moveHold"
         @pointerup="endHold"
-        @pointercancel="cancel"
+        @pointercancel="cancelHold"
+        @lostpointercapture="cancelHold"
         @contextmenu.prevent
         @click="keyboardStart"
       />
@@ -164,7 +165,15 @@ function moveHold(event: PointerEvent) {
 function endHold(event: PointerEvent) {
   if (!pointer || pointer.id !== event.pointerId) return;
   pointer = null;
-  if (!locked.value) stop();
+  // Системное окно забирает указатель до выдачи разрешения. Не отменяем этот запрос.
+  if (state.value === 'requesting') locked.value = true;
+  else if (!locked.value) stop();
+}
+/** Потеря указателя в системном окне фиксирует запись; вне него отменяет жест. */
+function cancelHold(event: PointerEvent) {
+  if (!pointer || pointer.id !== event.pointerId) return;
+  if (state.value === 'requesting') endHold(event);
+  else if (!locked.value) cancel();
 }
 /** Активация клавиатурой или вспомогательной технологией запускает запись без удержания. */
 function keyboardStart(event: MouseEvent) {
