@@ -1,6 +1,6 @@
 <template>
   <q-page
-    class="manager-page manager-dashboard"
+    class="manager-page manager-dashboard column no-wrap"
     :aria-busy="chatStore.ordersLoading"
   >
     <AppHeaderBar :eyebrow="t('manager.role')" profile-route-name="managerProfile" />
@@ -25,7 +25,7 @@
       {{ t('manager.dashboard.activeOrderTotals', { total: activeOrderTotals }) }}
     </p>
 
-    <section class="manager-dashboard__queue">
+    <section class="manager-dashboard__queue column no-wrap col-grow">
       <div class="manager-dashboard__section-heading">
         <h2>{{ t('manager.dashboard.queue') }}</h2>
         <q-btn

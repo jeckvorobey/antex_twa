@@ -1,12 +1,14 @@
 <template>
-  <AntexCard :elevated="false" class="manager-active-order-queue">
-    <template v-for="(order, index) in orders" :key="order.id">
-      <ManagerActiveOrderQueueItem :order="order" @select="emit('select', order.id)" />
-      <q-separator
-        v-if="index < orders.length - 1"
-        class="manager-active-order-queue__separator"
-      />
-    </template>
+  <AntexCard :elevated="false" class="manager-active-order-queue col-grow overflow-hidden">
+    <div class="manager-active-order-queue__scroll scroll">
+      <template v-for="(order, index) in orders" :key="order.id">
+        <ManagerActiveOrderQueueItem :order="order" @select="emit('select', order.id)" />
+        <q-separator
+          v-if="index < orders.length - 1"
+          class="manager-active-order-queue__separator"
+        />
+      </template>
+    </div>
   </AntexCard>
 </template>
 

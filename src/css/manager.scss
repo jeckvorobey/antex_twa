@@ -83,6 +83,8 @@ body.manager-workspace-active {
   width: min(100%, 390px);
   padding-right: 20px;
   padding-left: 20px;
+  // Навигация с рамкой занимает 62px; по 8px оставляем под ней и над очередью.
+  padding-bottom: calc(62px + 2 * var(--antex-space-sm) + var(--antex-safe-area-bottom));
   font-family: 'Montserrat Alternates', 'Segoe UI', sans-serif;
 }
 
@@ -570,26 +572,35 @@ body.manager-workspace-active {
 .manager-active-order-queue {
   position: relative;
   width: 100%;
-  height: 100%;
-  max-height: 223px;
-  padding: 0 8px;
-  overflow: hidden auto;
+  padding: 0;
   border: 1px solid var(--antex-manager-outline);
   border-radius: var(--antex-radius-card);
   background: var(--antex-bg-card);
+}
+
+.manager-active-order-queue.col-grow {
+  // Перекрываем min-height: 0 у Quasar .column > .col-grow для низких экранов.
+  min-height: 160px;
+}
+
+.manager-active-order-queue__scroll {
+  // Внутренний отступ удерживает scrollbar в пределах скругления карточки.
+  position: absolute;
+  inset: var(--antex-space-sm);
+  overflow-x: hidden;
   scrollbar-color: var(--antex-gold-base) var(--antex-separator);
   scrollbar-width: thin;
 }
 
-.manager-active-order-queue::-webkit-scrollbar {
+.manager-active-order-queue__scroll::-webkit-scrollbar {
   width: 2px;
 }
 
-.manager-active-order-queue::-webkit-scrollbar-track {
+.manager-active-order-queue__scroll::-webkit-scrollbar-track {
   background: var(--antex-separator);
 }
 
-.manager-active-order-queue::-webkit-scrollbar-thumb {
+.manager-active-order-queue__scroll::-webkit-scrollbar-thumb {
   background: var(--antex-gold-base);
 }
 
