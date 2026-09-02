@@ -316,11 +316,31 @@ body.body--dark .q-page {
 .order-card {
   position: relative;
   display: flex;
+  width: min(100%, 343px);
+  max-width: 343px;
   min-height: 172px;
   box-sizing: border-box;
   flex-direction: column;
+  margin-inline: auto;
   padding: 12px 14px;
+  border-left: 2px solid var(--antex-gold-base);
   background: color-mix(in srgb, var(--antex-bg-card) 94%, transparent);
+}
+
+.order-card--status-new {
+  border-left-color: var(--antex-gold-base);
+}
+
+.order-card--status-active {
+  border-left-color: var(--q-info);
+}
+
+.order-card--status-done {
+  border-left-color: var(--q-positive);
+}
+
+.order-card--status-cancelled {
+  border-left-color: var(--q-negative);
 }
 
 .order-card--compact {
@@ -362,7 +382,7 @@ body.body--dark .q-page {
   font-size: 10px;
 }
 
-.order-card__meta > span,
+.order-card__meta-line,
 .order-card__time {
   display: inline-flex;
   min-width: 0;
@@ -374,10 +394,6 @@ body.body--dark .q-page {
   overflow: hidden;
   flex: 1;
   text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-__method {
   white-space: nowrap;
 }
 

@@ -84,7 +84,7 @@ describe('OrderCard manager mode', () => {
     expect(wrapper.get('.order-card__number').text()).toBe('#2026080127');
     expect(wrapper.get('.order-card__customer').text()).toBe('Сергей Иванов');
     expect(wrapper.text()).not.toContain('@must-not-be-card-name');
-    expect(wrapper.get('.order-card__location').text()).toContain('Вьетнам, Хошимин');
+    expect(wrapper.get('.order-card__meta-copy').text()).toBe('Вьетнам · Хошимин · Наличные');
     expect(wrapper.get('.order-amount-flow__rate-inline').text()).toContain('1 RUB = 271.60 VND');
     expect(wrapper.findAllComponents(AppCurrencyMark).map((item) => item.props('mark'))).toEqual([
       '🇷🇺',
@@ -108,8 +108,7 @@ describe('OrderCard manager mode', () => {
     );
 
     expect(wrapper.get('.order-card__customer').text()).toBe('Клиент #77');
-    expect(wrapper.get('.order-card__location').text()).toContain('Вьетнам');
-    expect(wrapper.get('.order-card__location').text()).not.toContain(',');
+    expect(wrapper.get('.order-card__meta-copy').text()).toBe('Вьетнам · Наличные');
     expect(wrapper.text()).not.toContain('username-is-not-a-name');
   });
 

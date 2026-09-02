@@ -51,7 +51,7 @@ describe('OrderCard adapters', () => {
       publicNumber: '2026080124',
       statusLabelKey: 'status.completed',
       statusTone: 'positive',
-      location: 'Таиланд, Паттайя',
+      location: 'Таиланд · Паттайя',
       method: 'Наличные',
       createdAt: '20:34',
       customerName: null,

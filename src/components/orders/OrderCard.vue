@@ -4,6 +4,7 @@
     :class="[
       'order-card',
       `order-card--${mode}`,
+      statusClass,
       {
         'order-card--compact': compact,
         'order-card--regular': !compact,
@@ -35,13 +36,9 @@
     />
 
     <div class="order-card__meta">
-      <span class="order-card__location">
+      <span class="order-card__meta-line order-card__location">
         <q-icon name="location_on" aria-hidden="true" />
-        {{ view.location }}
-      </span>
-      <span v-if="view.method" class="order-card__method">
-        <q-icon name="payments" aria-hidden="true" />
-        {{ view.method }}
+        <span class="order-card__meta-copy">{{ metaText }}</span>
       </span>
     </div>
 
@@ -121,6 +118,17 @@ const view = computed(() =>
     ? toManagerOrderCard(props.order as ManagerOrderSummary, locale.value, t, te)
     : toUserOrderCard(props.order as MiniappOrderItem, locale.value, t, te),
 );
+const metaText = computed(() => [view.value.location, view.value.method].filter(Boolean).join(' · '));
+const statusClass = computed(() => {
+  const statusNames: Record<number, string> = {
+    1: 'new',
+    2: 'active',
+    3: 'done',
+    4: 'cancelled',
+  };
+  const statusName = statusNames[props.order.status];
+  return statusName ? `order-card--status-${statusName}` : undefined;
+});
 const visibleActions = computed<OrderCardAction[]>(() => {
   if (!props.actions) return [];
 
@@ -128,18 +136,6 @@ const visibleActions = computed<OrderCardAction[]>(() => {
     case 1:
       return props.mode === 'manager'
         ? [
-            {
-              key: 'details',
-              event: 'openDetails',
-              icon: 'visibility',
-              labelKey: 'manager.orders.actions.details',
-            },
-            {
-              key: 'chat',
-              event: 'openChat',
-              icon: 'forum',
-              labelKey: 'manager.orders.actions.chat',
-            },
             {
               key: 'take',
               event: 'take',
@@ -151,12 +147,6 @@ const visibleActions = computed<OrderCardAction[]>(() => {
     case 2:
       return props.mode === 'manager'
         ? [
-            {
-              key: 'details',
-              event: 'openDetails',
-              icon: 'visibility',
-              labelKey: 'manager.orders.actions.details',
-            },
             {
               key: 'chat',
               event: 'openChat',

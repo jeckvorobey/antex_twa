@@ -56,7 +56,7 @@ function baseOrderCard(
     currencyBuy: order.currencyBuy,
     amountBuy: order.amountBuy,
     rateText: order.rateText,
-    location: order.city ? `${country}, ${order.city.name}` : country,
+    location: order.city ? `${country} · ${order.city.name}` : country,
     method: translatedValue(
       `manager.receiveMethods.${order.methodGet}`,
       order.methodGet,

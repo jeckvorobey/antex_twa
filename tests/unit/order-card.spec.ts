@@ -77,7 +77,11 @@ describe('shared OrderCard', () => {
       expect(wrapper.classes()).toContain('antex-card--gold-border');
       expect(wrapper.get('.order-card__number').text()).toBe('#2026080124');
       expect(wrapper.get('.order-card__status').text()).toContain('Завершена');
-      expect(wrapper.get('.order-card__location').text()).toContain('Таиланд, Паттайя');
+      const metaLine = wrapper.get('.order-card__meta-line');
+      expect(metaLine.get('.order-card__meta-copy').text()).toBe(
+        'Таиланд · Паттайя · Наличные',
+      );
+      expect(metaLine.findAll('.q-icon')).toHaveLength(1);
       expect(wrapper.get('.order-amount-flow--card-stack').exists()).toBe(true);
       expect(wrapper.find('.order-amount-flow__side').exists()).toBe(false);
       expect(wrapper.find('.order-amount-flow__arrow').exists()).toBe(false);
@@ -124,32 +128,23 @@ describe('shared OrderCard', () => {
 
   it('adds status-specific manager actions with compact Penpot action visuals', async () => {
     const newOrder = mountCard('manager', true, { status: 1 });
-    const newDetails = newOrder.get('[aria-label="Открыть детали заявки"]');
-    const newChat = newOrder.get('[aria-label="Открыть чат клиента"]');
     const take = newOrder.get('[aria-label="Взять в работу"]');
 
-    expect(newOrder.findAll('.order-card__action')).toHaveLength(3);
-    expect(newOrder.findAll('.order-card__action-visual')).toHaveLength(3);
-    await newDetails.trigger('click');
-    await newChat.trigger('click');
+    expect(newOrder.findAll('.order-card__action')).toHaveLength(1);
+    expect(newOrder.findAll('.order-card__action-visual')).toHaveLength(1);
     await take.trigger('click');
-    expect(newOrder.emitted('openDetails')).toHaveLength(1);
-    expect(newOrder.emitted('openChat')).toHaveLength(1);
     expect(newOrder.emitted('take')).toHaveLength(1);
 
     const wrapper = mountCard('manager', true, { status: 2 });
-    const details = wrapper.get('[aria-label="Открыть детали заявки"]');
     const chat = wrapper.get('[aria-label="Открыть чат клиента"]');
     const complete = wrapper.get('[aria-label="Завершить заявку"]');
     const cancel = wrapper.get('[aria-label="Отменить заявку"]');
 
     expect(wrapper.find('[aria-label="Повторить"]').exists()).toBe(false);
-    expect(wrapper.findAll('.order-card__action')).toHaveLength(4);
-    await details.trigger('click');
+    expect(wrapper.findAll('.order-card__action')).toHaveLength(3);
     await chat.trigger('click');
     await complete.trigger('click');
     await cancel.trigger('click');
-    expect(wrapper.emitted('openDetails')).toHaveLength(1);
     expect(wrapper.emitted('openChat')).toHaveLength(1);
     expect(wrapper.emitted('complete')).toHaveLength(1);
     expect(wrapper.emitted('cancel')).toHaveLength(1);
@@ -157,6 +152,21 @@ describe('shared OrderCard', () => {
     const completedOrder = mountCard('manager', true, { status: 3 });
     expect(completedOrder.findAll('.order-card__action')).toHaveLength(0);
     expect(completedOrder.classes()).toContain('order-card--compact');
+  });
+
+  it('maps every order status to a semantic accent class', () => {
+    expect(mountCard('manager', true, { status: 1 }).classes()).toContain(
+      'order-card--status-new',
+    );
+    expect(mountCard('manager', true, { status: 2 }).classes()).toContain(
+      'order-card--status-active',
+    );
+    expect(mountCard('manager', true, { status: 3 }).classes()).toContain(
+      'order-card--status-done',
+    );
+    expect(mountCard('manager', true, { status: 4 }).classes()).toContain(
+      'order-card--status-cancelled',
+    );
   });
 
   it('emits select from an explicitly selectable card for click and keyboard', async () => {
@@ -174,7 +184,7 @@ describe('shared OrderCard', () => {
     const wrapper = mountCard('manager', true, { status: 2 });
     await wrapper.setProps({ selectable: true });
 
-    expect(wrapper.findAll('.order-card__action')).toHaveLength(4);
+    expect(wrapper.findAll('.order-card__action')).toHaveLength(3);
     expect(wrapper.classes()).not.toContain('order-card--selectable');
     expect(wrapper.attributes('role')).toBeUndefined();
     expect(wrapper.attributes('tabindex')).toBeUndefined();
@@ -182,10 +192,9 @@ describe('shared OrderCard', () => {
     expect(wrapper.emitted('select')).toBeUndefined();
   });
 
-  it('disables pending manager status actions without blocking details or chat', () => {
+  it('disables pending manager status actions without blocking chat', () => {
     const wrapper = mountCard('manager', true, { status: 2 }, ['complete', 'cancel']);
 
-    expect(wrapper.get('[aria-label="Открыть детали заявки"]').attributes('disabled')).toBeUndefined();
     expect(wrapper.get('[aria-label="Открыть чат клиента"]').attributes('disabled')).toBeUndefined();
     expect(wrapper.get('[aria-label="Завершить заявку"]').attributes('disabled')).toBeDefined();
     expect(wrapper.get('[aria-label="Отменить заявку"]').attributes('disabled')).toBeDefined();
