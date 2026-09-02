@@ -150,7 +150,7 @@ const visibleActions = computed<OrderCardAction[]>(() => {
             {
               key: 'chat',
               event: 'openChat',
-              icon: 'forum',
+              icon: 'chat_bubble_outline',
               labelKey: 'manager.orders.actions.chat',
             },
             {
