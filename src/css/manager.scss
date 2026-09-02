@@ -952,8 +952,7 @@ body.manager-workspace-active {
   line-height: 1.2;
 }
 
-.manager-profile-card,
-.manager-info-card {
+.manager-profile-card {
   padding: 14px 16px;
   border: 1px solid var(--antex-manager-outline);
   border-radius: var(--antex-radius-card);
@@ -985,40 +984,10 @@ body.manager-workspace-active {
   font-weight: 700;
 }
 
-.manager-profile-card__role,
-.manager-info-card__text {
+.manager-profile-card__role {
   margin-top: 4px;
   color: var(--antex-text-muted);
   font-size: 12px;
-}
-
-.manager-info-stack {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: 8px;
-}
-
-.manager-info-card {
-  display: flex;
-  min-height: 76px;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.manager-info-card__copy {
-  min-width: 0;
-  flex: 1;
-}
-
-.manager-info-card__label {
-  margin-bottom: 4px;
-  color: var(--antex-gold-base);
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
 }
 
 .manager-order-actions {

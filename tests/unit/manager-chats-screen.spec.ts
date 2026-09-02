@@ -92,7 +92,7 @@ describe('manager chats Penpot composition', () => {
     expect(item).not.toContain(':src="conversation.user.photoUrl"');
   });
 
-  it('keeps search out of rendered Chat Detail and connection state in one Profile location', () => {
+  it('keeps search out of rendered Chat Detail and removes connection state from Profile', () => {
     const pinia = createPinia();
     setActivePinia(pinia);
     const global = {
@@ -109,7 +109,6 @@ describe('manager chats Penpot composition', () => {
         ManagerPageHeader: { template: '<header><slot name="trailing" /></header>' },
         OrderCard: true,
         QPage: { template: '<main><slot /></main>' },
-        ConnectionStatePill: { template: '<span class="connection-state-pill-stub" />' },
       },
     };
 
@@ -117,6 +116,6 @@ describe('manager chats Penpot composition', () => {
     const profile = mount(ManagerProfilePage, { global });
 
     expect(detail.findComponent(ManagerChatSearch).exists()).toBe(false);
-    expect(profile.findAllComponents(ConnectionStatePill)).toHaveLength(1);
+    expect(profile.findAllComponents(ConnectionStatePill)).toHaveLength(0);
   });
 });

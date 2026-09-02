@@ -43,7 +43,6 @@ describe('manager profile identity', () => {
         components: { QAvatar, QCard },
         stubs: {
           AppHeaderBar: true,
-          ConnectionStatePill: true,
           QPage: { template: '<main><slot /></main>' },
           QImg: {
             props: ['src', 'alt'],
@@ -141,7 +140,7 @@ describe('manager profile identity', () => {
     expect(wrapper.get('.app-header-bar__avatar span').text()).toBe('МИ');
   });
 
-  it('keeps the operational profile focused on identity and one client-connection state', () => {
+  it('keeps the operational profile focused on manager identity without a client-connection card', () => {
     const authStore = useAuthStore();
     authStore.user = {
       id: 1,
@@ -166,16 +165,14 @@ describe('manager profile identity', () => {
         components: { QAvatar, QCard },
         stubs: {
           AppHeaderBar: true,
-          ConnectionStatePill: { template: '<span>На связи</span>' },
           QPage: { template: '<main><slot /></main>' },
           QImg: true,
         },
       },
     });
 
-    expect(wrapper.findAll('.manager-info-card')).toHaveLength(1);
-    expect(wrapper.text()).toContain('Связь с клиентами');
-    expect(wrapper.text()).not.toContain('Уведомления');
-    expect(wrapper.text()).not.toContain('@manager');
+    expect(wrapper.find('.manager-info-card').exists()).toBe(false);
+    expect(wrapper.text()).not.toContain('Связь с клиентами');
+    expect(wrapper.text()).toContain('Мария Иванова');
   });
 });

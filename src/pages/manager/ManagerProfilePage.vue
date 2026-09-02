@@ -24,18 +24,6 @@
       </div>
     </AntexCard>
 
-    <div class="manager-info-stack">
-      <AntexCard tag="section" class="manager-info-card manager-info-card--realtime">
-        <div class="manager-info-card__copy">
-          <div class="manager-info-card__label">{{ t('manager.profile.realtime.label') }}</div>
-          <div class="manager-info-card__text">
-            {{ t('manager.profile.realtime.text') }}
-          </div>
-        </div>
-        <ConnectionStatePill :state="realtimeStore.state" />
-      </AntexCard>
-
-    </div>
   </q-page>
 </template>
 
@@ -43,15 +31,12 @@
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 
-import ConnectionStatePill from '@components/manager/ConnectionStatePill.vue';
 import AntexCard from '@components/ui/AntexCard.vue';
 import AppHeaderBar from '@components/ui/AppHeaderBar.vue';
 import { useAuthStore } from '@stores/auth.store';
-import { useManagerRealtimeStore } from '@stores/manager-realtime.store';
 import { toSafeExternalUrl } from '@utils/safe-external-url';
 
 const authStore = useAuthStore();
-const realtimeStore = useManagerRealtimeStore();
 const { t } = useI18n();
 
 const profilePhotoFailed = ref(false);
