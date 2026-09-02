@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia';
+import { isAxiosError } from 'axios';
 import { computed, ref } from 'vue';
 
 import { api } from '@boot/axios';
@@ -22,13 +23,24 @@ export const DEFAULT_USER_NAVIGATION: MiniappNavigationItem[] = [
 
 export type TelegramWriteAccessState =
   | 'idle'
+  | 'authenticating'
   | 'requesting'
   | 'syncing'
   | 'allowed'
   | 'denied'
   | 'unsupported'
   | 'sync_error'
-  | 'auth_error';
+  | 'auth_error'
+  | 'reopen_required';
+
+const TELEGRAM_SESSION_BINDING_KEY = 'telegram_session_binding';
+
+/** Отпечаток связывает запуск с JWT; сам по себе НЕ даёт права доступа к API. */
+async function getSessionBinding(initData: string, accessToken: string): Promise<string> {
+  const bytes = new TextEncoder().encode(JSON.stringify([initData, accessToken]));
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
+}
 
 export const useAuthStore = defineStore('auth', () => {
   const token = ref<string | null>(localStorage.getItem('access_token'));
@@ -40,63 +52,122 @@ export const useAuthStore = defineStore('auth', () => {
   const writeAccessState = ref<TelegramWriteAccessState>('idle');
   const nativeWriteAccessGranted = ref(false);
   let writeAccessRequest: Promise<void> | null = null;
+  let initRequest: Promise<void> | null = null;
+  let sessionGeneration = 0;
 
   const isAuthenticated = computed(() => !!token.value);
   const trustedContactReady = computed(() => user.value?.trusted_contact_ready ?? false);
   const requiresTelegramWriteAccess = computed(
     () => Boolean(tg?.initData) && (!isAuthenticated.value || !telegramWriteAccess.value),
   );
-  const canUseApp = computed(() => !requiresTelegramWriteAccess.value);
+  const canUseApp = computed(
+    () =>
+      !['authenticating', 'auth_error', 'reopen_required'].includes(writeAccessState.value) &&
+      !requiresTelegramWriteAccess.value,
+  );
   const navigation = computed<MiniappNavigationItem[]>(() => {
     return user.value?.navigation ?? DEFAULT_USER_NAVIGATION;
   });
 
-  async function init() {
-    try {
-      if (tg?.initData) {
-        await login(tg.initData);
-      } else if (token.value) {
-        await fetchUser();
-      } else {
-        setGuestUser();
-      }
-    } catch {
-      token.value = null;
+  /** Удаляет локальную сессию, не меняя серверные правила проверки JWT/initData. */
+  function clearSession() {
+    const storedToken = localStorage.getItem('access_token');
+    if (!storedToken || storedToken === token.value) {
       localStorage.removeItem('access_token');
+      localStorage.removeItem(TELEGRAM_SESSION_BINDING_KEY);
+    }
+    token.value = null;
+    user.value = null;
+    isNewUser.value = false;
+    telegramWriteAccess.value = false;
+    nativeWriteAccessGranted.value = false;
+  }
+
+  /** Восстанавливает только тот же запуск; новый initData проверяется backend заново. */
+  async function initializeSession() {
+    const generation = sessionGeneration;
+    writeAccessState.value = 'authenticating';
+    ready.value = false;
+    user.value = null;
+    telegramWriteAccess.value = false;
+    try {
+      token.value = localStorage.getItem('access_token');
       if (tg?.initData) {
-        user.value = null;
-        telegramWriteAccess.value = false;
-        writeAccessState.value = 'auth_error';
+        const binding = token.value ? await getSessionBinding(tg.initData, token.value) : null;
+        if (generation !== sessionGeneration) return;
+        if (binding && binding === localStorage.getItem(TELEGRAM_SESSION_BINDING_KEY)) {
+          // Browser storage — лишь подсказка. Доступ открывает только успешный /me.
+          await fetchUser(generation);
+        } else {
+          clearSession();
+          await login(tg.initData, generation);
+        }
+      } else if (token.value) {
+        await fetchUser(generation);
       } else {
         setGuestUser();
+        writeAccessState.value = 'idle';
       }
+    } catch (error) {
+      if (generation !== sessionGeneration) return;
+      const rejected = isAxiosError(error) && [401, 403].includes(error.response?.status ?? 0);
+      if (rejected) {
+        clearSession();
+      }
+      // Сетевой сбой не отзывает JWT, но неподтверждённый профиль недоступен.
+      user.value = null;
+      telegramWriteAccess.value = false;
+      writeAccessState.value = rejected && tg?.initData ? 'reopen_required' : 'auth_error';
     } finally {
-      ready.value = true;
+      if (generation === sessionGeneration) ready.value = true;
     }
   }
 
-  async function login(initData: string) {
+  /** Объединяет boot и повторные клики, не потребляя одноразовый initData параллельно. */
+  async function init() {
+    if (writeAccessState.value === 'reopen_required') return;
+    if (initRequest) return initRequest;
+    initRequest = initializeSession();
+    try {
+      await initRequest;
+    } finally {
+      initRequest = null;
+    }
+  }
+
+  /** Сохраняет привязку сразу после выдачи JWT, до потенциального сбоя загрузки профиля. */
+  async function login(initData: string, generation = sessionGeneration) {
     const response = await api.post<TelegramAuthResponse>('/api/auth/telegram', {
       init_data: initData,
     });
-    token.value = response.data.access_token;
+    if (generation !== sessionGeneration) return;
+    const accessToken = response.data.access_token;
+    const binding = await getSessionBinding(initData, accessToken);
+    if (generation !== sessionGeneration) return;
+    token.value = accessToken;
     isNewUser.value = response.data.is_new_user;
-    telegramWriteAccess.value = response.data.telegram_write_access;
-    writeAccessState.value = telegramWriteAccess.value ? 'allowed' : 'idle';
     localStorage.setItem('access_token', token.value);
-    await fetchUser();
+    localStorage.setItem(TELEGRAM_SESSION_BINDING_KEY, binding);
+    await fetchUser(generation);
   }
 
-  async function fetchUser() {
-    const response = await api.get<MiniappUser>('/api/users/me');
+  /** Получает профиль и разрешения только через серверную проверку bearer-токена. */
+  async function fetchUser(generation = sessionGeneration) {
+    const accessToken = token.value;
+    if (!accessToken) throw new Error('Session unavailable');
+    const response = await api.get<MiniappUser>('/api/users/me', {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (generation !== sessionGeneration) return;
+    // Не смешиваем профиль одного аккаунта с bearer-токеном из другой вкладки.
+    if (localStorage.getItem('access_token') !== accessToken) throw new Error('Session changed');
     user.value = response.data;
     telegramWriteAccess.value = response.data.telegram_write_access;
-    if (telegramWriteAccess.value) {
-      writeAccessState.value = 'allowed';
-    }
+    writeAccessState.value = telegramWriteAccess.value ? 'allowed' : 'idle';
     setAppLocale(user.value.language_code ?? tg?.initDataUnsafe?.user?.language_code ?? 'ru');
   }
 
+  /** Подтверждает разрешение сервером; отказ auth требует нового Telegram-запуска. */
   async function syncTelegramWriteAccess(status: TelegramWriteAccessOutcome) {
     writeAccessState.value = 'syncing';
     try {
@@ -113,12 +184,18 @@ export const useAuthStore = defineStore('auth', () => {
         : status === 'unsupported'
           ? 'unsupported'
           : 'denied';
-    } catch {
+    } catch (error) {
+      if (isAxiosError(error) && [401, 403].includes(error.response?.status ?? 0)) {
+        clearSession();
+        writeAccessState.value = 'reopen_required';
+        return;
+      }
       writeAccessState.value =
         status === 'allowed' ? 'sync_error' : status === 'unsupported' ? 'unsupported' : 'denied';
     }
   }
 
+  /** Разделяет native-разрешение и его сохранение, чтобы retry не открывал второй popup. */
   async function runTelegramWriteAccessRequest() {
     if (telegramWriteAccess.value) {
       writeAccessState.value = 'allowed';
@@ -145,7 +222,13 @@ export const useAuthStore = defineStore('auth', () => {
     await syncTelegramWriteAccess('cancelled');
   }
 
+  /** Запрашивает разрешение только после успешной аутентификации. */
   async function requestTelegramWriteAccess() {
+    if (
+      !isAuthenticated.value ||
+      ['authenticating', 'auth_error', 'reopen_required'].includes(writeAccessState.value)
+    )
+      return;
     if (writeAccessRequest) {
       return writeAccessRequest;
     }
@@ -157,6 +240,7 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  /** Сохраняет доверенный телефон текущего пользователя через защищённый API. */
   async function saveTrustedPhone(phone: string) {
     if (!user.value) {
       return null;
@@ -178,16 +262,15 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  /** Завершает локальную сессию и удаляет отпечаток запуска. */
   function logout() {
-    token.value = null;
-    user.value = null;
-    isNewUser.value = false;
-    telegramWriteAccess.value = false;
-    nativeWriteAccessGranted.value = false;
-    writeAccessState.value = 'idle';
-    localStorage.removeItem('access_token');
+    sessionGeneration += 1;
+    clearSession();
+    ready.value = true;
+    writeAccessState.value = tg?.initData ? 'reopen_required' : 'idle';
   }
 
+  /** Создаёт только browser/dev-представление; не заменяет ошибку Telegram auth. */
   function setGuestUser() {
     const telegramUser = tg?.initDataUnsafe?.user;
     user.value = {

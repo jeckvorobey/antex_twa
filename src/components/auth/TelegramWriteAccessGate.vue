@@ -11,7 +11,14 @@
           </q-card-section>
 
           <q-card-actions v-if="!busy" vertical class="q-gutter-sm q-pa-lg q-pt-none">
-            <q-btn color="primary" unelevated no-caps :label="retryLabel" @click="requestAccess" />
+            <q-btn
+              v-if="authStore.writeAccessState !== 'reopen_required'"
+              color="primary"
+              unelevated
+              no-caps
+              :label="retryLabel"
+              @click="requestAccess"
+            />
             <q-btn flat no-caps color="grey-7" :label="t('writeAccess.close')" @click="closeApp" />
           </q-card-actions>
         </AntexCard>
@@ -31,7 +38,9 @@ import { useAuthStore } from '@stores/auth.store';
 const authStore = useAuthStore();
 const { t } = useI18n();
 
-const busy = computed(() => ['idle', 'requesting', 'syncing'].includes(authStore.writeAccessState));
+const busy = computed(() =>
+  ['idle', 'authenticating', 'requesting', 'syncing'].includes(authStore.writeAccessState),
+);
 const title = computed(() => t(`writeAccess.${authStore.writeAccessState}.title`));
 const message = computed(() => t(`writeAccess.${authStore.writeAccessState}.text`));
 const retryLabel = computed(() =>
@@ -42,22 +51,25 @@ const retryLabel = computed(() =>
       : t('writeAccess.retryPermission'),
 );
 
+/** Повторяет только восстановимый запрос; использованный initData требует нового запуска. */
 async function requestAccess() {
+  if (['authenticating', 'reopen_required'].includes(authStore.writeAccessState)) return;
   if (authStore.writeAccessState === 'auth_error') {
     await authStore.init();
-    if (authStore.writeAccessState === 'auth_error') {
+    if (['auth_error', 'reopen_required'].includes(authStore.writeAccessState)) {
       return;
     }
   }
   await authStore.requestTelegramWriteAccess();
 }
 
+/** Закрывает WebView: свежий initData выдаётся при новом запуске из Telegram. */
 function closeApp() {
   tg?.close();
 }
 
 onMounted(() => {
-  if (authStore.writeAccessState !== 'auth_error') {
+  if (!['auth_error', 'authenticating', 'reopen_required'].includes(authStore.writeAccessState)) {
     void requestAccess();
   }
 });

@@ -8,7 +8,7 @@ const api = axios.create({
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('access_token');
-  if (token) {
+  if (token && !config.headers.has('Authorization')) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
@@ -17,7 +17,13 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    // Запоздавший 401 не должен удалять JWT уже другой сессии.
+    const token = localStorage.getItem('access_token');
+    if (
+      error.response?.status === 401 &&
+      token &&
+      error.config?.headers?.Authorization === `Bearer ${token}`
+    ) {
       localStorage.removeItem('access_token');
     }
     return Promise.reject(error);
