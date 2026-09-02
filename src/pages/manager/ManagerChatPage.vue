@@ -1,5 +1,8 @@
 <template>
-  <q-page class="manager-page manager-page--chat">
+  <q-page
+    class="manager-page manager-page--chat"
+    :style="{ '--chat-composer-height': `${composerHeight}px` }"
+  >
     <ManagerPageHeader
       :title="conversationTitle"
       :subtitle="conversationSubtitle"
@@ -11,7 +14,10 @@
       </template>
     </ManagerPageHeader>
 
-    <div v-if="chatStore.messagesLoading && !chatStore.activeConversation" class="row justify-center q-py-xl">
+    <div
+      v-if="chatStore.messagesLoading && !chatStore.activeConversation"
+      class="row justify-center q-py-xl"
+    >
       <q-spinner size="36px" color="primary" />
     </div>
 
@@ -49,7 +55,13 @@
 
         <template v-for="item in timelineItems" :key="item.key">
           <ChatDateDivider v-if="item.kind === 'date'" :label="item.label" />
-          <ChatBubble v-else :message="item.message" />
+          <ChatBubble
+            v-else
+            :message="item.message"
+            :reply-label="replyPreview(item.message.replyToMessageId)"
+            @reply="replyTo = $event"
+            @forward="selectForward"
+          />
         </template>
 
         <AntexEmptyState
@@ -61,10 +73,43 @@
       </div>
 
       <ChatComposer
+        :key="conversationId"
+        ref="composer"
         v-model="draftText"
+        :reply-label="replyTo ? managerMessagePreview(replyTo, t) : undefined"
         :sending="chatStore.sending"
         @send="sendText"
-        @send-file="sendFile"
+        @send-file="selectFile"
+        @send-recording="sendRecording"
+        @cancel-reply="replyTo = null"
+        @height="composerHeight = $event"
+      />
+      <q-dialog v-model="fileDialog" :persistent="chatStore.sending">
+        <q-card class="manager-chat-forward">
+          <q-card-section>{{ pendingFile?.name }}</q-card-section>
+          <q-card-actions align="right">
+            <q-btn
+              v-close-popup
+              flat
+              no-caps
+              :disable="chatStore.sending"
+              :label="t('common.cancel')"
+            />
+            <q-btn
+              color="primary"
+              text-color="black"
+              no-caps
+              :loading="chatStore.sending"
+              :label="t('manager.chat.composer.send')"
+              @click="pendingFile && sendFile(pendingFile)"
+            />
+          </q-card-actions>
+        </q-card>
+      </q-dialog>
+      <ChatForwardDialog
+        v-model="forwardDialog"
+        :sending="chatStore.sending"
+        @forward="forwardMessage"
       />
     </template>
   </q-page>
@@ -78,6 +123,7 @@ import { useRoute, useRouter } from 'vue-router';
 
 import ChatBubble from '@components/manager/ChatBubble.vue';
 import ChatComposer from '@components/manager/ChatComposer.vue';
+import ChatForwardDialog from '@components/manager/ChatForwardDialog.vue';
 import ChatDateDivider from '@components/manager/ChatDateDivider.vue';
 import ConnectionStatePill from '@components/manager/ConnectionStatePill.vue';
 import AntexEmptyState from '@components/ui/AntexEmptyState.vue';
@@ -88,6 +134,7 @@ import { useManagerRealtimeStore } from '@stores/manager-realtime.store';
 import type { ManagerChatMessage } from '@types/manager-chat';
 import {
   managerScrollBehavior,
+  managerMessagePreview,
   managerUserFullName,
   shouldAutoScrollMessages,
 } from '@utils/manager-chat';
@@ -116,6 +163,47 @@ const { notify } = useAntexNotify();
 const reducedMotionQuery = window.matchMedia?.('(prefers-reduced-motion: reduce)');
 const conversationId = computed(() => Number(route.params.conversationId));
 const draftText = ref('');
+const composer = ref<InstanceType<typeof ChatComposer> | null>(null);
+const composerHeight = ref(54);
+const replyTo = ref<ManagerChatMessage | null>(null);
+const forwardSource = ref<ManagerChatMessage | null>(null);
+const forwardDialog = ref(false);
+const pendingFile = ref<File | null>(null);
+const fileDialog = ref(false);
+let draftGeneration = 0;
+
+/** Возвращает краткий текст выбранного ответа из загруженной истории. */
+function replyPreview(messageId: number | null): string | undefined {
+  const message = chatStore.messages.find((message) => message.id === messageId);
+  return message ? managerMessagePreview(message, t) : undefined;
+}
+
+/** Открывает выбор получателя для конкретного исходного сообщения. */
+function selectForward(message: ManagerChatMessage): void {
+  forwardSource.value = message;
+  forwardDialog.value = true;
+}
+
+/** Хранит выбранный файл до отправки, чтобы сетевую ошибку можно было повторить. */
+function selectFile(file: File): void {
+  pendingFile.value = file;
+  fileDialog.value = true;
+}
+
+/** Пересылает только после явного подтверждения получателя в диалоге. */
+async function forwardMessage(target: number): Promise<void> {
+  if (!forwardSource.value) return;
+  const generation = draftGeneration;
+  try {
+    const result = await chatStore.forwardMessage(forwardSource.value.id, target);
+    if (generation !== draftGeneration || !result) return;
+    forwardDialog.value = false;
+    forwardSource.value = null;
+    notify('positive', t('manager.chat.forward.sent'));
+  } catch {
+    if (generation === draftGeneration) notify('negative', t('manager.chat.forward.error'));
+  }
+}
 
 const conversationTitle = computed(() =>
   chatStore.activeConversation
@@ -157,6 +245,13 @@ onMounted(() => {
 
 watch(conversationId, (nextId, previousId) => {
   if (nextId === previousId) return;
+  ++draftGeneration;
+  draftText.value = '';
+  replyTo.value = null;
+  pendingFile.value = null;
+  fileDialog.value = false;
+  forwardSource.value = null;
+  forwardDialog.value = false;
   if (!Number.isFinite(nextId)) {
     goBack();
     return;
@@ -175,6 +270,7 @@ async function loadConversation(): Promise<void> {
 }
 
 onBeforeUnmount(() => {
+  ++draftGeneration;
   realtimeStore.setViewing(null);
   chatStore.resetActiveConversation();
 });
@@ -209,24 +305,54 @@ async function loadEarlierMessages(): Promise<void> {
   }
 }
 
+/** Очищает только тот draft и reply, для которых подтверждена доставка. */
 async function sendText(text: string): Promise<void> {
+  const generation = draftGeneration;
+  const replyId = replyTo.value?.id;
   try {
-    await chatStore.sendMessage(text);
+    const result = await chatStore.sendMessage(text, replyId);
+    if (generation !== draftGeneration || !result) return;
     if (draftText.value.trim() === text) {
       draftText.value = '';
     }
+    if (replyTo.value?.id === replyId) replyTo.value = null;
     await scrollToBottom();
   } catch {
-    notify('negative', t('manager.chat.notifications.messageError'));
+    if (generation === draftGeneration)
+      notify('negative', t('manager.chat.notifications.messageError'));
   }
 }
 
+/** Сохраняет файл и reply при ошибке отправки для явного повтора. */
 async function sendFile(file: File): Promise<void> {
+  const generation = draftGeneration;
+  const replyId = replyTo.value?.id;
   try {
-    await chatStore.sendAttachment(file);
+    const result = await chatStore.sendAttachment(file, { replyToMessageId: replyId });
+    if (generation !== draftGeneration || !result) return;
+    pendingFile.value = null;
+    fileDialog.value = false;
+    if (replyTo.value?.id === replyId) replyTo.value = null;
     await scrollToBottom();
   } catch {
-    notify('negative', t('manager.chat.notifications.attachmentError'));
+    if (generation === draftGeneration)
+      notify('negative', t('manager.chat.notifications.attachmentError'));
+  }
+}
+
+/** Передаёт запись с явным Telegram типом и очищает preview только после sent. */
+async function sendRecording(file: File, kind: 'voice' | 'video_note'): Promise<void> {
+  const generation = draftGeneration;
+  const replyId = replyTo.value?.id;
+  try {
+    const result = await chatStore.sendAttachment(file, { kind, replyToMessageId: replyId });
+    if (generation !== draftGeneration || !result) return;
+    composer.value?.resetRecording();
+    if (replyTo.value?.id === replyId) replyTo.value = null;
+    await scrollToBottom();
+  } catch {
+    if (generation === draftGeneration)
+      notify('negative', t('manager.chat.notifications.recordingError'));
   }
 }
 

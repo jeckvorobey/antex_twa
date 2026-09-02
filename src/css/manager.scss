@@ -112,7 +112,7 @@ body.manager-workspace-active {
 .manager-page--chat {
   display: flex;
   flex-direction: column;
-  padding-bottom: calc(176px + var(--antex-safe-area-bottom));
+  padding-bottom: calc(94px + var(--chat-composer-height, 54px) + var(--antex-safe-area-bottom));
 }
 
 .manager-unread-badge {
@@ -311,7 +311,10 @@ body.manager-workspace-active {
   background: transparent;
   box-shadow: none;
   text-align: left;
-  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    background 0.2s ease;
 }
 
 .manager-conversation-item:active {
@@ -789,6 +792,8 @@ body.manager-workspace-active {
 .manager-chat-bubble-row {
   display: flex;
   width: 100%;
+  align-items: flex-end;
+  gap: var(--antex-space-xs);
 }
 
 .manager-chat-bubble-row--outbound {
@@ -796,22 +801,97 @@ body.manager-workspace-active {
 }
 
 .manager-chat-bubble {
-  max-width: min(82%, 460px);
-  padding: 10px 12px 7px;
-  border-radius: 20px;
+  position: relative;
+  min-width: 48px;
+  max-width: min(calc(100% - 48px), 460px);
+  padding: var(--antex-space-sm) 12px var(--antex-space-xs);
+  border-radius: 16px;
   box-shadow: none;
 }
 
 .manager-chat-bubble--inbound {
   border: 1px solid var(--antex-manager-outline);
-  border-bottom-left-radius: 7px;
+  border-bottom-left-radius: 4px;
   background: var(--antex-bg-card);
 }
 
 .manager-chat-bubble--outbound {
   border: 1px solid var(--antex-manager-outbound-outline);
-  border-bottom-right-radius: 7px;
+  border-bottom-right-radius: 4px;
   background: var(--antex-manager-outbound);
+}
+
+// Хвостик продолжает фон и внешнюю рамку пузырька без перекрытия текста.
+.manager-chat-bubble::before {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  width: 8px;
+  height: 12px;
+  background: inherit;
+  border-bottom: inherit;
+}
+.manager-chat-bubble--inbound::before {
+  left: -5px;
+  border-left: inherit;
+  border-bottom-left-radius: 8px 12px;
+  transform: skewX(-20deg);
+}
+.manager-chat-bubble--outbound::before {
+  right: -5px;
+  border-right: inherit;
+  border-bottom-right-radius: 8px 12px;
+  transform: skewX(20deg);
+}
+.manager-chat-bubble-actions {
+  min-width: 44px;
+  min-height: 44px;
+  color: var(--antex-text-muted);
+  flex: 0 0 auto;
+}
+.manager-chat-bubble-row--outbound .manager-chat-bubble-actions {
+  order: -1;
+}
+.manager-chat-bubble__quote {
+  padding: var(--antex-space-xs) var(--antex-space-sm);
+  margin-bottom: var(--antex-space-xs);
+  border-left: 2px solid var(--antex-gold-base);
+  background: var(--antex-gold-soft);
+  color: var(--antex-gold-light);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+.manager-chat-player {
+  width: 240px;
+  max-width: 100%;
+}
+.manager-chat-player audio {
+  display: none;
+}
+.manager-chat-player .q-btn {
+  min-width: 44px;
+  min-height: 44px;
+}
+.manager-chat-player__circle {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 50%;
+}
+.manager-chat-forward {
+  width: 360px;
+  max-width: calc(100vw - 32px);
+  color: var(--antex-text-primary);
+  background: var(--antex-bg-card);
+}
+.manager-chat-forward__list {
+  max-height: 45dvh;
+  overflow-y: auto;
 }
 
 .manager-chat-bubble__text {
@@ -907,17 +987,45 @@ body.manager-workspace-active {
   position: fixed;
   z-index: 70;
   right: max(16px, calc((100vw - 720px) / 2 + 16px));
-  bottom: calc(88px + var(--antex-safe-area-bottom));
+  // Меню: 62px + 8px снизу; зазор до поля — ещё 8px.
+  bottom: calc(78px + var(--antex-safe-area-bottom));
   left: max(16px, calc((100vw - 720px) / 2 + 16px));
   display: flex;
-  align-items: flex-end;
-  gap: 7px;
-  min-height: 58px;
-  padding: 7px 8px;
+  flex-direction: column;
+  gap: var(--antex-space-xs);
+  min-height: 54px;
+  padding: var(--antex-space-xs);
   border-radius: var(--antex-radius-card);
   border: 1px solid var(--antex-manager-outline);
   background: var(--antex-bg-deep);
   box-shadow: none;
+}
+
+.manager-chat-composer:focus-within {
+  border-color: var(--antex-gold-base);
+}
+.manager-chat-composer__row {
+  gap: var(--antex-space-xs);
+}
+.manager-chat-composer__reply {
+  width: 100%;
+  gap: var(--antex-space-sm);
+  padding-left: var(--antex-space-sm);
+  color: var(--antex-gold-light);
+  font-size: 12px;
+}
+.manager-chat-composer__reply .q-btn {
+  min-width: 44px;
+  min-height: 44px;
+}
+.manager-chat-composer .q-field--focused .q-field__control {
+  outline: none;
+}
+.manager-chat-composer__input .q-field__control {
+  min-height: 44px;
+}
+.manager-chat-composer__input .q-field__native {
+  padding: 10px 0;
 }
 
 .manager-chat-composer__file-input {

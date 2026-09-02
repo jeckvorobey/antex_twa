@@ -39,6 +39,7 @@ export function managerUserInitials(user: ManagerChatUser): string {
   return (user.username?.[0] ?? '?').toUpperCase();
 }
 
+/** Формирует локализованное превью текста или типа медиа для списка и цитаты. */
 export function managerMessagePreview(
   message: ManagerChatMessage | null,
   t: ManagerTranslate,
@@ -59,6 +60,10 @@ export function managerMessagePreview(
       return t('manager.chat.preview.voice');
     case 'video':
       return t('manager.chat.preview.video');
+    case 'video_note':
+      return t('manager.chat.preview.video_note');
+    case 'audio':
+      return t('manager.chat.preview.audio');
     default:
       return t('manager.chat.preview.message');
   }

@@ -14,7 +14,9 @@ import { useManagerChatStore } from '@stores/manager-chat.store';
 
 const { routerPush, routeHarness } = vi.hoisted(() => ({
   routerPush: vi.fn(),
-  routeHarness: {} as { route?: { params: { conversationId: string }; meta: Record<string, unknown> } },
+  routeHarness: {} as {
+    route?: { params: { conversationId: string }; meta: Record<string, unknown> };
+  },
 }));
 
 vi.mock('vue-router', async () => {
@@ -49,11 +51,7 @@ import {
 
 function globalOptions(pinia = createPinia()) {
   return {
-    plugins: [
-      pinia,
-      Quasar,
-      createI18n({ legacy: false, locale: 'ru', messages: { ru } }),
-    ],
+    plugins: [pinia, Quasar, createI18n({ legacy: false, locale: 'ru', messages: { ru } })],
     components: { QAvatar, QBtn, QCard, QIcon, QImg, QInput, QSpinner, QTooltip },
     stubs: {
       ManagerPageHeader: true,
@@ -78,9 +76,20 @@ describe('manager localized states', () => {
     const pinia = createPinia();
     setActivePinia(pinia);
     vi.mocked(fetchManagerChat).mockResolvedValue({
-      id: 7, status: 'open', unreadCount: 0, lastMessageAt: null,
-      user: { id: 41, telegramId: 900_041, username: null, firstName: null, lastName: null, photoUrl: null },
-      lastMessage: null, latestOrder: null,
+      id: 7,
+      status: 'open',
+      unreadCount: 0,
+      lastMessageAt: null,
+      user: {
+        id: 41,
+        telegramId: 900_041,
+        username: null,
+        firstName: null,
+        lastName: null,
+        photoUrl: null,
+      },
+      lastMessage: null,
+      latestOrder: null,
     });
     vi.mocked(fetchManagerChatMessages).mockResolvedValue({ items: [], hasMore: false });
 
@@ -194,6 +203,12 @@ describe('manager localized states', () => {
     const composer = mount(ChatComposer, { global: options });
     expect(composer.get('textarea').attributes('placeholder')).toBe('Сообщение…');
     expect(composer.get('[aria-label="Прикрепить файл"]').exists()).toBe(true);
+    expect(
+      composer
+        .get('[aria-label="Удерживайте для записи голоса; Enter — начать без удержания"]')
+        .exists(),
+    ).toBe(true);
+    await composer.get('textarea').setValue('Сообщение');
     expect(composer.get('[aria-label="Отправить сообщение"]').exists()).toBe(true);
   });
 

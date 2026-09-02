@@ -9,12 +9,14 @@ import {
   fetchManagerChats,
   fetchManagerOrder,
   fetchManagerOrders,
+  forwardManagerChatMessage,
   markManagerChatRead,
   sendManagerChatAttachment,
   sendManagerChatMessage,
   updateManagerOrderStatus,
 } from '@services/manager-chat';
 import type {
+  ChatAttachmentOptions,
   ManagerChatMessage,
   ManagerConversation,
   ManagerOrderSummary,
@@ -75,6 +77,10 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
   const activeConversationError = ref<string | null>(null);
   const hasMoreMessages = ref(false);
   const sending = ref(false);
+  // Ключи живут только в памяти текущей сессии, без записи текстов в storage/logs.
+  const pendingTextRequests = new Map<string, string>();
+  const pendingFileRequests = new WeakMap<File, Map<string, string>>();
+  const pendingForwardRequests = new Map<string, string>();
 
   const orders = ref<ManagerOrderSummary[]>([]);
   const ordersLoading = ref(false);
@@ -114,7 +120,7 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
       ) ||
       Boolean(
         orderSearch &&
-          conversation.latestOrder?.publicNumber.toLocaleLowerCase('ru-RU').includes(orderSearch),
+        conversation.latestOrder?.publicNumber.toLocaleLowerCase('ru-RU').includes(orderSearch),
       )
     );
   }
@@ -451,37 +457,93 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
     }
   }
 
-  async function sendMessage(text: string): Promise<ManagerChatMessage | null> {
+  /** Возвращает прежний ключ до подтверждённой доставки для безопасного повтора. */
+  function requestKey(requests: Map<string, string>, identity: string): string {
+    const existing = requests.get(identity);
+    if (existing) return existing;
+    const key = createClientRequestId();
+    requests.set(identity, key);
+    return key;
+  }
+
+  /** Не позволяет очистить draft при HTTP 200 с failed/pending delivery. */
+  function confirmDelivery(message: ManagerChatMessage): void {
+    applySentMessage(message);
+    if (message.deliveryStatus !== 'sent') {
+      throw new Error(
+        message.deliveryStatus === 'pending' ? 'delivery_pending' : 'delivery_failed',
+      );
+    }
+  }
+
+  /** Отправляет текст с reply и сохраняет idempotency key при ошибке сети. */
+  async function sendMessage(
+    text: string,
+    replyToMessageId?: number,
+  ): Promise<ManagerChatMessage | null> {
     const conversation = activeConversation.value;
-    if (!conversation || !text.trim()) {
+    if (!conversation || !text.trim() || sending.value) {
       return null;
     }
     sending.value = true;
+    const identity = JSON.stringify([conversation.id, replyToMessageId, text.trim()]);
     try {
       const message = await sendManagerChatMessage(conversation.id, {
-        clientRequestId: createClientRequestId(),
+        clientRequestId: requestKey(pendingTextRequests, identity),
         text: text.trim(),
+        ...(replyToMessageId ? { replyToMessageId } : {}),
       });
-      applySentMessage(message);
+      confirmDelivery(message);
+      pendingTextRequests.delete(identity);
       return message;
     } finally {
       sending.value = false;
     }
   }
 
-  async function sendAttachment(file: File): Promise<ManagerChatMessage | null> {
+  /** Повторяет ту же запись/вложение с прежним ключом без дублирования в Telegram. */
+  async function sendAttachment(
+    file: File,
+    options: ChatAttachmentOptions = {},
+  ): Promise<ManagerChatMessage | null> {
     const conversation = activeConversation.value;
-    if (!conversation) {
+    if (!conversation || sending.value) {
       return null;
     }
     sending.value = true;
+    const requests = pendingFileRequests.get(file) ?? new Map<string, string>();
+    pendingFileRequests.set(file, requests);
+    const identity = JSON.stringify([conversation.id, options.kind, options.replyToMessageId]);
     try {
       const message = await sendManagerChatAttachment(
         conversation.id,
         file,
-        createClientRequestId(),
+        requestKey(requests, identity),
+        options,
       );
-      applySentMessage(message);
+      confirmDelivery(message);
+      requests.delete(identity);
+      return message;
+    } finally {
+      sending.value = false;
+    }
+  }
+
+  /** Пересылает сообщение в явно выбранный диалог, не меняя текущий маршрут. */
+  async function forwardMessage(
+    sourceMessageId: number,
+    targetConversationId: number,
+  ): Promise<ManagerChatMessage | null> {
+    if (sending.value) return null;
+    sending.value = true;
+    const identity = `${targetConversationId}:${sourceMessageId}`;
+    try {
+      const message = await forwardManagerChatMessage(targetConversationId, {
+        sourceMessageId,
+        clientRequestId: requestKey(pendingForwardRequests, identity),
+      });
+      confirmDelivery(message);
+      pendingForwardRequests.delete(identity);
       return message;
     } finally {
       sending.value = false;
@@ -535,7 +597,9 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
       if (generation !== ordersRequestGeneration || controller.signal.aborted) {
         return;
       }
-      const nextOrders = response.items.filter((order) => !TERMINAL_ORDER_STATUSES.has(order.status));
+      const nextOrders = response.items.filter(
+        (order) => !TERMINAL_ORDER_STATUSES.has(order.status),
+      );
       const refreshedOrderIds = new Set([
         ...orders.value.map((order) => order.id),
         ...response.items.map((order) => order.id),
@@ -741,6 +805,7 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
     loadEarlierMessages,
     sendMessage,
     sendAttachment,
+    forwardMessage,
     markRead,
     closeConversation,
     loadOrders,

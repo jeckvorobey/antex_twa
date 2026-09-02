@@ -3,24 +3,26 @@
     <q-skeleton v-if="loading" type="rect" class="manager-chat-attachment__skeleton" />
     <template v-else-if="objectUrl">
       <img
-        v-if="attachment.kind === 'photo'"
+        v-if="
+          attachment.kind === 'photo' ||
+          (attachment.kind === 'sticker' && attachment.mimeType?.startsWith('image/'))
+        "
         :src="objectUrl"
         :alt="attachment.filename || t('manager.chat.attachment.photoAlt')"
         class="manager-chat-attachment__image"
       />
       <video
-        v-else-if="attachment.kind === 'video'"
+        v-else-if="attachment.kind === 'video' || attachment.kind === 'animation'"
         :src="objectUrl"
         controls
+        playsinline
         preload="metadata"
         class="manager-chat-attachment__video"
       />
-      <audio
-        v-else-if="attachment.kind === 'voice'"
+      <ChatMediaPlayer
+        v-else-if="['voice', 'audio', 'video_note'].includes(attachment.kind)"
         :src="objectUrl"
-        controls
-        preload="metadata"
-        class="manager-chat-attachment__audio"
+        :video-note="attachment.kind === 'video_note'"
       />
       <a
         v-else
@@ -50,12 +52,14 @@ import { useI18n } from 'vue-i18n';
 import { fetchManagerAttachment } from '@services/manager-chat';
 import type { ChatAttachment } from '@types/manager-chat';
 import { formatFileSize } from '@utils/manager-chat';
+import ChatMediaPlayer from './ChatMediaPlayer.vue';
 
 const props = defineProps<{ attachment: ChatAttachment }>();
 const { t } = useI18n();
 
 const loading = ref(true);
 const objectUrl = ref<string | null>(null);
+let disposed = false;
 const sizeLabel = computed(() =>
   formatFileSize(props.attachment.size, {
     kilobyte: t('manager.units.kilobyte'),
@@ -66,6 +70,7 @@ const sizeLabel = computed(() =>
 onMounted(async () => {
   try {
     const blob = await fetchManagerAttachment(props.attachment.id);
+    if (disposed) return;
     objectUrl.value = URL.createObjectURL(blob);
   } catch {
     objectUrl.value = null;
@@ -75,6 +80,7 @@ onMounted(async () => {
 });
 
 onBeforeUnmount(() => {
+  disposed = true;
   if (objectUrl.value) {
     URL.revokeObjectURL(objectUrl.value);
   }

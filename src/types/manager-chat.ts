@@ -55,9 +55,15 @@ export interface ManagerChatMessage {
   telegramMessageId: number | null;
   replyToMessageId: number | null;
   edited: boolean;
+  forwardSourceLabel?: string | null;
   createdAt: string;
   updatedAt: string;
   attachments: ChatAttachment[];
+}
+
+export interface ChatAttachmentOptions {
+  kind?: 'voice' | 'video_note';
+  replyToMessageId?: number;
 }
 
 export interface ManagerConversation {

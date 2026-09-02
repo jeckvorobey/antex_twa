@@ -1,6 +1,7 @@
 import { api } from '@boot/axios';
 import { fetchEventSource, type EventSourceMessage } from '@microsoft/fetch-event-source';
 import type {
+  ChatAttachmentOptions,
   ManagerChatListResponse,
   ManagerChatMessage,
   ManagerChatMessagesResponse,
@@ -56,6 +57,7 @@ export async function fetchManagerChatMessages(
   return response.data;
 }
 
+/** Отправляет текст и необязательную ссылку на сообщение этого диалога. */
 export async function sendManagerChatMessage(
   conversationId: number,
   payload: { clientRequestId: string; text: string; replyToMessageId?: number | null },
@@ -67,6 +69,7 @@ export async function sendManagerChatMessage(
   return response.data;
 }
 
+/** Определяет тип выбранного файла; для записи тип задаётся явно. */
 function attachmentKind(file: File): 'photo' | 'video' | 'voice' | 'document' {
   if (file.type.startsWith('image/')) {
     return 'photo';
@@ -80,10 +83,12 @@ function attachmentKind(file: File): 'photo' | 'video' | 'voice' | 'document' {
   return 'document';
 }
 
+/** Загружает вложение, сохраняя явный тип записи и контекст ответа. */
 export async function sendManagerChatAttachment(
   conversationId: number,
   file: File,
   clientRequestId: string,
+  options: ChatAttachmentOptions = {},
 ) {
   if (file.size > MAX_MANAGER_ATTACHMENT_BYTES) {
     throw new Error('Файл больше 20 МБ');
@@ -96,10 +101,23 @@ export async function sendManagerChatAttachment(
         clientRequestId,
         filename: file.name || 'attachment',
         mimeType: file.type || 'application/octet-stream',
-        kind: attachmentKind(file),
+        kind: options.kind ?? attachmentKind(file),
+        ...(options.replyToMessageId ? { replyToMessageId: options.replyToMessageId } : {}),
       },
       headers: { 'Content-Type': 'application/octet-stream' },
     },
+  );
+  return response.data;
+}
+
+/** Пересылает исходное сообщение через бота в подтверждённый диалог. */
+export async function forwardManagerChatMessage(
+  conversationId: number,
+  payload: { clientRequestId: string; sourceMessageId: number },
+) {
+  const response = await api.post<ManagerChatMessage>(
+    `/api/manager/chats/${conversationId}/forward`,
+    payload,
   );
   return response.data;
 }
