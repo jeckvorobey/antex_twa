@@ -2,7 +2,7 @@ import { createPinia, setActivePinia } from 'pinia';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { flushPromises, mount } from '@vue/test-utils';
-import { QBadge, QBtn, QCard, QIcon, QSkeleton, QSpinner, Quasar } from 'quasar';
+import { Dialog, QBadge, QBtn, QCard, QIcon, QSkeleton, QSpinner, Quasar } from 'quasar';
 import { createI18n } from 'vue-i18n';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -22,6 +22,11 @@ const { routerPush, routeHarness } = vi.hoisted(() => ({
   routerPush: vi.fn(),
   routeHarness: {} as { route?: { params: { orderId: string } } },
 }));
+
+vi.mock('quasar', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('quasar')>();
+  return { ...actual, Dialog: { create: vi.fn() } };
+});
 
 vi.mock('vue-router', async () => {
   const { reactive } = await import('vue');
@@ -50,7 +55,12 @@ vi.mock('@/composables/useAntexNotify', () => ({
   useAntexNotify: () => ({ notify: vi.fn() }),
 }));
 
-import { ensureManagerOrderChat, fetchManagerOrder, fetchManagerOrders, updateManagerOrderStatus } from '@services/manager-chat';
+import {
+  ensureManagerOrderChat,
+  fetchManagerOrder,
+  fetchManagerOrders,
+  updateManagerOrderStatus,
+} from '@services/manager-chat';
 
 function makeOrder(id = 1): ManagerOrderSummary {
   return {
@@ -81,11 +91,7 @@ function makeOrder(id = 1): ManagerOrderSummary {
 
 function managerPageGlobal(pinia: ReturnType<typeof createPinia>) {
   return {
-    plugins: [
-      pinia,
-      Quasar,
-      createI18n({ legacy: false, locale: 'ru', messages: { ru } }),
-    ],
+    plugins: [pinia, Quasar, createI18n({ legacy: false, locale: 'ru', messages: { ru } })],
     components: { QBtn, QCard, QIcon, QSkeleton, QSpinner },
     stubs: {
       ManagerPageHeader: true,
@@ -102,24 +108,32 @@ describe('manager orders workflow state', () => {
     routeHarness.route!.params.orderId = '1';
   });
 
-  it.each([1, 2])('opens the correct order from the real view button for status %s without mutations', async (status) => {
-    const pinia = createPinia();
-    vi.mocked(fetchManagerOrders).mockResolvedValueOnce({ items: [{ ...makeOrder(17), status }] });
-    const global = managerPageGlobal(pinia);
-    const wrapper = mount(ManagerOrdersPage, {
-      global: {
-        ...global,
-        components: { ...global.components, QBadge, OrderCard },
-        stubs: { ...global.stubs, OrderCard: false, QTooltip: true },
-      },
-    });
-    await flushPromises();
-    await wrapper.get('[aria-label="Открыть детали заявки"]').trigger('click');
-    expect(routerPush).toHaveBeenCalledExactlyOnceWith({ name: 'managerOrder', params: { orderId: 17 } });
-    expect(updateManagerOrderStatus).not.toHaveBeenCalled();
-    expect(ensureManagerOrderChat).not.toHaveBeenCalled();
-    wrapper.unmount();
-  });
+  it.each([1, 2])(
+    'opens the correct order from the real view button for status %s without mutations',
+    async (status) => {
+      const pinia = createPinia();
+      vi.mocked(fetchManagerOrders).mockResolvedValueOnce({
+        items: [{ ...makeOrder(17), status }],
+      });
+      const global = managerPageGlobal(pinia);
+      const wrapper = mount(ManagerOrdersPage, {
+        global: {
+          ...global,
+          components: { ...global.components, QBadge, OrderCard },
+          stubs: { ...global.stubs, OrderCard: false, QTooltip: true },
+        },
+      });
+      await flushPromises();
+      await wrapper.get('[aria-label="Открыть детали заявки"]').trigger('click');
+      expect(routerPush).toHaveBeenCalledExactlyOnceWith({
+        name: 'managerOrder',
+        params: { orderId: 17 },
+      });
+      expect(updateManagerOrderStatus).not.toHaveBeenCalled();
+      expect(ensureManagerOrderChat).not.toHaveBeenCalled();
+      wrapper.unmount();
+    },
+  );
 
   it('reloads order details when Vue reuses the page for another route id', async () => {
     const pinia = createPinia();
@@ -187,6 +201,108 @@ describe('manager orders workflow state', () => {
     expect(wrapper.text()).toContain('Активных заявок нет');
   });
 
+  it('shows only the completion loader while blocking cancellation and allows retry after failure', async () => {
+    const pinia = createPinia();
+    vi.mocked(fetchManagerOrders).mockResolvedValueOnce({ items: [makeOrder(1), makeOrder(2)] });
+    let rejectUpdate!: (error: Error) => void;
+    vi.mocked(updateManagerOrderStatus).mockImplementationOnce(
+      () =>
+        new Promise((_, reject) => {
+          rejectUpdate = reject;
+        }),
+    );
+    const global = managerPageGlobal(pinia);
+    const wrapper = mount(ManagerOrdersPage, {
+      global: {
+        ...global,
+        components: { ...global.components, QBadge },
+        stubs: { ...global.stubs, OrderCard: false, QTooltip: true },
+      },
+    });
+    await flushPromises();
+    const cards = wrapper.findAllComponents(OrderCard);
+    const complete = cards[0]!
+      .findAllComponents(QBtn)
+      .find((btn) => btn.attributes('aria-label') === 'Завершить заявку')!;
+    const cancel = cards[0]!.get('.order-card__action--cancel');
+    await complete.trigger('click');
+    expect(complete.props('loading')).toBe(true);
+    expect(cancel.find('.q-spinner').exists()).toBe(false);
+    expect(cancel.attributes('disabled')).toBeDefined();
+    expect(cards[1]!.get('.order-card__action--complete').attributes('disabled')).toBeUndefined();
+    await cancel.trigger('click');
+    expect(updateManagerOrderStatus).toHaveBeenCalledExactlyOnceWith(1, 3);
+    rejectUpdate(new Error('network unavailable'));
+    await flushPromises();
+    expect(complete.props('loading')).toBe(false);
+    expect(cancel.attributes('disabled')).toBeUndefined();
+    wrapper.unmount();
+  });
+
+  it.each(['list', 'details'])('loads only cancellation after confirmation in %s', async (page) => {
+    const pinia = createPinia();
+    vi.mocked(fetchManagerOrders).mockResolvedValue({ items: [makeOrder()] });
+    vi.mocked(fetchManagerOrder).mockResolvedValue(makeOrder());
+    let resolveUpdate!: (order: ManagerOrderSummary) => void;
+    vi.mocked(updateManagerOrderStatus).mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveUpdate = resolve;
+        }),
+    );
+    let accept!: () => void;
+    let dismiss!: () => void;
+    const dialog = {
+      onOk: vi.fn((cb) => {
+        accept = cb;
+        return dialog;
+      }),
+      onDismiss: vi.fn((cb) => {
+        dismiss = cb;
+        return dialog;
+      }),
+    };
+    const dialogSpy = vi
+      .spyOn(Dialog, 'create')
+      .mockReturnValue(dialog as unknown as ReturnType<typeof Dialog.create>);
+    const global = managerPageGlobal(pinia);
+    const wrapper = mount(page === 'list' ? ManagerOrdersPage : ManagerOrderPage, {
+      global: {
+        ...global,
+        components: { ...global.components, QBadge },
+        stubs: { ...global.stubs, OrderCard: false, QTooltip: true },
+      },
+    });
+    await flushPromises();
+    const buttons = wrapper.findAllComponents(QBtn);
+    const cancel = buttons.find(
+      (btn) => (btn.props('label') || btn.attributes('aria-label')) === 'Отменить заявку',
+    )!;
+    const complete = buttons.find(
+      (btn) => (btn.props('label') || btn.attributes('aria-label')) === 'Завершить заявку',
+    )!;
+    await cancel.trigger('click');
+    await flushPromises();
+    expect(complete.props('loading')).toBe(false);
+    expect(cancel.props('loading')).toBeFalsy();
+    expect(complete.props('disable')).toBe(true);
+    expect(updateManagerOrderStatus).not.toHaveBeenCalled();
+    dismiss();
+    await flushPromises();
+    expect(complete.props('disable')).toBe(false);
+    await cancel.trigger('click');
+    accept();
+    dismiss();
+    await flushPromises();
+    expect(cancel.props('loading')).toBe(true);
+    expect(complete.props('loading')).toBe(false);
+    expect(updateManagerOrderStatus).toHaveBeenCalledExactlyOnceWith(1, 4);
+    resolveUpdate({ ...makeOrder(), status: 4 });
+    await flushPromises();
+    wrapper.unmount();
+    dialogSpy.mockRestore();
+  });
+
   it('locks manager status actions until the current update completes', async () => {
     const pinia = createPinia();
     setActivePinia(pinia);
@@ -205,7 +321,9 @@ describe('manager orders workflow state', () => {
     });
 
     await vi.waitFor(() => expect(fetchManagerOrders).toHaveBeenCalledTimes(1));
-    await vi.waitFor(() => expect(wrapper.findComponent({ name: 'OrderCard' }).exists()).toBe(true));
+    await vi.waitFor(() =>
+      expect(wrapper.findComponent({ name: 'OrderCard' }).exists()).toBe(true),
+    );
     const card = wrapper.getComponent({ name: 'OrderCard' });
 
     card.vm.$emit('take');

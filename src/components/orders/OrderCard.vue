@@ -56,7 +56,7 @@
           padding="0"
           :class="['order-card__action', `order-card__action--${action.key}`]"
           :aria-label="t(action.labelKey)"
-          :disable="isActionPending(action.key)"
+          :disable="isActionPending(action.key) || disabledActions.includes(action.key)"
           :loading="isActionPending(action.key)"
           @click.stop="emitAction(action.event)"
         >
@@ -109,9 +109,16 @@ const props = withDefaults(
     compact?: boolean;
     actions?: boolean;
     pendingActions?: string[];
+    disabledActions?: string[];
     selectable?: boolean;
   }>(),
-  { compact: false, actions: true, pendingActions: () => [], selectable: false },
+  {
+    compact: false,
+    actions: true,
+    pendingActions: () => [],
+    disabledActions: () => [],
+    selectable: false,
+  },
 );
 const emit = defineEmits<{
   repeat: [];
@@ -129,7 +136,9 @@ const view = computed(() =>
     ? toManagerOrderCard(props.order as ManagerOrderSummary, locale.value, t, te)
     : toUserOrderCard(props.order as MiniappOrderItem, locale.value, t, te),
 );
-const metaText = computed(() => [view.value.location, view.value.method].filter(Boolean).join(' · '));
+const metaText = computed(() =>
+  [view.value.location, view.value.method].filter(Boolean).join(' · '),
+);
 const statusClass = computed(() => {
   const statusNames: Record<number, string> = {
     1: 'new',

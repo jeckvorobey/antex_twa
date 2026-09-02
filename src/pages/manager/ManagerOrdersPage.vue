@@ -35,6 +35,7 @@
         actions
         selectable
         :pending-actions="pendingStatusActions(order.id)"
+        :disabled-actions="statusActionLocks.has(order.id) ? statusActionKeys : []"
         @open-details="openDetails(order.id)"
         @open-chat="openChat(order.id)"
         @select="openDetails(order.id)"
@@ -72,6 +73,7 @@ const chatStore = useManagerChatStore();
 const { t } = useI18n();
 const { notify } = useAntexNotify();
 const statusActionLocks = ref<Set<number>>(new Set());
+const pendingStatuses = ref<Map<number, number>>(new Map());
 const statusActionKeys = ['take', 'complete', 'cancel'];
 
 onMounted(() => {
@@ -107,10 +109,14 @@ function openDetails(orderId: number): void {
   void router.push({ name: 'managerOrder', params: { orderId } });
 }
 
+/** Показывает загрузку только на кнопке выполняемого запроса. */
 function pendingStatusActions(orderId: number): string[] {
-  return statusActionLocks.value.has(orderId) ? statusActionKeys : [];
+  const status = pendingStatuses.value.get(orderId);
+  const key = status === 2 ? 'take' : status === 3 ? 'complete' : status === 4 ? 'cancel' : null;
+  return key ? [key] : [];
 }
 
+/** Блокирует конкурирующие изменения одной заявки, включая время подтверждения. */
 function lockStatusActions(orderId: number): boolean {
   if (statusActionLocks.value.has(orderId)) return false;
   const nextLocks = new Set(statusActionLocks.value);
@@ -119,12 +125,15 @@ function lockStatusActions(orderId: number): boolean {
   return true;
 }
 
+/** Освобождает заявку после ответа сервера либо отказа от отмены. */
 function unlockStatusActions(orderId: number): void {
+  pendingStatuses.value.delete(orderId);
   const nextLocks = new Set(statusActionLocks.value);
   nextLocks.delete(orderId);
   statusActionLocks.value = nextLocks;
 }
 
+/** Отправляет один запрос смены статуса и всегда снимает блокировку. */
 async function setStatus(
   orderId: number,
   status: number,
@@ -132,6 +141,7 @@ async function setStatus(
 ): Promise<void> {
   const shouldLock = options.lock !== false;
   if (shouldLock && !lockStatusActions(orderId)) return;
+  pendingStatuses.value.set(orderId, status);
   try {
     await chatStore.changeOrderStatus(orderId, status);
     notify('positive', t('manager.orderPage.notifications.statusUpdated'));
@@ -142,6 +152,7 @@ async function setStatus(
   }
 }
 
+/** Запрашивает подтверждение до включения загрузки отмены. */
 function confirmCancel(orderId: number): void {
   if (!lockStatusActions(orderId)) return;
   let confirmed = false;

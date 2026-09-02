@@ -40,7 +40,8 @@
           color="primary"
           icon="play_arrow"
           :label="t('manager.orderPage.actions.take')"
-          :loading="changingStatus"
+          :loading="pendingStatus === 2"
+          :disable="changingStatus"
           @click="setStatus(2)"
         />
         <template v-if="order.status === 2">
@@ -51,7 +52,8 @@
             color="primary"
             icon="done_all"
             :label="t('manager.orderPage.actions.complete')"
-            :loading="changingStatus"
+            :loading="pendingStatus === 3"
+            :disable="changingStatus"
             @click="setStatus(3)"
           />
           <q-btn
@@ -62,6 +64,7 @@
             icon="close"
             :label="t('manager.orderPage.actions.cancel')"
             :disable="changingStatus"
+            :loading="pendingStatus === 4"
             @click="confirmCancel"
           />
         </template>
@@ -90,6 +93,7 @@ const { t } = useI18n();
 const { notify } = useAntexNotify();
 const loading = ref(true);
 const changingStatus = ref(false);
+const pendingStatus = ref<number | null>(null);
 const orderId = computed(() => Number(route.params.orderId));
 const order = computed(() => chatStore.activeOrder);
 
@@ -130,8 +134,11 @@ async function openChat(): Promise<void> {
   }
 }
 
-async function setStatus(status: number): Promise<void> {
+/** Сохраняет статус один раз и показывает загрузку выбранного действия. */
+async function setStatus(status: number, confirmed = false): Promise<void> {
+  if (changingStatus.value && !confirmed) return;
   changingStatus.value = true;
+  pendingStatus.value = status;
   try {
     await chatStore.changeOrderStatus(orderId.value, status);
     await chatStore.loadOrders();
@@ -140,19 +147,29 @@ async function setStatus(status: number): Promise<void> {
     notify('negative', t('manager.orderPage.notifications.statusError'));
   } finally {
     changingStatus.value = false;
+    pendingStatus.value = null;
   }
 }
 
+/** Блокирует действия на время подтверждения без преждевременного лоадера. */
 function confirmCancel(): void {
+  if (changingStatus.value) return;
+  changingStatus.value = true;
+  let confirmed = false;
   Dialog.create({
     title: t('manager.orderPage.cancelDialog.title'),
     message: t('manager.orderPage.cancelDialog.text'),
     cancel: { label: t('common.back'), flat: true },
     ok: { label: t('manager.orderPage.actions.cancel'), color: 'negative' },
     persistent: true,
-  }).onOk(() => {
-    void setStatus(4);
-  });
+  })
+    .onOk(() => {
+      confirmed = true;
+      void setStatus(4, true);
+    })
+    .onDismiss(() => {
+      if (!confirmed) changingStatus.value = false;
+    });
 }
 
 function goBack(): void {
