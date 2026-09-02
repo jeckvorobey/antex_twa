@@ -86,7 +86,7 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
   const sending = ref(false);
   // Ключи живут только в памяти текущей сессии, без записи текстов в storage/logs.
   const pendingTextRequests = new Map<string, string>();
-  const pendingFileRequests = new WeakMap<File, Map<string, string>>();
+  let pendingFileRequests = new WeakMap<File, Map<string, string>>();
   const pendingForwardRequests = new Map<string, string>();
 
   const orders = ref<ManagerOrderSummary[]>([]);
@@ -117,6 +117,7 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
   let activeOrderRequestGeneration = 0;
   let unreadStateRevision = 0;
   const orderRevisions = new Map<number, number>();
+  let sessionGeneration = 0;
 
   const activeConversationId = computed(() => activeConversation.value?.id ?? null);
 
@@ -391,12 +392,13 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
 
   /** Сверяет REST state после reconnect, не позволяя route leave вернуть старый диалог. */
   async function reconcile(config: { signal?: AbortSignal } = {}): Promise<void> {
+    const session = sessionGeneration;
     await Promise.all([
       loadChats({ ...config, preservePages: true }),
       loadDashboardChatTotal(config),
       loadOrders({ ...config, preservePages: true }),
     ]);
-    if (config.signal?.aborted) {
+    if (session !== sessionGeneration || config.signal?.aborted) {
       return;
     }
     // Route request новее отображаемого active snapshot и имеет приоритет над reconnect refresh.
@@ -548,6 +550,7 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
     text: string,
     replyToMessageId?: number,
   ): Promise<ManagerChatMessage | null> {
+    const session = sessionGeneration;
     const conversation = activeConversation.value;
     if (!conversation || !text.trim() || sending.value) {
       return null;
@@ -560,11 +563,12 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
         text: text.trim(),
         ...(replyToMessageId ? { replyToMessageId } : {}),
       });
+      if (session !== sessionGeneration) return null;
       confirmDelivery(message);
       pendingTextRequests.delete(identity);
       return message;
     } finally {
-      sending.value = false;
+      if (session === sessionGeneration) sending.value = false;
     }
   }
 
@@ -573,6 +577,7 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
     file: File,
     options: ChatAttachmentOptions = {},
   ): Promise<ManagerChatMessage | null> {
+    const session = sessionGeneration;
     const conversation = activeConversation.value;
     if (!conversation || sending.value) {
       return null;
@@ -588,11 +593,12 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
         requestKey(requests, identity),
         options,
       );
+      if (session !== sessionGeneration) return null;
       confirmDelivery(message);
       requests.delete(identity);
       return message;
     } finally {
-      sending.value = false;
+      if (session === sessionGeneration) sending.value = false;
     }
   }
 
@@ -601,6 +607,7 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
     sourceMessageId: number,
     targetConversationId: number,
   ): Promise<ManagerChatMessage | null> {
+    const session = sessionGeneration;
     if (sending.value) return null;
     sending.value = true;
     const identity = `${targetConversationId}:${sourceMessageId}`;
@@ -609,11 +616,12 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
         sourceMessageId,
         clientRequestId: requestKey(pendingForwardRequests, identity),
       });
+      if (session !== sessionGeneration) return null;
       confirmDelivery(message);
       pendingForwardRequests.delete(identity);
       return message;
     } finally {
-      sending.value = false;
+      if (session === sessionGeneration) sending.value = false;
     }
   }
 
@@ -647,7 +655,9 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
   }
 
   async function closeConversation(conversationId: number): Promise<void> {
+    const session = sessionGeneration;
     const conversation = await closeManagerChat(conversationId);
+    if (session !== sessionGeneration) return;
     upsertConversation(conversation);
   }
 
@@ -787,16 +797,20 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
   }
 
   async function ensureOrderChat(orderId: number): Promise<ManagerConversation> {
+    const session = sessionGeneration;
     const conversation = await ensureManagerOrderChat(orderId);
+    if (session !== sessionGeneration) throw new Error('session_changed');
     upsertConversation(conversation);
     return conversation;
   }
 
   async function changeOrderStatus(orderId: number, status: number): Promise<ManagerOrderSummary> {
+    const session = sessionGeneration;
     let order: ManagerOrderSummary;
     try {
       order = await updateManagerOrderStatus(orderId, status);
     } catch (error) {
+      if (session !== sessionGeneration) throw error;
       const responseStatus = (error as { response?: { status?: number } })?.response?.status;
       if (responseStatus === 409) {
         const revision = orderRevisions.get(orderId) ?? 0;
@@ -804,6 +818,7 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
         try {
           const current = await fetchManagerOrder(orderId);
           if (
+            session === sessionGeneration &&
             (orderRevisions.get(orderId) ?? 0) === revision &&
             ordersRequestGeneration === listGeneration
           ) {
@@ -815,6 +830,7 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
       }
       throw error;
     }
+    if (session !== sessionGeneration) throw new Error('session_changed');
     upsertOrder(order);
     const conversation = conversations.value.find(
       (item) => item.latestOrder?.id === order.id || item.user.id === order.user?.id,
@@ -920,6 +936,56 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
     hasMoreMessages.value = false;
   }
 
+  /** Очищает данные предыдущего пользователя и отменяет применение его поздних ответов. */
+  function resetSession(): void {
+    sessionGeneration += 1;
+    cancelChatsLoad();
+    resetActiveConversation();
+    dashboardTotalRequestGeneration += 1;
+    dashboardTotalRequestController?.abort();
+    dashboardTotalRequestController = null;
+    ordersRequestGeneration += 1;
+    ordersRequestController?.abort();
+    ordersRequestController = null;
+    ordersSummaryGeneration += 1;
+    ordersSummaryController?.abort();
+    ordersSummaryController = null;
+    activeOrderRequestGeneration += 1;
+    unreadStateRevision += 1;
+    chatsStateRevision += 1;
+    conversations.value = [];
+    total.value = 0;
+    dashboardChatTotal.value = 0;
+    unreadTotal.value = 0;
+    chatsLoaded.value = false;
+    chatsError.value = null;
+    hasMoreChats.value = false;
+    chatsMoreError.value = null;
+    chatsOffset = 0;
+    chatsPaginationDirty = false;
+    query.value = '';
+    unreadOnly.value = false;
+    messagesLoading.value = false;
+    sending.value = false;
+    pendingTextRequests.clear();
+    pendingFileRequests = new WeakMap();
+    pendingForwardRequests.clear();
+    orders.value = [];
+    ordersLoading.value = false;
+    ordersError.value = null;
+    hasMoreOrders.value = false;
+    ordersMoreError.value = null;
+    ordersTotal.value = 0;
+    ordersTodayTotal.value = 0;
+    ordersAmountTotals.value = {};
+    ordersOffset = 0;
+    ordersPaginationDirty = false;
+    ordersSummaryAvailable = false;
+    activeOrder.value = null;
+    activeOrderError.value = null;
+    orderRevisions.clear();
+  }
+
   return {
     conversations,
     total,
@@ -968,5 +1034,6 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
     changeOrderStatus,
     handleRealtimeEvent,
     resetActiveConversation,
+    resetSession,
   };
 });
