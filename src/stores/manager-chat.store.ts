@@ -427,10 +427,13 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
           return;
         }
         if (chatsStateRevision === conversationRevision && messagesStateRevision === messageRevision) activeConversation.value = conversation;
-        const merged = new Map(messages.value.map(message => [message.id, message]));
-        for (const message of response.items) {
-          const current = merged.get(message.id);
-          if (!current || current === initialMessages.get(message.id)) merged.set(message.id, message);
+        const merged = new Map(response.items.map(message => [message.id, message]));
+        const latestSnapshotId = Math.max(0, ...response.items.map(message => message.id));
+        for (const message of messages.value) {
+          if (message !== initialMessages.get(message.id) &&
+              (merged.has(message.id) || (!initialMessages.has(message.id) && message.id > latestSnapshotId))) {
+            merged.set(message.id, message);
+          }
         }
         messages.value = [...merged.values()].sort((left, right) => left.id - right.id);
         hasMoreMessages.value = response.hasMore;

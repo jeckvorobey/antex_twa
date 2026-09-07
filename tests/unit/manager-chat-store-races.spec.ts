@@ -716,6 +716,19 @@ describe('регрессии review релиза', () => {
     expect(store.activeOrder?.status).toBe(3);
   });
 
+  it('после долгого отключения сохраняет доступный курсор пропущенной истории', async () => {
+    const store = useManagerChatStore();
+    store.activeConversation = makeConversation(1);
+    store.messages = [makeMessage(1, 1), makeMessage(50, 1)];
+    vi.mocked(fetchManagerChat).mockResolvedValue(makeConversation(1));
+    vi.mocked(fetchManagerChatMessages).mockResolvedValueOnce({ items: [makeMessage(101, 1), makeMessage(150, 1)], hasMore: true });
+    await store.reconcile();
+    vi.mocked(fetchManagerChatMessages).mockResolvedValueOnce({ items: [makeMessage(51, 1), makeMessage(100, 1)], hasMore: true });
+    await store.loadEarlierMessages();
+    expect(fetchManagerChatMessages).toHaveBeenLastCalledWith(1, { limit: 50, beforeId: 101 }, expect.any(Object));
+    expect(store.messages.map(item => item.id)).toEqual([51, 100, 101, 150]);
+  });
+
   it('не читает сообщения в скрытой вкладке', async () => {
     const hidden = vi.spyOn(document, 'hidden', 'get').mockReturnValue(true);
     try {
