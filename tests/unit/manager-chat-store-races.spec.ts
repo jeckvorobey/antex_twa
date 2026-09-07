@@ -676,3 +676,54 @@ describe('manager active orders realtime reducer', () => {
     expect(store.orders).toEqual([]);
   });
 });
+
+
+describe('регрессии review релиза', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    vi.clearAllMocks();
+    vi.mocked(fetchManagerChats).mockResolvedValue({ items: [], total: 0, unreadTotal: 0, hasMore: false });
+    vi.mocked(fetchManagerOrders).mockResolvedValue({ items: [], hasMore: false });
+    vi.mocked(markManagerChatRead).mockResolvedValue({ unreadCount: 0, unreadTotal: 0 });
+  });
+
+  it('сохраняет новое сообщение и редакцию поверх старого REST снимка', async () => {
+    const store = useManagerChatStore();
+    store.activeConversation = makeConversation(1);
+    store.messages = [makeMessage(1, 1)];
+    const pending = deferred<ManagerChatMessagesResponse>();
+    vi.mocked(fetchManagerChat).mockResolvedValue(makeConversation(1));
+    vi.mocked(fetchManagerChatMessages).mockReturnValue(pending.promise);
+    const refresh = store.reconcile();
+    await vi.waitFor(() => expect(fetchManagerChatMessages).toHaveBeenCalled());
+    const edited = { ...makeMessage(1, 1), text: 'Исправлено', edited: true };
+    await store.handleRealtimeEvent({ type: 'chat.message.updated', payload: { message: edited } });
+    await store.handleRealtimeEvent({ type: 'chat.message.created', payload: { message: makeMessage(2, 1) } });
+    pending.resolve({ items: [makeMessage(1, 1)], hasMore: false });
+    await refresh;
+    expect(store.messages.map(item => item.id)).toEqual([1, 2]);
+    expect(store.messages[0].text).toBe('Исправлено');
+  });
+
+  it('сохраняет terminal статус, пришедший во время загрузки деталей', async () => {
+    const store = useManagerChatStore();
+    const pending = deferred<ManagerOrderSummary>();
+    vi.mocked(fetchManagerOrder).mockReturnValue(pending.promise);
+    const loading = store.loadOrder(7);
+    await store.handleRealtimeEvent({ type: 'chat.order.updated', payload: { order: makeOrder(7, 3) } });
+    pending.resolve(makeOrder(7, 2));
+    await loading;
+    expect(store.activeOrder?.status).toBe(3);
+  });
+
+  it('не читает сообщения в скрытой вкладке', async () => {
+    const hidden = vi.spyOn(document, 'hidden', 'get').mockReturnValue(true);
+    try {
+      const store = useManagerChatStore();
+      store.activeConversation = makeConversation(1);
+      await store.handleRealtimeEvent({ type: 'chat.message.created', payload: { message: makeMessage(2, 1), unreadTotal: 1 } });
+      expect(markManagerChatRead).not.toHaveBeenCalled();
+      expect(store.unreadTotal).toBe(1);
+    } finally { hidden.mockRestore(); }
+  });
+});

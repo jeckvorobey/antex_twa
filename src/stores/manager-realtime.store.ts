@@ -43,7 +43,15 @@ export const useManagerRealtimeStore = defineStore('manager-realtime', () => {
 
   function sendViewing(): void {
     if (state.value === 'online' && connectionId) {
-      void updateManagerRealtimeViewing(connectionId, currentConversationId.value).catch(() => undefined);
+      void updateManagerRealtimeViewing(connectionId, document.hidden ? null : currentConversationId.value).catch(() => undefined);
+    }
+  }
+
+  function handleVisibility(): void {
+    sendViewing();
+    const chat = useManagerChatStore();
+    if (!document.hidden && currentConversationId.value === chat.activeConversationId && chat.activeConversationId) {
+      void chat.markRead(chat.activeConversationId).catch(() => { lastError.value = 'Не удалось отметить сообщения прочитанными'; });
     }
   }
 
@@ -61,7 +69,9 @@ export const useManagerRealtimeStore = defineStore('manager-realtime', () => {
       cancelReconciliation();
       const nextController = new AbortController();
       reconciliationController = nextController;
-      void chatStore.reconcile({ signal: nextController.signal }).finally(() => {
+      void chatStore.reconcile({ signal: nextController.signal }).catch(() => {
+        if (isCurrent(generation, source)) lastError.value = 'Не удалось обновить данные чата';
+      }).finally(() => {
         if (reconciliationController === nextController) reconciliationController = null;
       });
       return;
@@ -108,7 +118,9 @@ export const useManagerRealtimeStore = defineStore('manager-realtime', () => {
         signal: nextController.signal,
         connectionId,
         onmessage: (message) => {
-          eventQueue = eventQueue.then(() => handleMessage(message.data, generation, nextController));
+          eventQueue = eventQueue.then(() => handleMessage(message.data, generation, nextController)).catch(() => {
+            if (isCurrent(generation, nextController)) lastError.value = 'Не удалось обработать обновление чата';
+          });
         },
       });
       if (isCurrent(generation, nextController)) scheduleReconnect(generation);
@@ -125,6 +137,7 @@ export const useManagerRealtimeStore = defineStore('manager-realtime', () => {
   function start(): void {
     if (enabled) return;
     enabled = true;
+    document.addEventListener('visibilitychange', handleVisibility);
     reconnectAttempt = 0;
     eventQueue = Promise.resolve();
     void connect(++connectionGeneration);
@@ -132,6 +145,7 @@ export const useManagerRealtimeStore = defineStore('manager-realtime', () => {
 
   function stop(): void {
     enabled = false;
+    document.removeEventListener('visibilitychange', handleVisibility);
     connectionGeneration += 1;
     eventQueue = Promise.resolve();
     cancelReconciliation();

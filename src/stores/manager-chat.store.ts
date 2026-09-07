@@ -75,6 +75,7 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
   let chatsOffset = 0;
   let chatsPaginationDirty = false;
   let chatsStateRevision = 0;
+  let messagesStateRevision = 0;
   const query = ref('');
   const unreadOnly = ref(false);
 
@@ -115,6 +116,7 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
   let ordersRequestController: AbortController | null = null;
   let ordersRequestGeneration = 0;
   let activeOrderRequestGeneration = 0;
+  let requestedActiveOrderId: number | null = null;
   let unreadStateRevision = 0;
   const orderRevisions = new Map<number, number>();
   let sessionGeneration = 0;
@@ -196,6 +198,7 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
     if (activeConversation.value?.id !== message.conversationId) {
       return;
     }
+    messagesStateRevision += 1;
     const position = findMessagePosition(message.id);
     const next = messages.value.slice();
     if (messages.value[position]?.id === message.id) {
@@ -224,7 +227,7 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
     ordersRequestController?.abort();
     ordersRequestController = null;
     ordersLoading.value = false;
-    if (activeOrder.value?.id === order.id) {
+    if (activeOrder.value?.id === order.id || requestedActiveOrderId === order.id) {
       activeOrder.value = order;
     }
     const index = orders.value.findIndex((item) => item.id === order.id);
@@ -407,6 +410,9 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
     }
     if (activeConversation.value) {
       const conversationId = activeConversation.value.id;
+      const initialMessages = new Map(messages.value.map(message => [message.id, message]));
+      const conversationRevision = chatsStateRevision;
+      const messageRevision = messagesStateRevision;
       const { controller, detach, generation } = beginActiveConversationRequest(config.signal);
       try {
         const [conversation, response] = await Promise.all([
@@ -420,8 +426,13 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
         ) {
           return;
         }
-        activeConversation.value = conversation;
-        messages.value = response.items;
+        if (chatsStateRevision === conversationRevision && messagesStateRevision === messageRevision) activeConversation.value = conversation;
+        const merged = new Map(messages.value.map(message => [message.id, message]));
+        for (const message of response.items) {
+          const current = merged.get(message.id);
+          if (!current || current === initialMessages.get(message.id)) merged.set(message.id, message);
+        }
+        messages.value = [...merged.values()].sort((left, right) => left.id - right.id);
         hasMoreMessages.value = response.hasMore;
       } catch (error) {
         if (!controller.signal.aborted) {
@@ -630,6 +641,7 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
     conversationId: number,
     config: { activeGeneration?: number; signal?: AbortSignal } = {},
   ): Promise<void> {
+    if (document.hidden) return;
     const generation = config.activeGeneration ?? activeConversationGeneration;
     const revision = unreadStateRevision;
     let response: Awaited<ReturnType<typeof markManagerChatRead>>;
@@ -781,11 +793,13 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
 
   async function loadOrder(orderId: number): Promise<void> {
     const generation = ++activeOrderRequestGeneration;
+    const revision = orderRevisions.get(orderId) ?? 0;
+    requestedActiveOrderId = orderId;
     activeOrder.value = null;
     activeOrderError.value = null;
     try {
       const order = await fetchManagerOrder(orderId);
-      if (generation === activeOrderRequestGeneration) {
+      if (generation === activeOrderRequestGeneration && (orderRevisions.get(orderId) ?? 0) === revision) {
         activeOrder.value = order;
       }
     } catch (error) {
@@ -951,6 +965,7 @@ export const useManagerChatStore = defineStore('manager-chat', () => {
     ordersSummaryController?.abort();
     ordersSummaryController = null;
     activeOrderRequestGeneration += 1;
+    requestedActiveOrderId = null;
     unreadStateRevision += 1;
     chatsStateRevision += 1;
     conversations.value = [];
