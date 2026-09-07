@@ -35,7 +35,7 @@ describe('ReferralPage structure', () => {
     expect(referralSource).toContain('icon="share"');
     expect(referralSource).toContain(':aria-label="t(\'referral.share\')"');
     expect(referralSource).toContain("t('referral.copyLink')");
-    expect(referralSource).not.toContain('<AppButton block color="warning" icon="share"');
+    expect(referralSource).not.toContain('<AntexButton block color="warning" icon="share"');
   });
 
   it('uses the ready referral link returned by backend', () => {

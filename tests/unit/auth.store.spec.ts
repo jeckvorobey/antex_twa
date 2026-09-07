@@ -92,9 +92,17 @@ describe('auth store', () => {
     expect(api.post).toHaveBeenCalledWith('/api/auth/telegram', {
       init_data: 'fresh-init-data',
     });
-    expect(api.get).toHaveBeenCalledWith('/api/users/me');
+    expect(api.get).toHaveBeenCalledWith('/api/users/me', {
+      headers: { Authorization: 'Bearer fresh-token' },
+    });
     expect(localStorage.getItem('access_token')).toBe('fresh-token');
     expect(store.user?.username).toBe('fresh_user');
+    expect(store.navigation.map((item) => item.name)).toEqual([
+      'home',
+      'exchange',
+      'history',
+      'profile',
+    ]);
     expect(store.trustedContactReady).toBe(true);
     expect(setAppLocale).toHaveBeenCalledWith('ru');
   });

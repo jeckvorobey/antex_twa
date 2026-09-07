@@ -35,7 +35,7 @@
               {{ group.label }}
             </div>
 
-            <AppSurface class="app-referral-tx-list">
+            <AntexCard class="app-referral-tx-list">
               <div v-for="referral in group.items" :key="referral.id" class="app-referral-tx-item">
                 <div class="row items-center no-wrap col">
                   <q-avatar size="36px" class="q-mr-sm">
@@ -64,16 +64,16 @@
 
                 <div class="app-referral-tx-item__amount">{{ referral.rewardPercent }}%</div>
               </div>
-            </AppSurface>
+            </AntexCard>
           </section>
         </template>
 
-        <AppSurface
+        <AntexCard
           v-else-if="!aexStore.referralsLoading && aexStore.referralsLoaded"
           class="app-referral-tx-empty q-pa-md"
         >
           <div class="app-empty-state">{{ t('referral.myReferralsEmpty') }}</div>
-        </AppSurface>
+        </AntexCard>
 
         <q-infinite-scroll
           v-if="aexStore.referralsHasMore"
@@ -99,7 +99,7 @@ import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 import AexBalanceCard from '@components/ui/AexBalanceCard.vue';
-import AppSurface from '@components/ui/AppSurface.vue';
+import AntexCard from '@components/ui/AntexCard.vue';
 import { useAexStore } from '@stores/aex.store';
 import { groupItemsByDate } from '@utils/date-groups';
 import { formatMiniappTime } from '@utils/formatters';

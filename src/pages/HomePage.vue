@@ -27,7 +27,7 @@
         </div>
       </section>
 
-      <AppSurface class="app-home-rates-card">
+      <AntexCard class="app-home-rates-card">
         <div class="app-home-country-chips app-home-rates-card__chips">
           <q-chip
             v-for="chip in filterChips"
@@ -70,7 +70,7 @@
           </div>
         </button>
 
-        <AppButton
+        <AntexButton
           v-if="canExpand"
           variant="secondary"
           block
@@ -78,18 +78,18 @@
           @click="toggleRatesExpansion"
         >
           {{ ratesExpanded ? t('home.collapseRates') : t('home.expandRates') }}
-        </AppButton>
-      </AppSurface>
+        </AntexButton>
+      </AntexCard>
 
-      <AppButton block class="app-home-primary-button" @click="openDefaultExchangeOrder">
+      <AntexButton block class="app-home-primary-button" @click="openDefaultExchangeOrder">
         {{ t('common.exchange') }}
-      </AppButton>
+      </AntexButton>
 
       <section class="app-section app-section--home">
         <AppSectionTitle>{{ t('home.social.title') }}</AppSectionTitle>
 
         <div class="app-home-social-grid">
-          <AppSurface v-for="link in socialLinks" :key="link.id" class="app-home-social-card">
+          <AntexCard v-for="link in socialLinks" :key="link.id" class="app-home-social-card">
             <a
               class="app-home-social-card__link"
               :href="link.href"
@@ -107,31 +107,31 @@
                 <span class="app-home-social-card__subtitle">{{ t(link.subtitleKey) }}</span>
               </span>
             </a>
-          </AppSurface>
+          </AntexCard>
         </div>
       </section>
 
-      <AppSurface v-if="showReferralBanner" class="app-home-bonus-card">
+      <AntexCard v-if="showReferralBanner" class="app-home-bonus-card">
         <div class="app-home-bonus-card__coin">
           <q-icon name="workspace_premium" size="22px" />
         </div>
         <div class="app-home-bonus-card__copy">
           {{ homeStore.data?.banner.title ?? t('home.bonus') }}
         </div>
-        <AppButton
+        <AntexButton
           variant="secondary"
           class="app-home-bonus-card__button"
           @click="uiStore.openMoreSheet()"
         >
           {{ homeStore.data?.banner.actionLabel ?? t('home.bonusAction') }}
-        </AppButton>
-      </AppSurface>
+        </AntexButton>
+      </AntexCard>
 
       <section class="app-section app-section--home">
         <AppSectionTitle>{{ t('home.services') }}</AppSectionTitle>
 
         <div class="app-home-services-grid">
-          <AppSurface
+          <AntexCard
             v-for="service in homeStore.data?.services ?? []"
             :key="service.id"
             class="app-home-service-card"
@@ -156,10 +156,10 @@
               <div class="app-home-service-card__title">{{ service.title }}</div>
               <div class="app-home-service-card__subtitle">{{ service.subtitle }}</div>
             </div>
-          </AppSurface>
+          </AntexCard>
         </div>
 
-        <AppSurface
+        <AntexCard
           v-if="
             profileStore.data?.managerAvailability &&
             profileStore.data.managerAvailability.status !== 'unknown'
@@ -178,7 +178,7 @@
               </div>
             </div>
           </div>
-        </AppSurface>
+        </AntexCard>
       </section>
     </div>
   </q-page>
@@ -188,12 +188,12 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 
-import AppButton from '@components/ui/AppButton.vue';
+import AntexButton from '@components/ui/AntexButton.vue';
 import AppCurrencyMark from '@components/ui/AppCurrencyMark.vue';
 import AppFlagOptionButton from '@components/ui/AppFlagOptionButton.vue';
 import AppRateValue from '@components/ui/AppRateValue.vue';
 import AppSectionTitle from '@components/ui/AppSectionTitle.vue';
-import AppSurface from '@components/ui/AppSurface.vue';
+import AntexCard from '@components/ui/AntexCard.vue';
 import { useHomeStore } from '@stores/home.store';
 import { useProfileStore } from '@stores/profile.store';
 import { useUiStore } from '@stores/ui.store';

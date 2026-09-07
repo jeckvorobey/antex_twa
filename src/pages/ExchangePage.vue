@@ -37,7 +37,7 @@
             <AppSectionTitle>{{ t('exchange.availablePairs') }}</AppSectionTitle>
 
             <div class="app-exchange-pairs app-exchange-pairs--carousel">
-              <AppSurface
+              <AntexCard
                 v-for="pair in exchangeStore.screen?.pairs ?? []"
                 :key="pair.id"
                 class="app-exchange-pair-card"
@@ -54,29 +54,29 @@
                   {{ formatMiniappDateTime(pair.updatedAt, locale) }}
                 </div>
 
-                <AppButton block class="app-exchange-pair-card__button" @click="selectPair(pair)">
+                <AntexButton block class="app-exchange-pair-card__button" @click="selectPair(pair)">
                   {{ t('common.exchange') }}
-                </AppButton>
-              </AppSurface>
+                </AntexButton>
+              </AntexCard>
             </div>
           </section>
         </div>
 
         <div class="q-pt-md app-exchange-submit">
-          <AppButton
+          <AntexButton
             block
             type="submit"
             :loading="exchangeStore.submitting || submitFlowPending"
             :disable="!canSubmit || submitFlowPending"
           >
             {{ t('common.submit') }}
-          </AppButton>
+          </AntexButton>
         </div>
       </q-form>
     </div>
 
     <q-dialog v-model="offlineConfirmVisible" persistent class="app-dialog--confirm">
-      <AppSurface class="app-sheet app-sheet--confirm q-pa-md">
+      <AntexCard class="app-sheet app-sheet--confirm q-pa-md">
         <div class="text-subtitle1">{{ t('order.offlineTitle') }}</div>
         <div class="text-body2 text-grey-5 q-mt-sm">{{ t('order.offlineText') }}</div>
         <div class="text-body2 q-mt-sm">
@@ -84,37 +84,37 @@
         </div>
         <div class="row q-col-gutter-sm q-mt-lg">
           <div class="col-12 col-sm">
-            <AppButton
+            <AntexButton
               block
               :loading="exchangeStore.submitting || submitFlowPending"
               @click="confirmOffline"
             >
               {{ t('common.yes') }}
-            </AppButton>
+            </AntexButton>
           </div>
           <div class="col-12 col-sm">
-            <AppButton block variant="secondary" @click="cancelOffline">
+            <AntexButton block variant="secondary" @click="cancelOffline">
               {{ t('common.cancel') }}
-            </AppButton>
+            </AntexButton>
           </div>
         </div>
-      </AppSurface>
+      </AntexCard>
     </q-dialog>
   </q-page>
 </template>
 
 <script setup lang="ts">
-import { Notify } from 'quasar';
+import { useAntexNotify } from '@/composables/useAntexNotify';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 
 import ExchangeOrderDetails from '@components/orders/ExchangeOrderDetails.vue';
-import AppButton from '@components/ui/AppButton.vue';
+import AntexButton from '@components/ui/AntexButton.vue';
 import AppOfflineNotice from '@components/ui/AppOfflineNotice.vue';
 import AppRateValue from '@components/ui/AppRateValue.vue';
 import AppSectionTitle from '@components/ui/AppSectionTitle.vue';
-import AppSurface from '@components/ui/AppSurface.vue';
+import AntexCard from '@components/ui/AntexCard.vue';
 import AppWarningNotice from '@components/ui/AppWarningNotice.vue';
 import { getMinAmount } from '@constants/limits';
 import { useAexStore } from '@stores/aex.store';
@@ -144,6 +144,7 @@ const aexStore = useAexStore();
 const exchangeStore = useExchangeStore();
 const ordersStore = useOrdersStore();
 const { locale, t } = useI18n();
+const { notify } = useAntexNotify();
 
 const selectedSellCurrency = ref('RUB');
 const selectedBuyCurrency = ref('THB');
@@ -434,7 +435,7 @@ async function refreshQuoteForCurrentState() {
     } catch (error: unknown) {
       amountBuy.value = null;
       const code = getMiniappErrorCode(error);
-      Notify.create({ type: 'negative', message: t(getMiniappErrorMessageKey(code)) });
+      notify('negative', t(getMiniappErrorMessageKey(code)));
       return;
     }
     if (
@@ -540,7 +541,7 @@ async function submitOrder() {
 
   const validation = preliminaryValidation.value;
   if (!validation.valid) {
-    Notify.create({ type: 'negative', message: t(validation.messageKey, validation.params) });
+    notify('negative', t(validation.messageKey, validation.params));
     return;
   }
 
@@ -560,10 +561,7 @@ async function submitOrder() {
     }
     const refreshedValidation = preliminaryValidation.value;
     if (!refreshedValidation.valid) {
-      Notify.create({
-        type: 'negative',
-        message: t(refreshedValidation.messageKey, refreshedValidation.params),
-      });
+      notify('negative', t(refreshedValidation.messageKey, refreshedValidation.params));
       return;
     }
     if (!canSubmit.value || !selectedCountry.value) {
@@ -571,7 +569,7 @@ async function submitOrder() {
     }
     quote = await refreshQuoteBeforeSubmit();
     if (!quote) {
-      Notify.create({ type: 'negative', message: t('exchange.quoteUnavailable') });
+      notify('negative', t('exchange.quoteUnavailable'));
       return;
     }
     amountBuy.value = quote.amountBuy;
@@ -592,10 +590,7 @@ async function submitOrder() {
     } catch {
       // Экран истории повторит загрузку.
     }
-    Notify.create({
-      type: 'positive',
-      message: t('order.success'),
-    });
+    notify('positive', t('order.success'));
     syncingState.value = true;
     resetFormToDefaults();
     syncingState.value = false;
@@ -605,7 +600,7 @@ async function submitOrder() {
     const code = (error as { response?: { data?: { code?: string } } })?.response?.data?.code;
     const status = (error as { response?: { status?: number } })?.response?.status;
     const messageKey = status === 401 ? 'errors.auth' : getMiniappErrorMessageKey(code);
-    Notify.create({ type: 'negative', message: t(messageKey) });
+    notify('negative', t(messageKey));
   } finally {
     submitFlowPending.value = false;
   }

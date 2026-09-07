@@ -2,6 +2,7 @@ import { mount } from '@vue/test-utils';
 import { installQuasarPlugin } from '@quasar/quasar-app-extension-testing-unit-vitest';
 import { createPinia, setActivePinia } from 'pinia';
 import {
+  QBanner,
   QBtn,
   QCard,
   QDialog,
@@ -30,7 +31,7 @@ import { api } from '@boot/axios';
 import ExchangePage from '@pages/ExchangePage.vue';
 
 installQuasarPlugin({
-  components: { QBtn, QCard, QDialog, QForm, QIcon, QInput, QOptionGroup, QPage, QSelect },
+  components: { QBanner, QBtn, QCard, QDialog, QForm, QIcon, QInput, QOptionGroup, QPage, QSelect },
   plugins: { Notify },
 });
 
@@ -181,7 +182,13 @@ describe('ExchangePage manager availability submit flow', () => {
       locale: 'ru',
       messages: {
         ru: {
-          common: { yes: 'Да', cancel: 'Отмена', submit: 'Отправить', exchange: 'Обмен' },
+          common: {
+            yes: 'Да',
+            cancel: 'Отмена',
+            close: 'Закрыть',
+            submit: 'Отправить',
+            exchange: 'Обмен',
+          },
           exchange: {
             quoteUnavailable: 'Нет котировки',
             payAmount: 'Отдаёте',
@@ -189,6 +196,9 @@ describe('ExchangePage manager availability submit flow', () => {
             receiveCountry: 'Страна',
             receiveMethod: 'Способ',
             cash: 'Наличные',
+            qrcode: 'QR',
+            bankAccount: 'Банк',
+            payServices: 'Сервисы',
             cashCities: 'Города',
             availablePairs: 'Пары',
           },
@@ -318,7 +328,7 @@ describe('ExchangePage manager availability submit flow', () => {
             createI18n({
               legacy: false,
               locale: 'ru',
-              messages: { ru: { common: { submit: 'Отправить' } } },
+              messages: { ru: { common: { close: 'Закрыть', submit: 'Отправить' } } },
               missingWarn: false,
               fallbackWarn: false,
             }),
@@ -378,7 +388,9 @@ describe('OrderFormSheet manager availability submit flow', () => {
     const i18n = createI18n({
       legacy: false,
       locale: 'ru',
-      messages: { ru: { common: { yes: 'Да', cancel: 'Отмена', submit: 'Отправить' } } },
+      messages: {
+        ru: { common: { yes: 'Да', cancel: 'Отмена', close: 'Закрыть', submit: 'Отправить' } },
+      },
       missingWarn: false,
       fallbackWarn: false,
     });

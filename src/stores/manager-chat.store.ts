@@ -1,0 +1,1057 @@
+import { defineStore } from 'pinia';
+import { computed, ref } from 'vue';
+
+import {
+  closeManagerChat,
+  ensureManagerOrderChat,
+  fetchManagerChat,
+  fetchManagerChatMessages,
+  fetchManagerChats,
+  fetchManagerOrder,
+  fetchManagerOrders,
+  forwardManagerChatMessage,
+  markManagerChatRead,
+  sendManagerChatAttachment,
+  sendManagerChatMessage,
+  updateManagerOrderStatus,
+} from '@services/manager-chat';
+import type {
+  ChatAttachmentOptions,
+  ManagerChatMessage,
+  ManagerConversation,
+  ManagerOrderListResponse,
+  ManagerOrderSummary,
+  ManagerRealtimeEnvelope,
+} from '@types/manager-chat';
+
+const TERMINAL_ORDER_STATUSES = new Set([3, 4]);
+const PAGE_SIZE = 50;
+
+interface LinkedAbortController {
+  controller: AbortController;
+  detach: () => void;
+}
+
+/** Связывает локальную отмену запроса с внешним lifecycle signal. */
+function createLinkedAbortController(parentSignal?: AbortSignal): LinkedAbortController {
+  const controller = new AbortController();
+  const abortFromParent = (): void => controller.abort();
+  if (parentSignal?.aborted) {
+    controller.abort();
+  } else {
+    parentSignal?.addEventListener('abort', abortFromParent, { once: true });
+  }
+  return {
+    controller,
+    detach: () => parentSignal?.removeEventListener('abort', abortFromParent),
+  };
+}
+
+function sortConversations(items: ManagerConversation[]): ManagerConversation[] {
+  return [...items].sort((left, right) => {
+    const leftTime = left.lastMessageAt ? Date.parse(left.lastMessageAt) : 0;
+    const rightTime = right.lastMessageAt ? Date.parse(right.lastMessageAt) : 0;
+    return rightTime - leftTime || right.id - left.id;
+  });
+}
+
+function createClientRequestId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return `msg-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+export const useManagerChatStore = defineStore('manager-chat', () => {
+  const conversations = ref<ManagerConversation[]>([]);
+  const total = ref(0);
+  const dashboardChatTotal = ref(0);
+  const unreadTotal = ref(0);
+  const loadingChats = ref(false);
+  const chatsLoaded = ref(false);
+  const chatsError = ref<string | null>(null);
+  const hasMoreChats = ref(false);
+  const chatsMoreError = ref<string | null>(null);
+  let chatsOffset = 0;
+  let chatsPaginationDirty = false;
+  let chatsStateRevision = 0;
+  let messagesStateRevision = 0;
+  const query = ref('');
+  const unreadOnly = ref(false);
+
+  const activeConversation = ref<ManagerConversation | null>(null);
+  const messages = ref<ManagerChatMessage[]>([]);
+  const messagesLoading = ref(false);
+  const activeConversationError = ref<string | null>(null);
+  const hasMoreMessages = ref(false);
+  const sending = ref(false);
+  // Ключи живут только в памяти текущей сессии, без записи текстов в storage/logs.
+  const pendingTextRequests = new Map<string, string>();
+  let pendingFileRequests = new WeakMap<File, Map<string, string>>();
+  const pendingForwardRequests = new Map<string, string>();
+
+  const orders = ref<ManagerOrderSummary[]>([]);
+  const ordersLoading = ref(false);
+  const ordersError = ref<string | null>(null);
+  const hasMoreOrders = ref(false);
+  const ordersMoreError = ref<string | null>(null);
+  const ordersTotal = ref(0);
+  const ordersTodayTotal = ref(0);
+  const ordersAmountTotals = ref<Record<string, number>>({});
+  let ordersOffset = 0;
+  let ordersPaginationDirty = false;
+  let ordersSummaryAvailable = false;
+  let ordersSummaryGeneration = 0;
+  let ordersSummaryController: AbortController | null = null;
+  const activeOrder = ref<ManagerOrderSummary | null>(null);
+  const activeOrderError = ref<string | null>(null);
+
+  let chatsRequestController: AbortController | null = null;
+  let chatsRequestGeneration = 0;
+  let dashboardTotalRequestController: AbortController | null = null;
+  let dashboardTotalRequestGeneration = 0;
+  let activeConversationRequestController: AbortController | null = null;
+  let earlierMessagesRequestController: AbortController | null = null;
+  let activeConversationGeneration = 0;
+  let ordersRequestController: AbortController | null = null;
+  let ordersRequestGeneration = 0;
+  let activeOrderRequestGeneration = 0;
+  let requestedActiveOrderId: number | null = null;
+  let unreadStateRevision = 0;
+  const orderRevisions = new Map<number, number>();
+  let sessionGeneration = 0;
+
+  const activeConversationId = computed(() => activeConversation.value?.id ?? null);
+
+  /** Проверяет DTO диалога по фактическим search/unread фильтрам на момент события. */
+  function matchesCurrentConversationFilters(conversation: ManagerConversation): boolean {
+    if (unreadOnly.value && conversation.unreadCount === 0) {
+      return false;
+    }
+    const search = query.value.trim().toLocaleLowerCase('ru-RU');
+    if (!search) {
+      return true;
+    }
+    const user = conversation.user;
+    const orderSearch = search.replace(/^#/, '');
+    return (
+      [user.firstName, user.lastName, user.username].some((field) =>
+        field?.toLocaleLowerCase('ru-RU').includes(search),
+      ) ||
+      Boolean(
+        orderSearch &&
+        conversation.latestOrder?.publicNumber.toLocaleLowerCase('ru-RU').includes(orderSearch),
+      )
+    );
+  }
+
+  /** Обновляет active conversation всегда, а список — только по его текущему predicate. */
+  function upsertConversation(conversation: ManagerConversation): void {
+    chatsPaginationDirty = true;
+    chatsStateRevision += 1;
+    if (activeConversation.value?.id === conversation.id) {
+      activeConversation.value = conversation;
+    }
+    const index = conversations.value.findIndex((item) => item.id === conversation.id);
+    if (!matchesCurrentConversationFilters(conversation)) {
+      if (index !== -1) {
+        conversations.value = conversations.value.filter((item) => item.id !== conversation.id);
+      }
+      return;
+    }
+    if (index === -1) {
+      conversations.value = sortConversations([conversation, ...conversations.value]);
+    } else {
+      const next = conversations.value.slice();
+      next[index] = conversation;
+      conversations.value = sortConversations(next);
+    }
+  }
+
+  /** Применяет unread update и повторно проверяет unread-only predicate списка. */
+  function updateConversationUnread(conversationId: number, unreadCount: number): void {
+    const conversation = conversations.value.find((item) => item.id === conversationId);
+    if (conversation) {
+      upsertConversation({ ...conversation, unreadCount });
+    }
+    if (activeConversation.value?.id === conversationId) {
+      activeConversation.value = { ...activeConversation.value, unreadCount };
+    }
+  }
+
+  /** Находит индекс сообщения или позицию вставки в упорядоченном по id массиве. */
+  function findMessagePosition(messageId: number): number {
+    let low = 0;
+    let high = messages.value.length;
+    while (low < high) {
+      const middle = low + Math.floor((high - low) / 2);
+      if ((messages.value[middle]?.id ?? Number.POSITIVE_INFINITY) < messageId) {
+        low = middle + 1;
+      } else {
+        high = middle;
+      }
+    }
+    return low;
+  }
+
+  function upsertMessage(message: ManagerChatMessage): void {
+    if (activeConversation.value?.id !== message.conversationId) {
+      return;
+    }
+    messagesStateRevision += 1;
+    const position = findMessagePosition(message.id);
+    const next = messages.value.slice();
+    if (messages.value[position]?.id === message.id) {
+      next[position] = message;
+    } else {
+      next.splice(position, 0, message);
+    }
+    messages.value = next;
+    if (activeConversation.value) {
+      activeConversation.value.lastMessage = message;
+      activeConversation.value.lastMessageAt = message.createdAt;
+    }
+  }
+
+  /** Сохраняет detail snapshot, но исключает terminal заявки из active списка. */
+  function upsertOrder(order: ManagerOrderSummary): void {
+    ordersPaginationDirty = true;
+    if (ordersSummaryAvailable) {
+      void refreshOrdersSummary().catch(() => {
+        ordersError.value = 'load_failed';
+      });
+    }
+    orderRevisions.set(order.id, (orderRevisions.get(order.id) ?? 0) + 1);
+    // Realtime/status result новее уже запущенного active-orders snapshot.
+    ordersRequestGeneration += 1;
+    ordersRequestController?.abort();
+    ordersRequestController = null;
+    ordersLoading.value = false;
+    if (activeOrder.value?.id === order.id || requestedActiveOrderId === order.id) {
+      activeOrder.value = order;
+    }
+    const index = orders.value.findIndex((item) => item.id === order.id);
+    if (TERMINAL_ORDER_STATUSES.has(order.status)) {
+      if (index !== -1) {
+        orders.value = orders.value.filter((item) => item.id !== order.id);
+      }
+      return;
+    }
+    if (index === -1) {
+      orders.value = [order, ...orders.value];
+    } else {
+      const next = orders.value.slice();
+      next[index] = order;
+      orders.value = next;
+    }
+  }
+
+  function applySentMessage(message: ManagerChatMessage): void {
+    upsertMessage(message);
+    const conversation = conversations.value.find((item) => item.id === message.conversationId);
+    if (conversation) {
+      conversation.lastMessage = message;
+      conversation.lastMessageAt = message.createdAt;
+      conversations.value = sortConversations(conversations.value);
+    }
+  }
+
+  /** Загружает список по snapshot фильтров и применяет только последнюю generation. */
+  async function loadChats(
+    config: { signal?: AbortSignal; append?: boolean; preservePages?: boolean } = {},
+  ): Promise<void> {
+    const append = config.append === true;
+    if (append && (loadingChats.value || !hasMoreChats.value)) return;
+    const offset = append ? chatsOffset : 0;
+    const windowSize = config.preservePages ? chatsOffset : 0;
+    const stateRevision = chatsStateRevision;
+    chatsRequestController?.abort();
+    const { controller, detach } = createLinkedAbortController(config.signal);
+    const generation = ++chatsRequestGeneration;
+    chatsRequestController = controller;
+    loadingChats.value = true;
+    chatsError.value = null;
+    chatsMoreError.value = null;
+    try {
+      const search = query.value.trim();
+      const params = {
+        unreadOnly: unreadOnly.value,
+        limit: PAGE_SIZE,
+        offset,
+        ...(search ? { query: search } : {}),
+      };
+      let response = await fetchManagerChats(params, { signal: controller.signal });
+      const pageItems = [...response.items];
+      while (
+        !append &&
+        pageItems.length < windowSize &&
+        pageItems.length < response.total &&
+        response.items.length
+      ) {
+        if (generation !== chatsRequestGeneration || controller.signal.aborted) return;
+        response = await fetchManagerChats(
+          { ...params, offset: pageItems.length },
+          { signal: controller.signal },
+        );
+        pageItems.push(...response.items);
+      }
+      if (generation !== chatsRequestGeneration || controller.signal.aborted) {
+        return;
+      }
+      if (stateRevision !== chatsStateRevision) {
+        chatsPaginationDirty = true;
+        hasMoreChats.value = true;
+        return;
+      }
+      chatsPaginationDirty = false;
+      const items = append ? [...conversations.value, ...pageItems] : pageItems;
+      conversations.value = sortConversations([
+        ...new Map(items.map((item) => [item.id, item])).values(),
+      ]);
+      chatsOffset = offset + pageItems.length;
+      hasMoreChats.value = response.items.length > 0 && chatsOffset < response.total;
+      total.value = response.total;
+      unreadTotal.value = response.unreadTotal;
+      chatsLoaded.value = true;
+    } catch (error) {
+      if (!controller.signal.aborted) {
+        if (append) chatsMoreError.value = 'load_failed';
+        else chatsError.value = 'load_failed';
+        throw error;
+      }
+    } finally {
+      if (generation === chatsRequestGeneration) {
+        loadingChats.value = false;
+      }
+      if (chatsRequestController === controller) {
+        chatsRequestController = null;
+      }
+      detach();
+    }
+  }
+
+  /** Продолжает список; после realtime-сдвига сначала обновляет первую страницу. */
+  async function loadMoreChats(): Promise<void> {
+    if (loadingChats.value || !hasMoreChats.value) return;
+    await loadChats({ append: !chatsPaginationDirty });
+  }
+
+  /** Загружает нефильтрованный total для KPI Dashboard независимо от состояния списка. */
+  async function loadDashboardChatTotal(config: { signal?: AbortSignal } = {}): Promise<void> {
+    dashboardTotalRequestController?.abort();
+    const { controller, detach } = createLinkedAbortController(config.signal);
+    const generation = ++dashboardTotalRequestGeneration;
+    dashboardTotalRequestController = controller;
+    try {
+      const response = await fetchManagerChats(
+        { unreadOnly: false, limit: 1, offset: 0 },
+        { signal: controller.signal },
+      );
+      if (generation === dashboardTotalRequestGeneration && !controller.signal.aborted) {
+        dashboardChatTotal.value = response.total;
+      }
+    } catch (error) {
+      if (!controller.signal.aborted) throw error;
+    } finally {
+      if (dashboardTotalRequestController === controller) {
+        dashboardTotalRequestController = null;
+      }
+      detach();
+    }
+  }
+
+  /** Инвалидирует filtered list request при уходе со страницы списка. */
+  function cancelChatsLoad(): void {
+    chatsRequestGeneration += 1;
+    chatsRequestController?.abort();
+    chatsRequestController = null;
+    loadingChats.value = false;
+  }
+
+  /** Создаёт новую generation active conversation и отменяет её старые REST-запросы. */
+  function beginActiveConversationRequest(parentSignal?: AbortSignal): {
+    controller: AbortController;
+    detach: () => void;
+    generation: number;
+  } {
+    activeConversationRequestController?.abort();
+    earlierMessagesRequestController?.abort();
+    earlierMessagesRequestController = null;
+    const { controller, detach } = createLinkedAbortController(parentSignal);
+    const generation = ++activeConversationGeneration;
+    activeConversationRequestController = controller;
+    return { controller, detach, generation };
+  }
+
+  /** Отменяет active conversation lifecycle и запрещает позднее применение результатов. */
+  function cancelActiveConversationRequests(): void {
+    activeConversationGeneration += 1;
+    activeConversationRequestController?.abort();
+    earlierMessagesRequestController?.abort();
+    activeConversationRequestController = null;
+    earlierMessagesRequestController = null;
+    messagesLoading.value = false;
+  }
+
+  /** Сверяет REST state после reconnect, не позволяя route leave вернуть старый диалог. */
+  async function reconcile(config: { signal?: AbortSignal } = {}): Promise<void> {
+    const session = sessionGeneration;
+    await Promise.all([
+      loadChats({ ...config, preservePages: true }),
+      loadDashboardChatTotal(config),
+      loadOrders({ ...config, preservePages: true }),
+    ]);
+    if (session !== sessionGeneration || config.signal?.aborted) {
+      return;
+    }
+    // Route request новее отображаемого active snapshot и имеет приоритет над reconnect refresh.
+    if (activeConversationRequestController) {
+      return;
+    }
+    if (activeConversation.value) {
+      const conversationId = activeConversation.value.id;
+      const initialMessages = new Map(messages.value.map(message => [message.id, message]));
+      const conversationRevision = chatsStateRevision;
+      const messageRevision = messagesStateRevision;
+      const { controller, detach, generation } = beginActiveConversationRequest(config.signal);
+      try {
+        const [conversation, response] = await Promise.all([
+          fetchManagerChat(conversationId, { signal: controller.signal }),
+          fetchManagerChatMessages(conversationId, { limit: 50 }, { signal: controller.signal }),
+        ]);
+        if (
+          generation !== activeConversationGeneration ||
+          controller.signal.aborted ||
+          activeConversation.value?.id !== conversationId
+        ) {
+          return;
+        }
+        if (chatsStateRevision === conversationRevision && messagesStateRevision === messageRevision) activeConversation.value = conversation;
+        const merged = new Map(response.items.map(message => [message.id, message]));
+        const latestSnapshotId = Math.max(0, ...response.items.map(message => message.id));
+        for (const message of messages.value) {
+          if (message !== initialMessages.get(message.id) &&
+              (merged.has(message.id) || (!initialMessages.has(message.id) && message.id > latestSnapshotId))) {
+            merged.set(message.id, message);
+          }
+        }
+        messages.value = [...merged.values()].sort((left, right) => left.id - right.id);
+        hasMoreMessages.value = response.hasMore;
+      } catch (error) {
+        if (!controller.signal.aborted) {
+          throw error;
+        }
+      } finally {
+        if (activeConversationRequestController === controller) {
+          activeConversationRequestController = null;
+        }
+        detach();
+      }
+    }
+  }
+
+  /** Открывает диалог только если его request generation всё ещё принадлежит текущему route. */
+  async function openConversation(conversationId: number): Promise<void> {
+    const { controller, detach, generation } = beginActiveConversationRequest();
+    activeConversation.value = null;
+    activeConversationError.value = null;
+    messages.value = [];
+    hasMoreMessages.value = false;
+    messagesLoading.value = true;
+    try {
+      const [conversation, response] = await Promise.all([
+        fetchManagerChat(conversationId, { signal: controller.signal }),
+        fetchManagerChatMessages(conversationId, { limit: 50 }, { signal: controller.signal }),
+      ]);
+      if (generation !== activeConversationGeneration || controller.signal.aborted) {
+        return;
+      }
+      activeConversation.value = conversation;
+      messages.value = response.items;
+      hasMoreMessages.value = response.hasMore;
+      upsertConversation(conversation);
+      if (conversation.unreadCount > 0) {
+        await markRead(conversationId, {
+          activeGeneration: generation,
+          signal: controller.signal,
+        });
+      }
+    } catch (error) {
+      if (!controller.signal.aborted) {
+        activeConversationError.value = 'load_failed';
+        throw error;
+      }
+    } finally {
+      if (generation === activeConversationGeneration) {
+        messagesLoading.value = false;
+      }
+      if (activeConversationRequestController === controller) {
+        activeConversationRequestController = null;
+      }
+      detach();
+    }
+  }
+
+  /** Добавляет раннюю страницу сообщений только в тот же active conversation lifecycle. */
+  async function loadEarlierMessages(): Promise<void> {
+    if (!activeConversation.value || !hasMoreMessages.value || messagesLoading.value) {
+      return;
+    }
+    const firstId = messages.value[0]?.id;
+    if (!firstId) {
+      return;
+    }
+    earlierMessagesRequestController?.abort();
+    const controller = new AbortController();
+    const generation = activeConversationGeneration;
+    const conversationId = activeConversation.value.id;
+    earlierMessagesRequestController = controller;
+    messagesLoading.value = true;
+    try {
+      const response = await fetchManagerChatMessages(
+        conversationId,
+        { limit: 50, beforeId: firstId },
+        { signal: controller.signal },
+      );
+      if (
+        generation !== activeConversationGeneration ||
+        controller.signal.aborted ||
+        activeConversation.value?.id !== conversationId
+      ) {
+        return;
+      }
+      const existing = new Set(messages.value.map((item) => item.id));
+      messages.value = [
+        ...response.items.filter((item) => !existing.has(item.id)),
+        ...messages.value,
+      ];
+      hasMoreMessages.value = response.hasMore;
+    } catch (error) {
+      if (!controller.signal.aborted) {
+        throw error;
+      }
+    } finally {
+      if (generation === activeConversationGeneration) {
+        messagesLoading.value = false;
+      }
+      if (earlierMessagesRequestController === controller) {
+        earlierMessagesRequestController = null;
+      }
+    }
+  }
+
+  /** Возвращает прежний ключ до подтверждённой доставки для безопасного повтора. */
+  function requestKey(requests: Map<string, string>, identity: string): string {
+    const existing = requests.get(identity);
+    if (existing) return existing;
+    const key = createClientRequestId();
+    requests.set(identity, key);
+    return key;
+  }
+
+  /** Не позволяет очистить draft при HTTP 200 с failed/pending delivery. */
+  function confirmDelivery(message: ManagerChatMessage): void {
+    applySentMessage(message);
+    if (message.deliveryStatus !== 'sent') {
+      throw new Error(
+        message.deliveryStatus === 'pending' ? 'delivery_pending' : 'delivery_failed',
+      );
+    }
+  }
+
+  /** Отправляет текст с reply и сохраняет idempotency key при ошибке сети. */
+  async function sendMessage(
+    text: string,
+    replyToMessageId?: number,
+  ): Promise<ManagerChatMessage | null> {
+    const session = sessionGeneration;
+    const conversation = activeConversation.value;
+    if (!conversation || !text.trim() || sending.value) {
+      return null;
+    }
+    sending.value = true;
+    const identity = JSON.stringify([conversation.id, replyToMessageId, text.trim()]);
+    try {
+      const message = await sendManagerChatMessage(conversation.id, {
+        clientRequestId: requestKey(pendingTextRequests, identity),
+        text: text.trim(),
+        ...(replyToMessageId ? { replyToMessageId } : {}),
+      });
+      if (session !== sessionGeneration) return null;
+      confirmDelivery(message);
+      pendingTextRequests.delete(identity);
+      return message;
+    } finally {
+      if (session === sessionGeneration) sending.value = false;
+    }
+  }
+
+  /** Повторяет ту же запись/вложение с прежним ключом без дублирования в Telegram. */
+  async function sendAttachment(
+    file: File,
+    options: ChatAttachmentOptions = {},
+  ): Promise<ManagerChatMessage | null> {
+    const session = sessionGeneration;
+    const conversation = activeConversation.value;
+    if (!conversation || sending.value) {
+      return null;
+    }
+    sending.value = true;
+    const requests = pendingFileRequests.get(file) ?? new Map<string, string>();
+    pendingFileRequests.set(file, requests);
+    const identity = JSON.stringify([conversation.id, options.kind, options.replyToMessageId]);
+    try {
+      const message = await sendManagerChatAttachment(
+        conversation.id,
+        file,
+        requestKey(requests, identity),
+        options,
+      );
+      if (session !== sessionGeneration) return null;
+      confirmDelivery(message);
+      requests.delete(identity);
+      return message;
+    } finally {
+      if (session === sessionGeneration) sending.value = false;
+    }
+  }
+
+  /** Пересылает сообщение в явно выбранный диалог, не меняя текущий маршрут. */
+  async function forwardMessage(
+    sourceMessageId: number,
+    targetConversationId: number,
+  ): Promise<ManagerChatMessage | null> {
+    const session = sessionGeneration;
+    if (sending.value) return null;
+    sending.value = true;
+    const identity = `${targetConversationId}:${sourceMessageId}`;
+    try {
+      const message = await forwardManagerChatMessage(targetConversationId, {
+        sourceMessageId,
+        clientRequestId: requestKey(pendingForwardRequests, identity),
+      });
+      if (session !== sessionGeneration) return null;
+      confirmDelivery(message);
+      pendingForwardRequests.delete(identity);
+      return message;
+    } finally {
+      if (session === sessionGeneration) sending.value = false;
+    }
+  }
+
+  /** Применяет read response только в исходный active lifecycle и unread revision. */
+  async function markRead(
+    conversationId: number,
+    config: { activeGeneration?: number; signal?: AbortSignal } = {},
+  ): Promise<void> {
+    if (document.hidden) return;
+    const generation = config.activeGeneration ?? activeConversationGeneration;
+    const revision = unreadStateRevision;
+    let response: Awaited<ReturnType<typeof markManagerChatRead>>;
+    try {
+      response = await markManagerChatRead(conversationId, { signal: config.signal });
+    } catch (error) {
+      if (config.signal?.aborted) {
+        return;
+      }
+      throw error;
+    }
+    if (
+      config.signal?.aborted ||
+      generation !== activeConversationGeneration ||
+      activeConversation.value?.id !== conversationId ||
+      revision !== unreadStateRevision
+    ) {
+      return;
+    }
+    unreadStateRevision += 1;
+    updateConversationUnread(conversationId, response.unreadCount);
+    unreadTotal.value = response.unreadTotal;
+  }
+
+  async function closeConversation(conversationId: number): Promise<void> {
+    const session = sessionGeneration;
+    const conversation = await closeManagerChat(conversationId);
+    if (session !== sessionGeneration) return;
+    upsertConversation(conversation);
+  }
+
+  /** Загружает active orders только для последней request/state generation. */
+  async function loadOrders(
+    config: { signal?: AbortSignal; append?: boolean; preservePages?: boolean } = {},
+  ): Promise<void> {
+    const append = config.append === true;
+    if (append && (ordersLoading.value || !hasMoreOrders.value)) return;
+    const offset = append ? ordersOffset : 0;
+    const windowSize = config.preservePages ? ordersOffset : 0;
+    const summaryGeneration = ++ordersSummaryGeneration;
+    ordersSummaryController?.abort();
+    ordersRequestController?.abort();
+    const { controller, detach } = createLinkedAbortController(config.signal);
+    const generation = ++ordersRequestGeneration;
+    ordersRequestController = controller;
+    ordersLoading.value = true;
+    ordersError.value = null;
+    ordersMoreError.value = null;
+    try {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      let response = await fetchManagerOrders(
+        { limit: PAGE_SIZE, offset, todayFrom: today.toISOString() },
+        { signal: controller.signal },
+      );
+      const pageItems = [...response.items];
+      while (
+        !append &&
+        pageItems.length < windowSize &&
+        pageItems.length < (response.total ?? 0) &&
+        response.items.length
+      ) {
+        if (generation !== ordersRequestGeneration || controller.signal.aborted) return;
+        response = await fetchManagerOrders(
+          { limit: PAGE_SIZE, offset: pageItems.length, todayFrom: today.toISOString() },
+          { signal: controller.signal },
+        );
+        pageItems.push(...response.items);
+      }
+      if (generation !== ordersRequestGeneration || controller.signal.aborted) {
+        return;
+      }
+      ordersPaginationDirty = false;
+      const nextOrders = pageItems.filter((order) => !TERMINAL_ORDER_STATUSES.has(order.status));
+      const refreshedOrderIds = new Set([
+        ...orders.value.map((order) => order.id),
+        ...pageItems.map((order) => order.id),
+      ]);
+      for (const orderId of refreshedOrderIds) {
+        orderRevisions.set(orderId, (orderRevisions.get(orderId) ?? 0) + 1);
+      }
+      const items = append ? [...orders.value, ...nextOrders] : nextOrders;
+      orders.value = [...new Map(items.map((item) => [item.id, item])).values()];
+      ordersOffset = offset + pageItems.length;
+      if (summaryGeneration === ordersSummaryGeneration) applyOrdersSummary(response, today);
+      hasMoreOrders.value = response.items.length > 0 && ordersOffset < ordersTotal.value;
+    } catch (error) {
+      if (!controller.signal.aborted) {
+        if (append) ordersMoreError.value = 'load_failed';
+        else ordersError.value = 'load_failed';
+        throw error;
+      }
+    } finally {
+      if (generation === ordersRequestGeneration) {
+        ordersLoading.value = false;
+      }
+      if (ordersRequestController === controller) {
+        ordersRequestController = null;
+      }
+      detach();
+    }
+  }
+
+  /** Применяет серверные агрегаты; fallback нужен только для старого backend при deploy. */
+  function applyOrdersSummary(response: ManagerOrderListResponse, today: Date): void {
+    ordersSummaryAvailable = response.total !== undefined;
+    ordersTotal.value = response.total ?? response.items.length;
+    ordersTodayTotal.value =
+      response.todayTotal ??
+      response.items.filter((item) => new Date(item.createdAt) >= today).length;
+    ordersAmountTotals.value =
+      response.amountTotals ??
+      response.items.reduce<Record<string, number>>((totals, item) => {
+        totals[item.currencySell] = (totals[item.currencySell] ?? 0) + item.amountSell;
+        return totals;
+      }, {});
+  }
+
+  /** Сверяет KPI после status/realtime, сохраняя уже загруженные страницы. */
+  async function refreshOrdersSummary(): Promise<void> {
+    ordersSummaryController?.abort();
+    const controller = new AbortController();
+    ordersSummaryController = controller;
+    const generation = ++ordersSummaryGeneration;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    try {
+      const response = await fetchManagerOrders(
+        { limit: 1, todayFrom: today.toISOString() },
+        { signal: controller.signal },
+      );
+      if (controller.signal.aborted || generation !== ordersSummaryGeneration) return;
+      applyOrdersSummary(response, today);
+      hasMoreOrders.value = ordersPaginationDirty
+        ? orders.value.length < ordersTotal.value
+        : ordersOffset < ordersTotal.value;
+    } catch (error) {
+      if (!controller.signal.aborted && generation === ordersSummaryGeneration) throw error;
+    } finally {
+      if (ordersSummaryController === controller) ordersSummaryController = null;
+    }
+  }
+
+  /** Загружает продолжение активных заявок только по запросу пользователя. */
+  async function loadMoreOrders(): Promise<void> {
+    if (ordersLoading.value || !hasMoreOrders.value) return;
+    await loadOrders({ append: !ordersPaginationDirty });
+  }
+
+  async function loadOrder(orderId: number): Promise<void> {
+    const generation = ++activeOrderRequestGeneration;
+    const revision = orderRevisions.get(orderId) ?? 0;
+    requestedActiveOrderId = orderId;
+    activeOrder.value = null;
+    activeOrderError.value = null;
+    try {
+      const order = await fetchManagerOrder(orderId);
+      if (generation === activeOrderRequestGeneration && (orderRevisions.get(orderId) ?? 0) === revision) {
+        activeOrder.value = order;
+      }
+    } catch (error) {
+      if (generation === activeOrderRequestGeneration) {
+        activeOrderError.value = 'load_failed';
+        throw error;
+      }
+    }
+  }
+
+  async function ensureOrderChat(orderId: number): Promise<ManagerConversation> {
+    const session = sessionGeneration;
+    const conversation = await ensureManagerOrderChat(orderId);
+    if (session !== sessionGeneration) throw new Error('session_changed');
+    upsertConversation(conversation);
+    return conversation;
+  }
+
+  async function changeOrderStatus(orderId: number, status: number): Promise<ManagerOrderSummary> {
+    const session = sessionGeneration;
+    let order: ManagerOrderSummary;
+    try {
+      order = await updateManagerOrderStatus(orderId, status);
+    } catch (error) {
+      if (session !== sessionGeneration) throw error;
+      const responseStatus = (error as { response?: { status?: number } })?.response?.status;
+      if (responseStatus === 409) {
+        const revision = orderRevisions.get(orderId) ?? 0;
+        const listGeneration = ordersRequestGeneration;
+        try {
+          const current = await fetchManagerOrder(orderId);
+          if (
+            session === sessionGeneration &&
+            (orderRevisions.get(orderId) ?? 0) === revision &&
+            ordersRequestGeneration === listGeneration
+          ) {
+            upsertOrder(current);
+          }
+        } catch {
+          // Сверка best-effort: вызывающий код должен получить исходный 409.
+        }
+      }
+      throw error;
+    }
+    if (session !== sessionGeneration) throw new Error('session_changed');
+    upsertOrder(order);
+    const conversation = conversations.value.find(
+      (item) => item.latestOrder?.id === order.id || item.user.id === order.user?.id,
+    );
+    if (conversation) {
+      conversation.latestOrder = order;
+    }
+    return order;
+  }
+
+  async function handleRealtimeEvent(event: ManagerRealtimeEnvelope): Promise<void> {
+    switch (event.type) {
+      case 'realtime.ready': {
+        const nextUnread = event.payload.unreadTotal;
+        if (typeof nextUnread === 'number') {
+          unreadStateRevision += 1;
+          unreadTotal.value = nextUnread;
+        }
+        return;
+      }
+      case 'chat.message.created': {
+        const message = event.payload.message as unknown as ManagerChatMessage | undefined;
+        const conversation = event.payload.conversation as unknown as
+          | ManagerConversation
+          | undefined;
+        const nextUnread = event.payload.unreadTotal;
+        if (conversation) {
+          upsertConversation(conversation);
+        }
+        if (message) {
+          upsertMessage(message);
+        }
+        if (typeof nextUnread === 'number') {
+          unreadStateRevision += 1;
+          unreadTotal.value = nextUnread;
+        }
+        if (message && activeConversation.value?.id === message.conversationId) {
+          await markRead(message.conversationId, {
+            activeGeneration: activeConversationGeneration,
+          });
+        }
+        return;
+      }
+      case 'chat.message.updated':
+      case 'chat.message.sent':
+      case 'chat.message.failed': {
+        const message = event.payload.message as unknown as ManagerChatMessage | undefined;
+        if (message) {
+          applySentMessage(message);
+        }
+        return;
+      }
+      case 'chat.read.updated':
+      case 'chat.unread.updated': {
+        const conversationId = event.payload.conversationId;
+        const unreadCount = event.payload.unreadCount;
+        const nextUnread = event.payload.unreadTotal;
+        if (typeof unreadCount === 'number' || typeof nextUnread === 'number') {
+          unreadStateRevision += 1;
+        }
+        if (typeof conversationId === 'number' && typeof unreadCount === 'number') {
+          updateConversationUnread(conversationId, unreadCount);
+        }
+        if (typeof nextUnread === 'number') {
+          unreadTotal.value = nextUnread;
+        }
+        return;
+      }
+      case 'chat.conversation.updated': {
+        const conversation = event.payload.conversation as unknown as
+          | ManagerConversation
+          | undefined;
+        if (conversation) {
+          upsertConversation(conversation);
+        }
+        return;
+      }
+      case 'chat.order.updated': {
+        const order = event.payload.order as unknown as ManagerOrderSummary | undefined;
+        const conversationId = event.payload.conversationId;
+        if (order) {
+          upsertOrder(order);
+        }
+        if (order && typeof conversationId === 'number') {
+          const conversation = conversations.value.find((item) => item.id === conversationId);
+          if (conversation) {
+            conversation.latestOrder = order;
+          }
+          if (activeConversation.value?.id === conversationId) {
+            activeConversation.value.latestOrder = order;
+          }
+        }
+      }
+    }
+  }
+
+  /** Сбрасывает route state и инвалидирует все поздние active conversation ответы. */
+  function resetActiveConversation(): void {
+    cancelActiveConversationRequests();
+    activeConversation.value = null;
+    activeConversationError.value = null;
+    messages.value = [];
+    hasMoreMessages.value = false;
+  }
+
+  /** Очищает данные предыдущего пользователя и отменяет применение его поздних ответов. */
+  function resetSession(): void {
+    sessionGeneration += 1;
+    cancelChatsLoad();
+    resetActiveConversation();
+    dashboardTotalRequestGeneration += 1;
+    dashboardTotalRequestController?.abort();
+    dashboardTotalRequestController = null;
+    ordersRequestGeneration += 1;
+    ordersRequestController?.abort();
+    ordersRequestController = null;
+    ordersSummaryGeneration += 1;
+    ordersSummaryController?.abort();
+    ordersSummaryController = null;
+    activeOrderRequestGeneration += 1;
+    requestedActiveOrderId = null;
+    unreadStateRevision += 1;
+    chatsStateRevision += 1;
+    conversations.value = [];
+    total.value = 0;
+    dashboardChatTotal.value = 0;
+    unreadTotal.value = 0;
+    chatsLoaded.value = false;
+    chatsError.value = null;
+    hasMoreChats.value = false;
+    chatsMoreError.value = null;
+    chatsOffset = 0;
+    chatsPaginationDirty = false;
+    query.value = '';
+    unreadOnly.value = false;
+    messagesLoading.value = false;
+    sending.value = false;
+    pendingTextRequests.clear();
+    pendingFileRequests = new WeakMap();
+    pendingForwardRequests.clear();
+    orders.value = [];
+    ordersLoading.value = false;
+    ordersError.value = null;
+    hasMoreOrders.value = false;
+    ordersMoreError.value = null;
+    ordersTotal.value = 0;
+    ordersTodayTotal.value = 0;
+    ordersAmountTotals.value = {};
+    ordersOffset = 0;
+    ordersPaginationDirty = false;
+    ordersSummaryAvailable = false;
+    activeOrder.value = null;
+    activeOrderError.value = null;
+    orderRevisions.clear();
+  }
+
+  return {
+    conversations,
+    total,
+    dashboardChatTotal,
+    unreadTotal,
+    loadingChats,
+    chatsLoaded,
+    chatsError,
+    hasMoreChats,
+    chatsMoreError,
+    query,
+    unreadOnly,
+    activeConversation,
+    activeConversationId,
+    messages,
+    messagesLoading,
+    activeConversationError,
+    hasMoreMessages,
+    sending,
+    orders,
+    ordersLoading,
+    ordersError,
+    hasMoreOrders,
+    ordersMoreError,
+    ordersTotal,
+    ordersTodayTotal,
+    ordersAmountTotals,
+    activeOrder,
+    activeOrderError,
+    loadChats,
+    loadMoreChats,
+    loadDashboardChatTotal,
+    cancelChatsLoad,
+    reconcile,
+    openConversation,
+    loadEarlierMessages,
+    sendMessage,
+    sendAttachment,
+    forwardMessage,
+    markRead,
+    closeConversation,
+    loadOrders,
+    loadMoreOrders,
+    loadOrder,
+    ensureOrderChat,
+    changeOrderStatus,
+    handleRealtimeEvent,
+    resetActiveConversation,
+    resetSession,
+  };
+});

@@ -10,6 +10,7 @@
       borderless
       dense
       bottom-slots
+      hide-bottom-space
       :error="!!error"
       :error-message="error"
       v-bind="$attrs"
@@ -30,6 +31,7 @@
       emit-value
       map-options
       bottom-slots
+      hide-bottom-space
       :error="!!error"
       :error-message="error"
       options-dense

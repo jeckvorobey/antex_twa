@@ -11,7 +11,7 @@
         {{ t('referral.reserved') }}: {{ formatTokenAmount(reservedBalance) }} ATXG
       </div>
 
-      <AppSurface padded class="app-referral-link-card">
+      <AntexCard padded class="app-referral-link-card">
         <div class="app-referral-link-card__link-label text-caption text-grey-7 q-mb-xs">
           {{ t('referral.referralLinkLabel') }}
         </div>
@@ -46,9 +46,9 @@
             />
           </template>
         </q-input>
-      </AppSurface>
+      </AntexCard>
 
-      <AppSurface padded class="app-referral-info-card justify-between">
+      <AntexCard padded class="app-referral-info-card justify-between">
         <div class="app-referral-info-card__header row items-center justify-between no-wrap">
           <div class="row items-center no-wrap">
             <q-icon name="group_add" color="warning" size="22px" class="q-mr-sm" />
@@ -60,11 +60,11 @@
           </div>
         </div>
 
-        <AppSurface v-if="aexStore.referralLoading" class="q-pa-md q-mt-sm">
+        <AntexCard v-if="aexStore.referralLoading" class="q-pa-md q-mt-sm">
           <div class="row justify-center">
             <q-spinner-dots color="warning" size="24px" />
           </div>
-        </AppSurface>
+        </AntexCard>
 
         <div
           v-else-if="aexStore.referralLoaded && aexStore.totalReferrals === 0"
@@ -72,9 +72,9 @@
         >
           {{ t('referral.noReferrals') }}
         </div>
-      </AppSurface>
+      </AntexCard>
 
-      <AppSurface padded class="app-referral-instruction">
+      <AntexCard padded class="app-referral-instruction">
         <div class="text-weight-bold text-subtitle2 q-mb-sm">{{ t('referral.howItWorks') }}</div>
         <div class="row q-col-gutter-sm">
           <div v-for="step in instructionSteps" :key="step.title" class="col-12 col-sm">
@@ -98,9 +98,9 @@
             </div>
           </div>
         </div>
-      </AppSurface>
+      </AntexCard>
 
-      <AppSurface padded class="app-referral-terms">
+      <AntexCard padded class="app-referral-terms">
         <div class="text-weight-bold text-subtitle2 q-mb-sm">{{ t('referral.termsTitle') }}</div>
         <div class="row q-col-gutter-sm">
           <div v-for="term in programTerms" :key="term.label" class="col-6">
@@ -110,9 +110,9 @@
             </div>
           </div>
         </div>
-      </AppSurface>
+      </AntexCard>
 
-      <AppSurface class="app-profile-card">
+      <AntexCard class="app-profile-card">
         <AppInfoRow
           icon="groups"
           :title="t('referral.myReferrals')"
@@ -125,7 +125,7 @@
           clickable
           @click="goToOperations"
         />
-      </AppSurface>
+      </AntexCard>
     </div>
   </q-page>
 </template>
@@ -134,15 +134,16 @@
 import { computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
-import { Notify } from 'quasar';
+import { useAntexNotify } from '@/composables/useAntexNotify';
 
 import AexBalanceCard from '@components/ui/AexBalanceCard.vue';
 import AppInfoRow from '@components/ui/AppInfoRow.vue';
-import AppSurface from '@components/ui/AppSurface.vue';
+import AntexCard from '@components/ui/AntexCard.vue';
 import { useAexStore } from '@stores/aex.store';
 import { openSafeExternalUrl } from '@utils/safe-external-url';
 
 const { locale, t } = useI18n();
+const { notify } = useAntexNotify();
 const router = useRouter();
 const aexStore = useAexStore();
 
@@ -236,7 +237,7 @@ onMounted(async () => {
 function copyLink() {
   if (referralLink.value) {
     void navigator.clipboard.writeText(referralLink.value);
-    Notify.create({ type: 'positive', message: t('referral.linkCopied') });
+    notify('positive', t('referral.linkCopied'));
   }
 }
 

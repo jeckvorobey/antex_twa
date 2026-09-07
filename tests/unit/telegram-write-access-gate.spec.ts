@@ -1,14 +1,15 @@
-import { createApp, defineComponent, h, inject, nextTick, provide } from 'vue';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { createApp, defineComponent, h, inject, nextTick, provide, reactive, type App } from 'vue';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { tg } from '@boot/telegram';
 
 import { i18n } from '@i18n';
 import TelegramWriteAccessGate from '@components/auth/TelegramWriteAccessGate.vue';
 
-const authStoreMock = {
+const authStoreMock = reactive({
   writeAccessState: 'auth_error',
   init: vi.fn(),
   requestTelegramWriteAccess: vi.fn(),
-};
+});
 
 vi.mock('@stores/auth.store', () => ({
   useAuthStore: () => authStoreMock,
@@ -56,36 +57,89 @@ vi.mock('@boot/telegram', () => ({
 }));
 
 let mountedElement: HTMLDivElement | null = null;
+let mountedApp: App | null = null;
+
+beforeEach(() => {
+  authStoreMock.writeAccessState = 'auth_error';
+  authStoreMock.init.mockReset();
+});
 
 afterEach(() => {
+  mountedApp?.unmount();
+  mountedApp = null;
   mountedElement?.remove();
   mountedElement = null;
   vi.clearAllMocks();
 });
 
+/** Монтирует gate с контрактами Quasar layout, сохраняя реальные click-обработчики. */
+async function mountGate() {
+  mountedElement = document.createElement('div');
+  document.body.append(mountedElement);
+  const app = createApp(TelegramWriteAccessGate);
+  mountedApp = app;
+  app.use(i18n);
+  app.component('QLayout', QLayoutContract);
+  app.component('QPageContainer', QPageContainerContract);
+  app.component('QPage', QPageContract);
+  app.component('QBtn', QBtnContract);
+  app.component('QAvatar', QContainerContract);
+  app.component('QSpinner', QContainerContract);
+  app.component('QCard', QContainerContract);
+  app.component('QCardSection', QContainerContract);
+  app.component('QCardActions', QContainerContract);
+
+  app.mount(mountedElement);
+  await nextTick();
+}
+
 describe('TelegramWriteAccessGate', () => {
   it('рендерит блокировку и доступные действия вне основного layout', async () => {
-    mountedElement = document.createElement('div');
-    document.body.append(mountedElement);
-    const app = createApp(TelegramWriteAccessGate);
-    app.use(i18n);
-    app.component('QLayout', QLayoutContract);
-    app.component('QPageContainer', QPageContainerContract);
-    app.component('QPage', QPageContract);
-    app.component('QBtn', QBtnContract);
-    app.component('QAvatar', QContainerContract);
-    app.component('QSpinner', QContainerContract);
-    app.component('QCard', QContainerContract);
-    app.component('QCardSection', QContainerContract);
-    app.component('QCardActions', QContainerContract);
+    await mountGate();
+    expect(mountedElement!.textContent).toContain('Не удалось проверить сессию');
+    expect(mountedElement!.textContent).toContain('Повторить вход');
+    expect(mountedElement!.textContent).toContain('Закрыть приложение');
+  });
 
-    app.mount(mountedElement);
+  it('для использованного initData предлагает закрыть и открыть приложение, не повторяя login', async () => {
+    authStoreMock.writeAccessState = 'reopen_required';
+    await mountGate();
+    expect(mountedElement!.textContent).toContain('Откройте приложение заново');
+    expect(mountedElement!.textContent).toContain('Закройте Mini App');
+    const buttons = mountedElement!.querySelectorAll('button');
+    expect(buttons).toHaveLength(1);
+    buttons[0]!.click();
+    expect(tg?.close).toHaveBeenCalledOnce();
+    expect(authStoreMock.init).not.toHaveBeenCalled();
+    expect(authStoreMock.requestTelegramWriteAccess).not.toHaveBeenCalled();
+  });
+
+  it('показывает проверку сессии и убирает повторные клики до завершения запроса', async () => {
+    let finish!: () => void;
+    authStoreMock.init.mockImplementation(() => {
+      authStoreMock.writeAccessState = 'authenticating';
+      return new Promise<void>((resolve) => {
+        finish = resolve;
+      });
+    });
+    await mountGate();
+    mountedElement!.querySelector('button')!.click();
     await nextTick();
+    expect(mountedElement!.textContent).toContain('Проверяем сессию');
+    expect(mountedElement!.querySelectorAll('button')).toHaveLength(0);
+    authStoreMock.writeAccessState = 'reopen_required';
+    finish();
+    await nextTick();
+    expect(authStoreMock.requestTelegramWriteAccess).not.toHaveBeenCalled();
+  });
 
-    expect(mountedElement.textContent).toContain('Не удалось проверить сессию');
-    expect(mountedElement.textContent).toContain('Повторить вход');
-    expect(mountedElement.textContent).toContain('Закрыть приложение');
-
-    app.unmount();
+  it('успешный повтор входа продолжает запрос разрешения', async () => {
+    authStoreMock.init.mockImplementation(async () => {
+      authStoreMock.writeAccessState = 'idle';
+    });
+    await mountGate();
+    mountedElement!.querySelector('button')!.click();
+    await nextTick();
+    expect(authStoreMock.requestTelegramWriteAccess).toHaveBeenCalledOnce();
   });
 });

@@ -13,10 +13,11 @@ const backButtonSource = readFileSync(
   'utf8',
 );
 const bottomNavSource = readFileSync(
-  resolve(process.cwd(), 'src/components/ui/AppBottomNav.vue'),
+  resolve(process.cwd(), 'src/components/ui/AntexBottomNav.vue'),
   'utf8',
 );
 const appStylesSource = readFileSync(resolve(process.cwd(), 'src/css/app.scss'), 'utf8');
+const authStoreSource = readFileSync(resolve(process.cwd(), 'src/stores/auth.store.ts'), 'utf8');
 const bottomNavStyles = bottomNavSource.split('<style scoped lang="scss">')[1] ?? '';
 
 describe('app navigation chrome', () => {
@@ -45,28 +46,27 @@ describe('app navigation chrome', () => {
   });
 
   it('keeps four Quasar navigation actions inside a narrower compact shell', () => {
-    expect(bottomNavSource).toContain('<q-card');
-    expect(bottomNavSource).toContain('flat');
-    expect(bottomNavSource).toContain('bordered');
-    expect(bottomNavSource).toContain(
-      'class="app-bottom-nav__shell bottom-nav__shell row no-wrap full-width q-pa-xs"',
-    );
-    expect(bottomNavSource).toContain('style="max-width: 322px"');
+    expect(bottomNavSource).toContain('<AntexCard');
+    expect(bottomNavSource).toContain(':elevated="false"');
+    expect(bottomNavSource).toContain('antex-bottom-nav__shell app-bottom-nav__shell');
     expect(bottomNavSource).toContain('<q-btn');
     expect(bottomNavSource).toContain('dense');
     expect(bottomNavSource).toContain('rounded');
     expect(bottomNavSource).toContain('size="10px"');
-    expect(bottomNavSource).toContain('class="app-bottom-nav__item col q-py-sm"');
-    expect(bottomNavSource).toMatch(/name:\s*'home'/);
-    expect(bottomNavSource).toMatch(/name:\s*'exchange'/);
-    expect(bottomNavSource).toMatch(/name:\s*'history'/);
-    expect(bottomNavSource).toMatch(/name:\s*'profile'/);
+    expect(bottomNavSource).toContain('class="antex-bottom-nav__item app-bottom-nav__item"');
+    expect(bottomNavSource).not.toMatch(/name:\s*'home'/);
+    expect(authStoreSource).toMatch(/name:\s*'home'/);
     expect(bottomNavSource).toContain(
-      'app-bottom-nav fixed-bottom row justify-center q-px-sm q-pb-sm z-top',
+      'antex-bottom-nav app-bottom-nav fixed-bottom',
     );
-    expect(bottomNavSource).toContain('margin-bottom: env(safe-area-inset-bottom)');
     expect(bottomNavStyles).not.toContain('.q-btn__content');
     expect(bottomNavStyles).not.toContain('.block');
     expect(appStylesSource).toContain('.app-bottom-nav {');
+  });
+
+  it('registers the backend-addressable manager dashboard as the manager entry route', () => {
+    expect(routesSource).toContain("name: 'managerDashboard'");
+    expect(routesSource).toContain("component: () => import('@pages/manager/ManagerDashboardPage.vue')");
+    expect(routesSource).toContain("redirect: { name: 'managerDashboard' }");
   });
 });

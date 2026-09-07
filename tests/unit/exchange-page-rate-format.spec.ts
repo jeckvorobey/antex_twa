@@ -22,7 +22,7 @@ describe('ExchangePage rate formatting', () => {
     const source = readFileSync(exchangePagePath, 'utf8');
 
     expect(source).toContain('validatePreliminaryOrderDraft');
-    expect(source).toContain("Notify.create({ type: 'negative', message: t(validation.messageKey");
+    expect(source).toContain("notify('negative', t(validation.messageKey, validation.params))");
   });
 
   it('refreshes manager availability and confirms offline submit on the dedicated route', () => {

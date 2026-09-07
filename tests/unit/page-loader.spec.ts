@@ -17,7 +17,7 @@ describe('AppPageLoader', () => {
     const layout = readFileSync(layoutPath, 'utf8');
 
     expect(layout).toContain("import AppPageLoader from '@components/ui/AppPageLoader.vue'");
-    expect(layout).toContain('<AppBottomNav v-if="shouldShowNavigation" />');
+    expect(layout).toContain('<AntexBottomNav v-if="shouldShowNavigation" />');
     expect(layout).toContain('@hidden="showNavigation"');
     expect(layout).toContain('const navigationVisible = ref(!pageLoading.value);');
     expect(layout).toContain('const shouldShowNavigation = computed(');

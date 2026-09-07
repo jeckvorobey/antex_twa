@@ -24,7 +24,7 @@
         </div>
       </div>
 
-      <AppSurface
+      <AntexCard
         v-if="
           profileStore.data?.managerAvailability &&
           profileStore.data.managerAvailability.status !== 'unknown'
@@ -43,18 +43,18 @@
             </div>
           </div>
         </div>
-      </AppSurface>
+      </AntexCard>
 
-      <AppSurface class="app-profile-card">
+      <AntexCard class="app-profile-card">
         <AppInfoRow
           icon="group_add"
           :title="t('profile.referralProgram')"
           clickable
           @click="goToReferral"
         />
-      </AppSurface>
+      </AntexCard>
 
-      <AppSurface class="app-profile-card">
+      <AntexCard class="app-profile-card">
         <AppInfoRow
           v-for="item in profileStore.data?.menu ?? []"
           :key="item.id"
@@ -63,7 +63,7 @@
           clickable
           @click="handleMenu(item)"
         />
-      </AppSurface>
+      </AntexCard>
 
       <div class="app-version-text">
         {{ t('profile.version', { version: profileStore.data?.version ?? '1.0.0' }) }}
@@ -78,7 +78,7 @@ import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 
 import AppInfoRow from '@components/ui/AppInfoRow.vue';
-import AppSurface from '@components/ui/AppSurface.vue';
+import AntexCard from '@components/ui/AntexCard.vue';
 import { useProfileStore } from '@stores/profile.store';
 import { useUiStore } from '@stores/ui.store';
 import type { MiniappMenuItem } from '@types/miniapp';

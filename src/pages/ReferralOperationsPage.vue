@@ -29,7 +29,7 @@
               {{ group.label }}
             </div>
 
-            <AppSurface class="app-referral-tx-list">
+            <AntexCard class="app-referral-tx-list">
               <div v-for="tx in group.items" :key="tx.id" class="app-referral-tx-item">
                 <div class="app-referral-tx-item__info">
                   <div class="app-referral-tx-item__desc">
@@ -55,16 +55,16 @@
                   {{ tx.amount >= 0 ? '+' : '' }}{{ formatTokenAmount(tx.amount) }}
                 </div>
               </div>
-            </AppSurface>
+            </AntexCard>
           </section>
         </template>
 
-        <AppSurface
+        <AntexCard
           v-else-if="!aexStore.txLoading && aexStore.txLoaded"
           class="app-referral-tx-empty q-pa-md"
         >
           <div class="app-empty-state">{{ t('referral.noTransactions') }}</div>
-        </AppSurface>
+        </AntexCard>
 
         <q-infinite-scroll
           v-if="aexStore.txHasMore"
@@ -89,7 +89,7 @@
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 
-import AppSurface from '@components/ui/AppSurface.vue';
+import AntexCard from '@components/ui/AntexCard.vue';
 import { useAexStore } from '@stores/aex.store';
 import { groupItemsByDate } from '@utils/date-groups';
 import { formatMiniappTime } from '@utils/formatters';
