@@ -44,7 +44,7 @@
 
     <div class="order-card__bottom">
       <span class="order-card__time">
-        <q-icon name="schedule" aria-hidden="true" />
+        <q-icon name="calendar_today" aria-hidden="true" />
         {{ view.createdAt }}
       </span>
       <div v-if="visibleActions.length" class="order-card__actions">

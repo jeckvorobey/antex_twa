@@ -100,14 +100,18 @@ describe('shared OrderCard', () => {
     expect(manager.html()).not.toContain('manager-order-card__');
   });
 
-  it('places time before the right-aligned action group and emits user repeat', async () => {
+  it('places date and time with a calendar icon before the action group', async () => {
     const wrapper = mountCard('user', true, { status: 3 });
     const bottom = wrapper.get('.order-card__bottom');
+    const dateTime = wrapper.get('.order-card__time');
 
     expect(wrapper.classes()).toContain('order-card--regular');
     expect(wrapper.classes()).not.toContain('order-card--compact');
     expect(bottom.element.firstElementChild?.classList).toContain('order-card__time');
     expect(bottom.element.lastElementChild?.classList).toContain('order-card__actions');
+    expect(dateTime.text()).toContain('19.08.2026 20:34');
+    expect(dateTime.get('.q-icon').classes()).toContain('material-icons');
+    expect(dateTime.get('.q-icon').text()).toBe('calendar_today');
     await wrapper.get('[aria-label="Повторить"]').trigger('click');
     expect(wrapper.emitted('repeat')).toHaveLength(1);
   });

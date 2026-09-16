@@ -5,7 +5,7 @@ import type {
 } from '@components/orders/order-card.model';
 import type { ManagerOrderSummary } from '@types/manager-chat';
 import type { MiniappOrderItem } from '@types/miniapp';
-import { formatMiniappTime } from '@utils/formatters';
+import { formatMiniappDateTime } from '@utils/formatters';
 import { managerUserFullName } from '@utils/manager-chat';
 import { getStatusLabelKey, getStatusTone } from '@utils/miniapp';
 
@@ -63,7 +63,7 @@ function baseOrderCard(
       t,
       te,
     ),
-    createdAt: formatMiniappTime(order.createdAt, locale),
+    createdAt: formatMiniappDateTime(order.createdAt, locale),
     customerName: null,
   };
 }
