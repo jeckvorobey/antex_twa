@@ -92,6 +92,7 @@ import OrderStatus from '@components/orders/OrderStatus.vue';
 import AntexCard from '@components/ui/AntexCard.vue';
 import type { ManagerOrderSummary } from '@types/manager-chat';
 import type { MiniappOrderItem } from '@types/miniapp';
+import { useTimezone } from '@composables/useTimezone';
 
 type OrderCardEvent = 'repeat' | 'cancel' | 'take' | 'complete' | 'openChat' | 'openDetails';
 
@@ -130,11 +131,12 @@ const emit = defineEmits<{
   select: [];
 }>();
 const { locale, t, te } = useI18n();
+const { getTimezone } = useTimezone();
 
 const view = computed(() =>
   props.mode === 'manager'
-    ? toManagerOrderCard(props.order as ManagerOrderSummary, locale.value, t, te)
-    : toUserOrderCard(props.order as MiniappOrderItem, locale.value, t, te),
+    ? toManagerOrderCard(props.order as ManagerOrderSummary, locale.value, t, te, getTimezone())
+    : toUserOrderCard(props.order as MiniappOrderItem, locale.value, t, te, getTimezone()),
 );
 const metaText = computed(() =>
   [view.value.location, view.value.method].filter(Boolean).join(' · '),

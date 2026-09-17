@@ -19,11 +19,12 @@ export function groupItemsByDate<T>(
   items: readonly T[],
   resolveDate: (item: T) => string,
   locale?: string | null,
+  timezone?: string,
 ): DateGroup<T>[] {
   const groups = new Map<string, T[]>();
 
   for (const item of items) {
-    const label = formatMiniappLongDate(resolveDate(item), locale);
+    const label = formatMiniappLongDate(resolveDate(item), locale, timezone);
     const group = groups.get(label);
 
     if (group) {

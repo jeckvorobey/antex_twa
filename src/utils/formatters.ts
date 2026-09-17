@@ -21,10 +21,11 @@ function getDateParts(
   value: string,
   locale: string,
   options: Intl.DateTimeFormatOptions,
+  timezone?: string,
 ): Record<string, string> {
   return new Intl.DateTimeFormat(locale, {
     ...options,
-    timeZone: 'UTC',
+    timeZone: timezone ?? 'UTC',
   })
     .formatToParts(new Date(value))
     .reduce<Record<string, string>>((parts, part) => {
@@ -39,14 +40,18 @@ function getDateParts(
 /**
  * Форматирует дату и время коротким форматом для карточек и курсов.
  */
-export function formatMiniappDateTime(value: string, locale?: string | null): string {
+export function formatMiniappDateTime(
+  value: string,
+  locale?: string | null,
+  timezone?: string,
+): string {
   const parts = getDateParts(value, resolveDateLocale(locale), {
     hour: '2-digit',
     minute: '2-digit',
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
-  });
+  }, timezone);
 
   return `${parts.day}.${parts.month}.${parts.year} ${parts.hour}:${parts.minute}`;
 }
@@ -54,11 +59,15 @@ export function formatMiniappDateTime(value: string, locale?: string | null): st
 /**
  * Форматирует только время для истории заявок.
  */
-export function formatMiniappTime(value: string, locale?: string | null): string {
+export function formatMiniappTime(
+  value: string,
+  locale?: string | null,
+  timezone?: string,
+): string {
   const parts = getDateParts(value, resolveDateLocale(locale), {
     hour: '2-digit',
     minute: '2-digit',
-  });
+  }, timezone);
 
   return `${parts.hour}:${parts.minute}`;
 }
@@ -66,12 +75,16 @@ export function formatMiniappTime(value: string, locale?: string | null): string
 /**
  * Форматирует длинную дату для группировки истории без локальных суффиксов вроде "г.".
  */
-export function formatMiniappLongDate(value: string, locale?: string | null): string {
+export function formatMiniappLongDate(
+  value: string,
+  locale?: string | null,
+  timezone?: string,
+): string {
   const parts = getDateParts(value, resolveDateLocale(locale), {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
-  });
+  }, timezone);
 
   return `${parts.day} ${parts.month} ${parts.year}`;
 }

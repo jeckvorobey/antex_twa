@@ -93,15 +93,17 @@ import AntexCard from '@components/ui/AntexCard.vue';
 import { useAexStore } from '@stores/aex.store';
 import { groupItemsByDate } from '@utils/date-groups';
 import { formatMiniappTime } from '@utils/formatters';
+import { useTimezone } from '@composables/useTimezone';
 
 const { locale, t } = useI18n();
 const aexStore = useAexStore();
+const { getTimezone } = useTimezone();
 const infiniteScrollRef = ref<{ resume: () => void; stop: () => void } | null>(null);
 const scrollRef = ref<HTMLElement | null>(null);
 
 const transactions = computed(() => aexStore.transactions ?? []);
 const transactionGroups = computed(() =>
-  groupItemsByDate(transactions.value, (transaction) => transaction.createdAt, locale.value),
+  groupItemsByDate(transactions.value, (transaction) => transaction.createdAt, locale.value, getTimezone()),
 );
 
 onMounted(async () => {
@@ -124,7 +126,7 @@ async function loadMore(_: number, done: (stop?: boolean) => void) {
 
 /** Форматирует только время, потому что календарная дата вынесена в заголовок группы. */
 function formatTime(value: string) {
-  return formatMiniappTime(value, locale.value);
+  return formatMiniappTime(value, locale.value, getTimezone());
 }
 
 /** Форматирует ATXG-сумму без лишней дробной части. */

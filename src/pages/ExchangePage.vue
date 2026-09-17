@@ -51,7 +51,7 @@
                 <AppRateValue :value="pair.rateDisplay" />
 
                 <div class="app-exchange-pair-card__meta">
-                  {{ formatMiniappDateTime(pair.updatedAt, locale) }}
+                  {{ formatMiniappDateTime(pair.updatedAt, locale, getTimezone()) }}
                 </div>
 
                 <AntexButton block class="app-exchange-pair-card__button" @click="selectPair(pair)">
@@ -138,6 +138,7 @@ import {
   TOKEN_CURRENCY,
   validatePreliminaryOrderDraft,
 } from '@utils/exchange';
+import { useTimezone } from '@composables/useTimezone';
 
 const router = useRouter();
 const aexStore = useAexStore();
@@ -145,6 +146,7 @@ const exchangeStore = useExchangeStore();
 const ordersStore = useOrdersStore();
 const { locale, t } = useI18n();
 const { notify } = useAntexNotify();
+const { getTimezone } = useTimezone();
 
 const selectedSellCurrency = ref('RUB');
 const selectedBuyCurrency = ref('THB');
