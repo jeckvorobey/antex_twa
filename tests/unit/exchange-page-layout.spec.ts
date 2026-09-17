@@ -54,7 +54,7 @@ describe('ExchangePage responsive layout contract', () => {
     expect(pageSource).toContain('v-model:selected-sell-currency="selectedSellCurrency"');
     expect(pageSource).toContain('v-model:selected-buy-currency="selectedBuyCurrency"');
     expect(pageSource).toContain('v-model:amount-sell="amountSell"');
-    expect(pageSource).toContain(':amount-buy="amountBuy"');
+    expect(pageSource).toContain('v-model:amount-buy="amountBuy"');
     expect(pageSource).toContain('v-model:selected-country="selectedCountry"');
     expect(pageSource).toContain('v-model:selected-method="selectedMethod"');
     expect(pageSource).toContain('v-model:selected-city-id="selectedCityId"');
@@ -73,7 +73,7 @@ describe('ExchangePage responsive layout contract', () => {
     expect(pageSource).toContain(':internal-exchange="isInternalExchange"');
     expect(pageSource).toContain("selectedCountry.value = 'internal'");
     expect(pageSource).toContain("selectedMethod.value = 'bank_account'");
-    expect(pageSource).toContain('const normalizedAmountSell = Math.round(amountSell.value)');
+    expect(pageSource).toContain('const normalizedAmountSell = amountSell.value ?? 0');
     expect(pageSource).toContain('amountSell: normalizedAmountSell');
   });
 
@@ -83,9 +83,10 @@ describe('ExchangePage responsive layout contract', () => {
 
     expect(detailsSource).toContain(':model-value="formattedAmountSell"');
     expect(detailsSource).toContain(':model-value="formattedAmountBuy"');
-    expect(detailsSource).toContain('readonly');
+    expect(detailsSource).not.toContain('readonly');
     expect(detailsSource).toContain('inputmode="decimal"');
-    expect(detailsSource).toContain('parseReadableNumber(value)');
+    expect(detailsSource).toContain('parseExchangeAmount(value, 8)');
+    expect(detailsSource).toContain('parseExchangeAmount(value, 2)');
     expect(pageSource).not.toContain('v-model.number="amountSell"');
     expect(pageSource).not.toContain('v-model.number="amountBuy"');
     expect(detailsSource).not.toContain('type="number"');

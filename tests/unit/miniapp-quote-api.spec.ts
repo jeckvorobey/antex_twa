@@ -64,4 +64,12 @@ describe('miniapp quote API', () => {
     expect(quote).not.toHaveProperty('cashDeliveryFee');
     expect(quote).not.toHaveProperty('deliveryRate');
   });
+
+  it('sends receive amount without a conflicting sell amount', async () => {
+    await fetchQuote({ currencySell: 'RUB', currencyBuy: 'THB', amountBuy: 9000 });
+
+    expect(api.get).toHaveBeenCalledWith('/api/miniapp/exchange/quote', {
+      params: { currencySell: 'RUB', currencyBuy: 'THB', amountBuy: 9000 },
+    });
+  });
 });

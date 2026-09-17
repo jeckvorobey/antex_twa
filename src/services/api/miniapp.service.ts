@@ -36,7 +36,8 @@ export async function fetchQuote(
   params: {
     currencySell: string;
     currencyBuy: string;
-    amountSell: number;
+    amountSell?: number;
+    amountBuy?: number;
     methodGet?: MiniappReceiveMethod;
   },
   config: { signal?: AbortSignal } = {},

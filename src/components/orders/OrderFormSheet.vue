@@ -31,7 +31,7 @@
           v-model:selected-sell-currency="selectedSellCurrency"
           v-model:selected-buy-currency="currencyBuy"
           v-model:amount-sell="amountSell"
-          :amount-buy="amountBuy"
+          v-model:amount-buy="amountBuy"
           v-model:selected-country="selectedCountry"
           v-model:selected-method="selectedMethod"
           v-model:selected-city-id="selectedCityId"
@@ -140,6 +140,8 @@ const syncingState = ref(false);
 const offlineConfirmVisible = ref(false);
 const offlineConfirmed = ref(false);
 const submitFlowPending = ref(false);
+const lastEditedAmount = ref<'sell' | 'buy'>('sell');
+let quoteRequestVersion = 0;
 type BottomSheetRef = ComponentPublicInstance & { contentElement?: HTMLElement };
 const sheetRef = ref<BottomSheetRef | null>(null);
 const sheetScrollRef = ref<HTMLElement | null>(null);
@@ -346,8 +348,15 @@ watch(amountSell, (value, previousValue) => {
   }
 
   amountSellTouched.value = true;
+  lastEditedAmount.value = 'sell';
   void refreshQuoteForCurrentState();
-});
+}, { flush: 'sync' });
+
+watch(amountBuy, (value, previousValue) => {
+  if (syncingState.value || value === previousValue) return;
+  lastEditedAmount.value = 'buy';
+  void refreshQuoteForCurrentState();
+}, { flush: 'sync' });
 
 function resolveCurrentQuote() {
   const quote = exchangeStore.quote;
@@ -364,17 +373,40 @@ function resolveCurrentQuote() {
 
 /** Пересчитывает локальный preview котировки после изменения полей формы. */
 async function refreshQuoteForCurrentState() {
-  if (!amountSell.value || amountSell.value <= 0) {
+  const requestVersion = ++quoteRequestVersion;
+  const sourceAmount = lastEditedAmount.value === 'buy' ? amountBuy.value : amountSell.value;
+  if (!sourceAmount || sourceAmount <= 0) {
     if (selectedMethod.value === 'cash') {
       exchangeStore.invalidateCashDeliveryQuote();
     } else {
       exchangeStore.cancelCashDeliveryQuote();
     }
-    amountBuy.value = null;
+    if (lastEditedAmount.value === 'sell') amountBuy.value = null;
+    else amountSell.value = null;
     return;
   }
 
-  const normalizedAmountSell = Math.round(amountSell.value);
+  if (lastEditedAmount.value === 'buy') {
+    try {
+      const quote = await exchangeStore.refreshQuote({
+        currencySell: selectedSellCurrency.value,
+        currencyBuy: currencyBuy.value,
+        amountBuy: sourceAmount,
+        methodGet: selectedMethod.value,
+      });
+      if (requestVersion !== quoteRequestVersion) return;
+      syncingState.value = true;
+      amountSell.value = quote.amountSell;
+      amountBuy.value = quote.amountBuy;
+      syncingState.value = false;
+    } catch (error: unknown) {
+      if (requestVersion !== quoteRequestVersion) return;
+      notify('negative', t(getMiniappErrorMessageKey(getMiniappErrorCode(error))));
+    }
+    return;
+  }
+
+  const normalizedAmountSell = amountSell.value ?? 0;
   if (selectedMethod.value === 'cash') {
     const currencySell = selectedSellCurrency.value;
     const selectedCurrencyBuy = currencyBuy.value;
@@ -408,7 +440,7 @@ async function refreshQuoteForCurrentState() {
       selectedMethod.value !== 'cash' ||
       selectedSellCurrency.value !== currencySell ||
       currencyBuy.value !== selectedCurrencyBuy ||
-      Math.round(amountSell.value ?? 0) !== normalizedAmountSell
+      amountSell.value !== normalizedAmountSell
     ) {
       return;
     }
@@ -448,7 +480,7 @@ async function refreshQuoteBeforeSubmit() {
   return exchangeStore.refreshQuote({
     currencySell: selectedSellCurrency.value,
     currencyBuy: currencyBuy.value,
-    amountSell: Math.round(amountSell.value ?? 0),
+    amountSell: amountSell.value ?? 0,
     methodGet: selectedMethod.value,
   });
 }
@@ -459,6 +491,7 @@ function getDefaultAmountSell(currencySell: string) {
 
 /** Возвращает форму к начальному состоянию с учётом контекста повторной заявки. */
 function resetFormToDefaults(options: { clearContext?: boolean } = {}) {
+  lastEditedAmount.value = 'sell';
   if (options.clearContext) {
     uiStore.orderContext = null;
   }

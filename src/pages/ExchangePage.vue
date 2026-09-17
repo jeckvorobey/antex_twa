@@ -20,7 +20,7 @@
             v-model:selected-sell-currency="selectedSellCurrency"
             v-model:selected-buy-currency="selectedBuyCurrency"
             v-model:amount-sell="amountSell"
-            :amount-buy="amountBuy"
+            v-model:amount-buy="amountBuy"
             v-model:selected-country="selectedCountry"
             v-model:selected-method="selectedMethod"
             v-model:selected-city-id="selectedCityId"
@@ -161,6 +161,8 @@ const aexQuote = ref<MiniappQuoteResponse | null>(null);
 const offlineConfirmVisible = ref(false);
 const offlineConfirmed = ref(false);
 const submitFlowPending = ref(false);
+const lastEditedAmount = ref<'sell' | 'buy'>('sell');
+let quoteRequestVersion = 0;
 
 const sellOptions = computed(() => {
   const options = [
@@ -366,8 +368,15 @@ watch(amountSell, (value, previousValue) => {
   }
 
   amountSellTouched.value = true;
+  lastEditedAmount.value = 'sell';
   void refreshQuoteForCurrentState();
-});
+}, { flush: 'sync' });
+
+watch(amountBuy, (value, previousValue) => {
+  if (syncingState.value || value === previousValue) return;
+  lastEditedAmount.value = 'buy';
+  void refreshQuoteForCurrentState();
+}, { flush: 'sync' });
 
 function selectPair(pair: MiniappRateCard) {
   const [currencySell, currencyBuy] = pair.id.split('-').map((part) => part.toUpperCase());
@@ -384,19 +393,34 @@ function selectPair(pair: MiniappRateCard) {
 
 /** Пересчитывает локальный preview котировки после изменения полей формы. */
 async function refreshQuoteForCurrentState() {
-  if (!amountSell.value || amountSell.value <= 0) {
+  const requestVersion = ++quoteRequestVersion;
+  const sourceAmount = lastEditedAmount.value === 'buy' ? amountBuy.value : amountSell.value;
+  if (!sourceAmount || sourceAmount <= 0) {
     if (selectedMethod.value === 'cash') {
       exchangeStore.invalidateCashDeliveryQuote();
     } else {
       exchangeStore.cancelCashDeliveryQuote();
     }
-    amountBuy.value = null;
+    if (lastEditedAmount.value === 'sell') amountBuy.value = null;
+    else amountSell.value = null;
     aexQuote.value = null;
     return;
   }
 
   if (isTokenCurrency(selectedSellCurrency.value)) {
-    const normalizedAmountSell = Math.round(amountSell.value);
+    let normalizedAmountSell = amountSell.value;
+    if (lastEditedAmount.value === 'buy') {
+      const unitQuote = calculateLocalQuote({
+        pairs: exchangeStore.screen?.pairs ?? [],
+        aexPayoutOptions: exchangeStore.screen?.aexPayoutOptions ?? [],
+        currencySell: selectedSellCurrency.value,
+        currencyBuy: selectedBuyCurrency.value,
+        amountSell: 1,
+      });
+      normalizedAmountSell = unitQuote?.rate
+        ? Number((sourceAmount / unitQuote.rate).toFixed(8))
+        : null;
+    }
     const quote = calculateLocalQuote({
       pairs: exchangeStore.screen?.pairs ?? [],
       aexPayoutOptions: exchangeStore.screen?.aexPayoutOptions ?? [],
@@ -404,13 +428,37 @@ async function refreshQuoteForCurrentState() {
       currencyBuy: selectedBuyCurrency.value,
       amountSell: normalizedAmountSell,
     });
+    if (requestVersion !== quoteRequestVersion) return;
     aexQuote.value = quote;
-    amountBuy.value = quote?.amountBuy ?? null;
+    syncingState.value = true;
+    amountSell.value = quote?.amountSell ?? null;
+    amountBuy.value = lastEditedAmount.value === 'buy' ? sourceAmount : (quote?.amountBuy ?? null);
+    syncingState.value = false;
     return;
   }
 
   aexQuote.value = null;
-  const normalizedAmountSell = Math.round(amountSell.value);
+  if (lastEditedAmount.value === 'buy') {
+    try {
+      const quote = await exchangeStore.refreshQuote({
+        currencySell: selectedSellCurrency.value,
+        currencyBuy: selectedBuyCurrency.value,
+        amountBuy: sourceAmount,
+        methodGet: selectedMethod.value,
+      });
+      if (requestVersion !== quoteRequestVersion) return;
+      syncingState.value = true;
+      amountSell.value = quote.amountSell;
+      amountBuy.value = quote.amountBuy;
+      syncingState.value = false;
+    } catch (error: unknown) {
+      if (requestVersion !== quoteRequestVersion) return;
+      notify('negative', t(getMiniappErrorMessageKey(getMiniappErrorCode(error))));
+    }
+    return;
+  }
+
+  const normalizedAmountSell = amountSell.value ?? 0;
   if (selectedMethod.value === 'cash') {
     const currencySell = selectedSellCurrency.value;
     const currencyBuy = selectedBuyCurrency.value;
@@ -444,7 +492,7 @@ async function refreshQuoteForCurrentState() {
       selectedMethod.value !== 'cash' ||
       selectedSellCurrency.value !== currencySell ||
       selectedBuyCurrency.value !== currencyBuy ||
-      Math.round(amountSell.value ?? 0) !== normalizedAmountSell
+      amountSell.value !== normalizedAmountSell
     ) {
       return;
     }
@@ -482,14 +530,14 @@ async function refreshQuoteForCurrentState() {
 /** Запрашивает серверную котировку выбранной пары непосредственно перед POST. */
 async function refreshQuoteBeforeSubmit() {
   if (isTokenCurrency(selectedSellCurrency.value)) {
-    refreshQuoteForCurrentState();
+    await refreshQuoteForCurrentState();
     return resolveCurrentQuote();
   }
 
   return exchangeStore.refreshQuote({
     currencySell: selectedSellCurrency.value,
     currencyBuy: selectedBuyCurrency.value,
-    amountSell: Math.round(amountSell.value ?? 0),
+    amountSell: amountSell.value ?? 0,
     methodGet: selectedMethod.value,
   });
 }
@@ -504,6 +552,7 @@ function getDefaultAmountSell(currencySell: string) {
 
 /** Возвращает форму обмена к backend-driven значениям по умолчанию. */
 function resetFormToDefaults() {
+  lastEditedAmount.value = 'sell';
   selectedSellCurrency.value = exchangeStore.screen?.calculator.fromCurrency ?? 'RUB';
   selectedBuyCurrency.value = exchangeStore.screen?.calculator.toCurrency ?? 'THB';
   amountSell.value =

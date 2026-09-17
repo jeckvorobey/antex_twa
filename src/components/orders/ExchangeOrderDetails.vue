@@ -51,10 +51,13 @@
               type="text"
               borderless
               dense
-              readonly
               inputmode="decimal"
               input-class="text-right text-antex-gold"
+              @update:model-value="handleAmountBuyInput"
             />
+          </div>
+          <div v-if="amountBuyError" class="app-exchange-calculator__error">
+            {{ amountBuyError }}
           </div>
         </div>
       </div>
@@ -138,7 +141,7 @@ import AppFlagOptionButton from '@components/ui/AppFlagOptionButton.vue';
 import AntexCard from '@components/ui/AntexCard.vue';
 import { getMinAmount } from '@constants/limits';
 import type { MiniappReceiveMethod } from '@types/miniapp';
-import { formatReadableNumber, parseReadableNumber } from '@utils/formatters';
+import { formatReadableNumber, parseExchangeAmount } from '@utils/formatters';
 import {
   buildReceiveLocationLabel,
   getReceiveLocationTitleKey,
@@ -168,6 +171,7 @@ const emit = defineEmits<{
   'update:selectedSellCurrency': [value: string];
   'update:selectedBuyCurrency': [value: string];
   'update:amountSell': [value: number | null];
+  'update:amountBuy': [value: number | null];
   'update:selectedCountry': [value: string | null];
   'update:selectedMethod': [value: MiniappReceiveMethod];
   'update:selectedCityId': [value: number | null];
@@ -239,7 +243,9 @@ const methodOptions = computed(() => {
   }));
 });
 
-const formattedAmountSell = computed(() => formatReadableNumber(props.amountSell, locale.value));
+const formattedAmountSell = computed(() =>
+  formatReadableNumber(props.amountSell, locale.value, 8),
+);
 const formattedAmountBuy = computed(() => formatReadableNumber(props.amountBuy, locale.value));
 
 /** Минимальная сумма для текущего метода и валюты. */
@@ -270,11 +276,24 @@ watch(
 );
 
 function handleAmountSellInput(value: string | number | null) {
-  emit('update:amountSell', parseReadableNumber(value));
+  const parsed = parseExchangeAmount(value, 8);
+  const hasInput = value != null && value !== '';
+  amountSellError.value = parsed == null && hasInput ? t('errors.exchange_invalid_amount') : null;
+  if (parsed == null && hasInput) return;
+  emit('update:amountSell', parsed);
+}
+
+function handleAmountBuyInput(value: string | number | null) {
+  const parsed = parseExchangeAmount(value, 2);
+  const hasInput = value != null && value !== '';
+  amountBuyError.value = parsed == null && hasInput ? t('errors.exchange_invalid_amount') : null;
+  if (parsed == null && hasInput) return;
+  emit('update:amountBuy', parsed);
 }
 
 /** Текст ошибки валидации суммы отправки (кастомный блок под инпутом). */
 const amountSellError = ref<string | null>(null);
+const amountBuyError = ref<string | null>(null);
 
 /** Валидация суммы при изменении значения или minAmount. */
 function validateAmountSell() {

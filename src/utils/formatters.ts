@@ -122,12 +122,27 @@ export function parseReadableNumber(value: string | number | null | undefined): 
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+/** Строго разбирает пользовательскую сумму без exponent, знака и посторонних символов. */
+export function parseExchangeAmount(
+  value: string | number | null | undefined,
+  maxDecimalPlaces: number,
+): number | null {
+  if (value == null || value === '') return null;
+  const normalized = String(value).trim().replace(/\s+/g, '').replace(',', '.');
+  if (!new RegExp(`^\\d+(?:\\.\\d{0,${maxDecimalPlaces}})?$`).test(normalized)) {
+    return null;
+  }
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
 /**
  * Форматирует число или числовую строку в читаемый вид для всего miniapp.
  */
 export function formatReadableNumber(
   value: string | number | null | undefined,
   locale?: string | null,
+  maximumFractionDigits = 2,
 ): string {
   const parsed = parseReadableNumber(value);
   if (parsed == null) {
@@ -136,7 +151,7 @@ export function formatReadableNumber(
 
   return new Intl.NumberFormat(resolveDateLocale(locale), {
     minimumFractionDigits: Number.isInteger(parsed) ? 0 : 2,
-    maximumFractionDigits: 2,
+    maximumFractionDigits,
   })
     .format(parsed)
     .replace(/\u00A0/g, ' ');

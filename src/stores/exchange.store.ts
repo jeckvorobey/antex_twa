@@ -126,7 +126,8 @@ export const useExchangeStore = defineStore('exchange', () => {
   async function refreshQuote(params: {
     currencySell: string;
     currencyBuy: string;
-    amountSell: number;
+    amountSell?: number;
+    amountBuy?: number;
     methodGet?: MiniappReceiveMethod;
   }) {
     return fetchQuote(params);
