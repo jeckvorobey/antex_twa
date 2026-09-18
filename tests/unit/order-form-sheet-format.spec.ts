@@ -34,7 +34,7 @@ describe('OrderFormSheet amount formatting', () => {
     expect(source).toContain('v-model:selected-sell-currency="selectedSellCurrency"');
     expect(source).toContain('v-model:selected-buy-currency="currencyBuy"');
     expect(source).toContain('v-model:amount-sell="amountSell"');
-    expect(source).toContain(':amount-buy="amountBuy"');
+    expect(source).toContain('v-model:amount-buy="amountBuy"');
     expect(source).toContain('v-model:selected-country="selectedCountry"');
     expect(source).toContain('v-model:selected-method="selectedMethod"');
     expect(source).toContain('v-model:selected-city-id="selectedCityId"');
@@ -92,7 +92,8 @@ describe('ExchangeOrderDetails shared component contract', () => {
     expect(source).toContain('selectedBuyCurrency: string');
     expect(source).toContain('amountSell: number | null');
     expect(source).toContain('amountBuy: number | null');
-    expect(source).toContain('readonly');
+    expect(source).not.toContain('readonly');
+    expect(source).toContain("'update:amountBuy': [value: number | null]");
     expect(source).toContain('selectedMethod: MiniappReceiveMethod');
     expect(source).toContain('bank_account');
     expect(source).toContain('pay_services');

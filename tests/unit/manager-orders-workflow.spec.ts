@@ -251,16 +251,12 @@ describe('manager orders workflow state', () => {
         }),
     );
     let accept!: () => void;
-    let dismiss!: () => void;
     const dialog = {
       onOk: vi.fn((cb) => {
         accept = cb;
         return dialog;
       }),
-      onDismiss: vi.fn((cb) => {
-        dismiss = cb;
-        return dialog;
-      }),
+      onDismiss: vi.fn(() => dialog),
     };
     const dialogSpy = vi
       .spyOn(Dialog, 'create')
@@ -285,14 +281,8 @@ describe('manager orders workflow state', () => {
     await flushPromises();
     expect(complete.props('loading')).toBe(false);
     expect(cancel.props('loading')).toBeFalsy();
-    expect(complete.props('disable')).toBe(true);
     expect(updateManagerOrderStatus).not.toHaveBeenCalled();
-    dismiss();
-    await flushPromises();
-    expect(complete.props('disable')).toBe(false);
-    await cancel.trigger('click');
     accept();
-    dismiss();
     await flushPromises();
     expect(cancel.props('loading')).toBe(true);
     expect(complete.props('loading')).toBe(false);

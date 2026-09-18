@@ -30,6 +30,7 @@ export default defineConfig((ctx) => {
         '@utils': resolve(rootDir, 'src/utils'),
         '@i18n': resolve(rootDir, 'src/i18n'),
         '@constants': resolve(rootDir, 'src/constants'),
+        '@composables': resolve(rootDir, 'src/composables'),
       },
       vueRouterMode: 'hash',
       sourcemap: ctx.dev,

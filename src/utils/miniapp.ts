@@ -1,5 +1,6 @@
 import type { GroupedOrders, MiniappOrderItem, MiniappQuoteResponse } from '@types/miniapp';
 import { groupItemsByDate } from '@utils/date-groups';
+import { useTimezone } from '@composables/useTimezone';
 
 type QuoteParams = {
   currencySell: string;
@@ -30,7 +31,7 @@ export function getStatusTone(status: number) {
 }
 
 export function groupOrdersByDate(items: MiniappOrderItem[]) {
-  return groupItemsByDate(items, (item) => item.createdAt, 'ru') as GroupedOrders[];
+  return groupItemsByDate(items, (item) => item.createdAt, 'ru', useTimezone().getTimezone()) as GroupedOrders[];
 }
 
 export function isQuoteCurrent(quote: MiniappQuoteResponse | null, params: QuoteParams) {

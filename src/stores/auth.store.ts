@@ -42,6 +42,10 @@ async function getSessionBinding(initData: string, accessToken: string): Promise
   return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
+function extractTelegramTimezone(): string | null {
+  return tg?.initDataUnsafe?.user?.time_zone ?? null;
+}
+
 export const useAuthStore = defineStore('auth', () => {
   const token = ref<string | null>(localStorage.getItem('access_token'));
   const user = ref<MiniappUser | null>(null);
@@ -51,6 +55,7 @@ export const useAuthStore = defineStore('auth', () => {
   const telegramWriteAccess = ref(false);
   const writeAccessState = ref<TelegramWriteAccessState>('idle');
   const nativeWriteAccessGranted = ref(false);
+  const userTimezone = ref<string | null>(null);
   let writeAccessRequest: Promise<void> | null = null;
   let initRequest: Promise<void> | null = null;
   let sessionGeneration = 0;
@@ -148,6 +153,7 @@ export const useAuthStore = defineStore('auth', () => {
     isNewUser.value = response.data.is_new_user;
     localStorage.setItem('access_token', token.value);
     localStorage.setItem(TELEGRAM_SESSION_BINDING_KEY, binding);
+    userTimezone.value = extractTelegramTimezone();
     await fetchUser(generation);
   }
 
@@ -165,6 +171,7 @@ export const useAuthStore = defineStore('auth', () => {
     telegramWriteAccess.value = response.data.telegram_write_access;
     writeAccessState.value = telegramWriteAccess.value ? 'allowed' : 'idle';
     setAppLocale(user.value.language_code ?? tg?.initDataUnsafe?.user?.language_code ?? 'ru');
+    userTimezone.value = extractTelegramTimezone();
   }
 
   /** Подтверждает разрешение сервером; отказ auth требует нового Telegram-запуска. */
@@ -291,6 +298,7 @@ export const useAuthStore = defineStore('auth', () => {
       navigation: DEFAULT_USER_NAVIGATION,
     };
     setAppLocale(user.value.language_code ?? 'ru');
+    userTimezone.value = extractTelegramTimezone();
   }
 
   return {
@@ -312,5 +320,6 @@ export const useAuthStore = defineStore('auth', () => {
     saveTrustedPhone,
     requestTelegramWriteAccess,
     logout,
+    userTimezone,
   };
 });

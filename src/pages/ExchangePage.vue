@@ -20,7 +20,7 @@
             v-model:selected-sell-currency="selectedSellCurrency"
             v-model:selected-buy-currency="selectedBuyCurrency"
             v-model:amount-sell="amountSell"
-            :amount-buy="amountBuy"
+            v-model:amount-buy="amountBuy"
             v-model:selected-country="selectedCountry"
             v-model:selected-method="selectedMethod"
             v-model:selected-city-id="selectedCityId"
@@ -31,6 +31,7 @@
             :city-options="cityOptions"
             :available-methods="currentQuoteMethods"
             :internal-exchange="isInternalExchange"
+            @invalid-input="inputInvalid = $event"
           />
 
           <section class="app-section">
@@ -51,7 +52,7 @@
                 <AppRateValue :value="pair.rateDisplay" />
 
                 <div class="app-exchange-pair-card__meta">
-                  {{ formatMiniappDateTime(pair.updatedAt, locale) }}
+                  {{ formatMiniappDateTime(pair.updatedAt, locale, getTimezone()) }}
                 </div>
 
                 <AntexButton block class="app-exchange-pair-card__button" @click="selectPair(pair)">
@@ -138,6 +139,7 @@ import {
   TOKEN_CURRENCY,
   validatePreliminaryOrderDraft,
 } from '@utils/exchange';
+import { useTimezone } from '@composables/useTimezone';
 
 const router = useRouter();
 const aexStore = useAexStore();
@@ -145,6 +147,7 @@ const exchangeStore = useExchangeStore();
 const ordersStore = useOrdersStore();
 const { locale, t } = useI18n();
 const { notify } = useAntexNotify();
+const { getTimezone } = useTimezone();
 
 const selectedSellCurrency = ref('RUB');
 const selectedBuyCurrency = ref('THB');
@@ -154,11 +157,14 @@ const selectedCountry = ref<string | null>(null);
 const selectedMethod = ref<MiniappReceiveMethod>('qrcode');
 const selectedCityId = ref<number | null>(null);
 const amountSellTouched = ref(false);
+const inputInvalid = ref(false);
 const syncingState = ref(false);
 const aexQuote = ref<MiniappQuoteResponse | null>(null);
 const offlineConfirmVisible = ref(false);
 const offlineConfirmed = ref(false);
 const submitFlowPending = ref(false);
+const lastEditedAmount = ref<'sell' | 'buy'>('sell');
+let quoteRequestVersion = 0;
 
 const sellOptions = computed(() => {
   const options = [
@@ -279,7 +285,7 @@ const canSubmit = computed(() => {
   );
   const hasBaseFields = Boolean(selectedSellCurrency.value && selectedBuyCurrency.value);
   const hasMethodFields = selectedMethod.value !== 'cash' || Boolean(selectedCityId.value);
-  return hasAmounts && hasBaseFields && hasMethodFields && preliminaryValidation.value.valid;
+  return hasAmounts && hasBaseFields && hasMethodFields && !inputInvalid.value && preliminaryValidation.value.valid;
 });
 
 watch(selectedSellCurrency, () => {
@@ -364,8 +370,15 @@ watch(amountSell, (value, previousValue) => {
   }
 
   amountSellTouched.value = true;
+  lastEditedAmount.value = 'sell';
   void refreshQuoteForCurrentState();
-});
+}, { flush: 'sync' });
+
+watch(amountBuy, (value, previousValue) => {
+  if (syncingState.value || value === previousValue) return;
+  lastEditedAmount.value = 'buy';
+  void refreshQuoteForCurrentState();
+}, { flush: 'sync' });
 
 function selectPair(pair: MiniappRateCard) {
   const [currencySell, currencyBuy] = pair.id.split('-').map((part) => part.toUpperCase());
@@ -382,19 +395,34 @@ function selectPair(pair: MiniappRateCard) {
 
 /** Пересчитывает локальный preview котировки после изменения полей формы. */
 async function refreshQuoteForCurrentState() {
-  if (!amountSell.value || amountSell.value <= 0) {
+  const requestVersion = ++quoteRequestVersion;
+  const sourceAmount = lastEditedAmount.value === 'buy' ? amountBuy.value : amountSell.value;
+  if (!sourceAmount || sourceAmount <= 0) {
     if (selectedMethod.value === 'cash') {
       exchangeStore.invalidateCashDeliveryQuote();
     } else {
       exchangeStore.cancelCashDeliveryQuote();
     }
-    amountBuy.value = null;
+    if (lastEditedAmount.value === 'sell') amountBuy.value = null;
+    else amountSell.value = null;
     aexQuote.value = null;
     return;
   }
 
   if (isTokenCurrency(selectedSellCurrency.value)) {
-    const normalizedAmountSell = Math.round(amountSell.value);
+    let normalizedAmountSell = amountSell.value;
+    if (lastEditedAmount.value === 'buy') {
+      const unitQuote = calculateLocalQuote({
+        pairs: exchangeStore.screen?.pairs ?? [],
+        aexPayoutOptions: exchangeStore.screen?.aexPayoutOptions ?? [],
+        currencySell: selectedSellCurrency.value,
+        currencyBuy: selectedBuyCurrency.value,
+        amountSell: 1,
+      });
+      normalizedAmountSell = unitQuote?.rate
+        ? Number((sourceAmount / unitQuote.rate).toFixed(8))
+        : null;
+    }
     const quote = calculateLocalQuote({
       pairs: exchangeStore.screen?.pairs ?? [],
       aexPayoutOptions: exchangeStore.screen?.aexPayoutOptions ?? [],
@@ -402,13 +430,37 @@ async function refreshQuoteForCurrentState() {
       currencyBuy: selectedBuyCurrency.value,
       amountSell: normalizedAmountSell,
     });
+    if (requestVersion !== quoteRequestVersion) return;
     aexQuote.value = quote;
-    amountBuy.value = quote?.amountBuy ?? null;
+    syncingState.value = true;
+    amountSell.value = quote?.amountSell ?? null;
+    amountBuy.value = lastEditedAmount.value === 'buy' ? sourceAmount : (quote?.amountBuy ?? null);
+    syncingState.value = false;
     return;
   }
 
   aexQuote.value = null;
-  const normalizedAmountSell = Math.round(amountSell.value);
+  if (lastEditedAmount.value === 'buy') {
+    try {
+      const quote = await exchangeStore.refreshQuote({
+        currencySell: selectedSellCurrency.value,
+        currencyBuy: selectedBuyCurrency.value,
+        amountBuy: sourceAmount,
+        methodGet: selectedMethod.value,
+      });
+      if (requestVersion !== quoteRequestVersion) return;
+      syncingState.value = true;
+      amountSell.value = quote.amountSell;
+      amountBuy.value = quote.amountBuy;
+      syncingState.value = false;
+    } catch (error: unknown) {
+      if (requestVersion !== quoteRequestVersion) return;
+      notify('negative', t(getMiniappErrorMessageKey(getMiniappErrorCode(error))));
+    }
+    return;
+  }
+
+  const normalizedAmountSell = amountSell.value ?? 0;
   if (selectedMethod.value === 'cash') {
     const currencySell = selectedSellCurrency.value;
     const currencyBuy = selectedBuyCurrency.value;
@@ -442,7 +494,7 @@ async function refreshQuoteForCurrentState() {
       selectedMethod.value !== 'cash' ||
       selectedSellCurrency.value !== currencySell ||
       selectedBuyCurrency.value !== currencyBuy ||
-      Math.round(amountSell.value ?? 0) !== normalizedAmountSell
+      amountSell.value !== normalizedAmountSell
     ) {
       return;
     }
@@ -480,14 +532,14 @@ async function refreshQuoteForCurrentState() {
 /** Запрашивает серверную котировку выбранной пары непосредственно перед POST. */
 async function refreshQuoteBeforeSubmit() {
   if (isTokenCurrency(selectedSellCurrency.value)) {
-    refreshQuoteForCurrentState();
+    await refreshQuoteForCurrentState();
     return resolveCurrentQuote();
   }
 
   return exchangeStore.refreshQuote({
     currencySell: selectedSellCurrency.value,
     currencyBuy: selectedBuyCurrency.value,
-    amountSell: Math.round(amountSell.value ?? 0),
+    amountSell: amountSell.value ?? 0,
     methodGet: selectedMethod.value,
   });
 }
@@ -502,6 +554,7 @@ function getDefaultAmountSell(currencySell: string) {
 
 /** Возвращает форму обмена к backend-driven значениям по умолчанию. */
 function resetFormToDefaults() {
+  lastEditedAmount.value = 'sell';
   selectedSellCurrency.value = exchangeStore.screen?.calculator.fromCurrency ?? 'RUB';
   selectedBuyCurrency.value = exchangeStore.screen?.calculator.toCurrency ?? 'THB';
   amountSell.value =
@@ -567,19 +620,25 @@ async function submitOrder() {
     if (!canSubmit.value || !selectedCountry.value) {
       return;
     }
+    const submitAmountSell = amountSell.value;
+    if (submitAmountSell == null) {
+      return;
+    }
     quote = await refreshQuoteBeforeSubmit();
     if (!quote) {
       notify('negative', t('exchange.quoteUnavailable'));
       return;
     }
+    syncingState.value = true;
     amountBuy.value = quote.amountBuy;
+    syncingState.value = false;
 
     await exchangeStore.submitOrder({
       country: selectedCountry.value,
       cityId: selectedMethod.value === 'cash' ? selectedCityId.value : null,
       currencySell: selectedSellCurrency.value,
       currencyBuy: selectedBuyCurrency.value,
-      amountSell: Math.round(amountSell.value),
+      amountSell: submitAmountSell,
       amountBuy: quote.amountBuy,
       rate: quote.rate,
       methodGet: selectedMethod.value,

@@ -1,12 +1,39 @@
 import { mount } from '@vue/test-utils';
 import { QBadge, QBtn, QCard, QIcon, Quasar } from 'quasar';
 import { createI18n } from 'vue-i18n';
-import { describe, expect, it } from 'vitest';
+import { createPinia, setActivePinia } from 'pinia';
+import { describe, expect, it, vi } from 'vitest';
 
 import OrderCard from '@components/orders/OrderCard.vue';
 import AppCurrencyMark from '@components/ui/AppCurrencyMark.vue';
 import ru from '@i18n/ru';
 import type { ManagerOrderSummary } from '@types/manager-chat';
+import type { MiniappOrderItem } from '@types/miniapp';
+
+const dialogState = vi.hoisted(() => ({
+  create: vi.fn(),
+  onOk: null as (() => void) | null,
+}));
+
+vi.mock('quasar', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('quasar')>();
+  return {
+    ...actual,
+    Dialog: {
+      create: dialogState.create.mockImplementation(() => {
+        const chain = {
+          onOk: (callback: () => void) => {
+            dialogState.onOk = callback;
+            return chain;
+          },
+          onDismiss: () => chain,
+          onCancel: () => chain,
+        };
+        return chain;
+      }),
+    },
+  };
+});
 
 type ManagerOrderFixture = ManagerOrderSummary & {
   country: string;
@@ -55,22 +82,30 @@ function makeOrder(overrides: Partial<ManagerOrderFixture> = {}): ManagerOrderFi
   };
 }
 
-function mountCard(order: ManagerOrderFixture) {
+function mountCard(order: ManagerOrderFixture, mode: 'manager' | 'user' = 'manager') {
+  const pinia = createPinia();
+  setActivePinia(pinia);
   const i18n = createI18n({
     legacy: false,
     locale: 'ru',
     messages: { ru },
   });
   return mount(OrderCard, {
-    props: { order, mode: 'manager', actions: true },
+    props: { order, mode, actions: true },
     global: {
-      plugins: [Quasar, i18n],
+      plugins: [pinia, Quasar, i18n],
       components: { QBadge, QBtn, QCard, QIcon },
       stubs: {
         QTooltip: { template: '<span class="test-tooltip"><slot /></span>' },
       },
     },
   });
+}
+
+/** Сбрасывает мок диалога между проверками. */
+function resetDialog(): void {
+  dialogState.create.mockClear();
+  dialogState.onOk = null;
 }
 
 describe('OrderCard manager mode', () => {
@@ -124,10 +159,106 @@ describe('OrderCard manager mode', () => {
 
     await chat.trigger('click');
     await complete.trigger('click');
-    await cancel.trigger('click');
 
     expect(wrapper.emitted('openChat')).toHaveLength(1);
     expect(wrapper.emitted('complete')).toHaveLength(1);
+  });
+
+  it('requires dialog confirmation before cancelling a processing order', async () => {
+    resetDialog();
+    const wrapper = mountCard(makeOrder());
+
+    await wrapper.get('[aria-label="Отменить заявку"]').trigger('click');
+
+    expect(dialogState.create).toHaveBeenCalledTimes(1);
+    const dialogOptions = dialogState.create.mock.calls[0][0];
+    expect(dialogOptions.title).toBe('Отменить заявку?');
+
+    dialogState.onOk?.();
     expect(wrapper.emitted('cancel')).toHaveLength(1);
+  });
+
+  it('offers details, take and confirmed cancel for a created order', async () => {
+    resetDialog();
+    const wrapper = mountCard(makeOrder({ status: 1 }));
+
+    await wrapper.get('[aria-label="Открыть детали заявки"]').trigger('click');
+    await wrapper.get('[aria-label="Взять в работу"]').trigger('click');
+    await wrapper.get('[aria-label="Отменить заявку"]').trigger('click');
+
+    expect(wrapper.emitted('openDetails')).toHaveLength(1);
+    expect(wrapper.emitted('take')).toHaveLength(1);
+    expect(dialogState.create).toHaveBeenCalledTimes(1);
+
+    dialogState.onOk?.();
+    expect(wrapper.emitted('cancel')).toHaveLength(1);
+  });
+});
+
+describe('OrderCard user mode', () => {
+  function makeUserOrder(overrides: Partial<MiniappOrderItem> = {}): MiniappOrderItem {
+    return {
+      id: 31,
+      publicNumber: '2026090011',
+      cityId: 5,
+      country: 'vietnam',
+      currencySell: 'RUB',
+      amountSell: 20_000,
+      currencyBuy: 'VND',
+      amountBuy: 5_979_619.21,
+      rate: 271.6,
+      rateDisplay: '271.60',
+      rateText: '1 RUB = 271.60 VND',
+      status: 1,
+      methodGet: 'cash',
+      contactTelegram: null,
+      createdAt: '2026-09-17T10:00:00+03:00',
+      updatedAt: '2026-09-17T10:00:00+03:00',
+      city: {
+        id: 5,
+        name: 'Хошимин',
+        country: 'vietnam',
+        countryRuName: 'Вьетнам',
+        countryCode: 'vn',
+        countryFlag: '🇻🇳',
+        createdAt: '2026-08-19T20:08:00+03:00',
+        updatedAt: '2026-08-19T20:08:00+03:00',
+      },
+      ...overrides,
+    };
+  }
+
+  it('lets the customer cancel a created order after confirmation', async () => {
+    resetDialog();
+    const wrapper = mountCard(makeUserOrder(), 'user');
+
+    const cancel = wrapper.get('[aria-label="Отменить заявку"]');
+    await cancel.trigger('click');
+
+    expect(dialogState.create).toHaveBeenCalledTimes(1);
+    const dialogOptions = dialogState.create.mock.calls[0][0];
+    expect(dialogOptions.message).toBe(
+      'Заявка будет отменена, менеджер получит уведомление через бота.',
+    );
+
+    dialogState.onOk?.();
+    expect(wrapper.emitted('cancel')).toHaveLength(1);
+  });
+
+  it('hides cancel for non-created customer orders', () => {
+    const processing = mountCard(makeUserOrder({ status: 2 }), 'user');
+    expect(processing.find('[aria-label="Отменить заявку"]').exists()).toBe(false);
+    expect(processing.attributes('data-order-card-density')).toBe('compact');
+
+    const completed = mountCard(makeUserOrder({ status: 3 }), 'user');
+    expect(completed.find('[aria-label="Отменить заявку"]').exists()).toBe(false);
+    expect(completed.get('[aria-label="Повторить"]').exists()).toBe(true);
+  });
+
+  it('keeps repeat as the only action for completed orders', async () => {
+    const wrapper = mountCard(makeUserOrder({ status: 3 }), 'user');
+    await wrapper.get('[aria-label="Повторить"]').trigger('click');
+    expect(wrapper.emitted('repeat')).toHaveLength(1);
+    expect(wrapper.find('[aria-label="Отменить заявку"]').exists()).toBe(false);
   });
 });

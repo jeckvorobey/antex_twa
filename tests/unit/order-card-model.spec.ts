@@ -53,7 +53,7 @@ describe('OrderCard adapters', () => {
       statusTone: 'positive',
       location: 'Таиланд · Паттайя',
       method: 'Наличные',
-      createdAt: '20:34',
+      createdAt: '19.08.2026 20:34',
       customerName: null,
     });
     expect(input).toEqual(before);

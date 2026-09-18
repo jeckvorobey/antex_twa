@@ -398,6 +398,16 @@ export default {
     refresh: 'Обновить историю',
     repeat: 'Повторить',
     cancel: 'Отменить заявку',
+    cancelDialog: {
+      title: 'Отменить заявку?',
+      text: 'Заявка будет отменена, менеджер получит уведомление через бота.',
+    },
+    notifications: {
+      cancelled: 'Заявка отменена',
+      cancelError: 'Не удалось отменить заявку',
+      cancelConflict: 'Статус заявки изменился, история обновлена',
+      cancelMissing: 'Заявка недоступна, история обновлена',
+    },
     loadingMore: 'Загружаем ещё',
   },
   profile: {
@@ -509,6 +519,7 @@ export default {
     order_exists: 'У вас уже есть активная заявка.',
     rate_unavailable: 'Курс временно недоступен. Попробуйте позже.',
     exchange_min_amount: 'Минимальная сумма обмена: {amount} {currency}.',
+    exchange_invalid_amount: 'Введите положительную сумму в допустимом формате.',
     country_required: 'Выберите страну получения.',
     country_currency_mismatch: 'Страна не соответствует выбранной валюте получения.',
     city_manager_missing: 'Для выбранного города пока не назначен менеджер.',

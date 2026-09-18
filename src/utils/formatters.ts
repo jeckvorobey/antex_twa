@@ -21,10 +21,11 @@ function getDateParts(
   value: string,
   locale: string,
   options: Intl.DateTimeFormatOptions,
+  timezone?: string,
 ): Record<string, string> {
   return new Intl.DateTimeFormat(locale, {
     ...options,
-    timeZone: 'UTC',
+    timeZone: timezone ?? 'UTC',
   })
     .formatToParts(new Date(value))
     .reduce<Record<string, string>>((parts, part) => {
@@ -39,14 +40,18 @@ function getDateParts(
 /**
  * Форматирует дату и время коротким форматом для карточек и курсов.
  */
-export function formatMiniappDateTime(value: string, locale?: string | null): string {
+export function formatMiniappDateTime(
+  value: string,
+  locale?: string | null,
+  timezone?: string,
+): string {
   const parts = getDateParts(value, resolveDateLocale(locale), {
     hour: '2-digit',
     minute: '2-digit',
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
-  });
+  }, timezone);
 
   return `${parts.day}.${parts.month}.${parts.year} ${parts.hour}:${parts.minute}`;
 }
@@ -54,11 +59,15 @@ export function formatMiniappDateTime(value: string, locale?: string | null): st
 /**
  * Форматирует только время для истории заявок.
  */
-export function formatMiniappTime(value: string, locale?: string | null): string {
+export function formatMiniappTime(
+  value: string,
+  locale?: string | null,
+  timezone?: string,
+): string {
   const parts = getDateParts(value, resolveDateLocale(locale), {
     hour: '2-digit',
     minute: '2-digit',
-  });
+  }, timezone);
 
   return `${parts.hour}:${parts.minute}`;
 }
@@ -66,12 +75,16 @@ export function formatMiniappTime(value: string, locale?: string | null): string
 /**
  * Форматирует длинную дату для группировки истории без локальных суффиксов вроде "г.".
  */
-export function formatMiniappLongDate(value: string, locale?: string | null): string {
+export function formatMiniappLongDate(
+  value: string,
+  locale?: string | null,
+  timezone?: string,
+): string {
   const parts = getDateParts(value, resolveDateLocale(locale), {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
-  });
+  }, timezone);
 
   return `${parts.day} ${parts.month} ${parts.year}`;
 }
@@ -109,12 +122,27 @@ export function parseReadableNumber(value: string | number | null | undefined): 
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+/** Строго разбирает пользовательскую сумму без exponent, знака и посторонних символов. */
+export function parseExchangeAmount(
+  value: string | number | null | undefined,
+  maxDecimalPlaces: number,
+): number | null {
+  if (value == null || value === '') return null;
+  const normalized = String(value).trim().replace(/\s+/g, '').replace(',', '.');
+  if (!new RegExp(`^\\d+(?:\\.\\d{1,${maxDecimalPlaces}})?$`).test(normalized)) {
+    return null;
+  }
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
 /**
  * Форматирует число или числовую строку в читаемый вид для всего miniapp.
  */
 export function formatReadableNumber(
   value: string | number | null | undefined,
   locale?: string | null,
+  maximumFractionDigits = 2,
 ): string {
   const parsed = parseReadableNumber(value);
   if (parsed == null) {
@@ -123,7 +151,7 @@ export function formatReadableNumber(
 
   return new Intl.NumberFormat(resolveDateLocale(locale), {
     minimumFractionDigits: Number.isInteger(parsed) ? 0 : 2,
-    maximumFractionDigits: 2,
+    maximumFractionDigits,
   })
     .format(parsed)
     .replace(/\u00A0/g, ' ');

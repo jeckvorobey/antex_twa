@@ -104,15 +104,17 @@ import { useAexStore } from '@stores/aex.store';
 import { groupItemsByDate } from '@utils/date-groups';
 import { formatMiniappTime } from '@utils/formatters';
 import { toSafeExternalUrl } from '@utils/safe-external-url';
+import { useTimezone } from '@composables/useTimezone';
 
 const { locale, t } = useI18n();
 const aexStore = useAexStore();
+const { getTimezone } = useTimezone();
 const infiniteScrollRef = ref<{ resume: () => void; stop: () => void } | null>(null);
 const scrollRef = ref<HTMLElement | null>(null);
 
 const totalAccrued = computed(() => parseDecimal(aexStore.referralsSummary?.totalAccrued));
 const referralGroups = computed(() =>
-  groupItemsByDate(aexStore.referrals, (referral) => referral.joinedAt, locale.value),
+  groupItemsByDate(aexStore.referrals, (referral) => referral.joinedAt, locale.value, getTimezone()),
 );
 
 onMounted(async () => {
@@ -135,7 +137,7 @@ async function loadMore(_: number, done: (stop?: boolean) => void) {
 
 /** Форматирует только время, потому что календарная дата вынесена в заголовок группы. */
 function formatTime(value: string) {
-  return formatMiniappTime(value, locale.value);
+  return formatMiniappTime(value, locale.value, getTimezone());
 }
 
 /** Отбрасывает небезопасную схему URL перед image binding. */

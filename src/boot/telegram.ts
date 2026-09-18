@@ -27,6 +27,7 @@ export interface TelegramWebApp extends TelegramEnvironmentWebApp {
       photo_url?: string;
       is_premium?: boolean;
       allows_write_to_pm?: boolean;
+      time_zone?: string;
     };
     start_param?: string;
   };

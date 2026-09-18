@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { createPinia, setActivePinia } from 'pinia';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 import {
   getStatusLabelKey,
@@ -7,6 +8,7 @@ import {
   isQuoteCurrent,
 } from '@utils/miniapp';
 import type { MiniappCity } from '@types/miniapp';
+import { useAuthStore } from '@stores/auth.store';
 
 const city: MiniappCity = {
   id: 1,
@@ -20,6 +22,12 @@ const city: MiniappCity = {
 };
 
 describe('miniapp utils', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    // Группировка дат зависит от зоны машины: фиксируем UTC, как в order-card.spec.
+    useAuthStore().userTimezone = 'UTC';
+  });
+
   it('groups orders by localized date label', () => {
     const result = groupOrdersByDate([
       {

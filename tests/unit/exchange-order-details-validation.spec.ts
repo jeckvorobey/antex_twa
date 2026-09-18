@@ -20,7 +20,9 @@ describe('ExchangeOrderDetails validation contract', () => {
   });
 
   it('re-validates amountSell when amountSell or minAmount changes', () => {
-    expect(source).toContain('watch(() => props.amountSell, validateAmountSell)');
+    expect(source).toContain('() => props.amountSell,');
+    expect(source).toContain('setInvalidInput(false);');
+    expect(source).toContain('validateAmountSell();');
     expect(source).toContain('watch(minAmount, validateAmountSell)');
   });
 

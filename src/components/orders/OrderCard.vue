@@ -44,32 +44,46 @@
 
     <div class="order-card__bottom">
       <span class="order-card__time">
-        <q-icon name="schedule" aria-hidden="true" />
+        <q-icon name="calendar_today" aria-hidden="true" />
         {{ view.createdAt }}
       </span>
       <div v-if="visibleActions.length" class="order-card__actions">
-        <q-btn
-          v-for="action in visibleActions"
-          :key="action.key"
-          flat
-          round
-          padding="0"
-          :class="['order-card__action', `order-card__action--${action.key}`]"
-          :aria-label="t(action.labelKey)"
-          :disable="isActionPending(action.key) || disabledActions.includes(action.key)"
-          :loading="isActionPending(action.key)"
-          @click.stop="emitAction(action.event)"
-        >
-          <span class="order-card__action-visual">
-            <q-icon
-              :name="action.icon"
-              size="var(--antex-space-md)"
-              class="order-card__action-icon"
-              aria-hidden="true"
-            />
-          </span>
-          <q-tooltip>{{ t(action.labelKey) }}</q-tooltip>
-        </q-btn>
+        <template v-for="action in visibleActions" :key="action.key">
+          <CancelOrderButton
+            v-if="action.key === 'cancel'"
+            variant="icon"
+            :class="`order-card__action--${action.key}`"
+            :icon="action.icon"
+            :label="t(action.labelKey)"
+            :loading="isActionPending(action.key)"
+            :disable="isActionPending(action.key) || disabledActions.includes(action.key)"
+            :dialog-title="cancelDialog.title"
+            :dialog-message="cancelDialog.message"
+            :ok-label="cancelDialog.ok"
+            @confirm="emitAction(action.event)"
+          />
+          <q-btn
+            v-else
+            flat
+            round
+            padding="0"
+            :class="['order-card__action', `order-card__action--${action.key}`]"
+            :aria-label="t(action.labelKey)"
+            :disable="isActionPending(action.key) || disabledActions.includes(action.key)"
+            :loading="isActionPending(action.key)"
+            @click.stop="emitAction(action.event)"
+          >
+            <span class="order-card__action-visual">
+              <q-icon
+                :name="action.icon"
+                size="var(--antex-space-md)"
+                class="order-card__action-icon"
+                aria-hidden="true"
+              />
+            </span>
+            <q-tooltip>{{ t(action.labelKey) }}</q-tooltip>
+          </q-btn>
+        </template>
       </div>
     </div>
   </AntexCard>
@@ -87,11 +101,13 @@ import {
 
 import { toManagerOrderCard, toUserOrderCard } from '@components/orders/order-card.adapters';
 import type { OrderCardMode } from '@components/orders/order-card.model';
+import CancelOrderButton from '@components/orders/CancelOrderButton.vue';
 import OrderAmountFlow from '@components/orders/OrderAmountFlow.vue';
 import OrderStatus from '@components/orders/OrderStatus.vue';
 import AntexCard from '@components/ui/AntexCard.vue';
 import type { ManagerOrderSummary } from '@types/manager-chat';
 import type { MiniappOrderItem } from '@types/miniapp';
+import { useTimezone } from '@composables/useTimezone';
 
 type OrderCardEvent = 'repeat' | 'cancel' | 'take' | 'complete' | 'openChat' | 'openDetails';
 
@@ -130,11 +146,12 @@ const emit = defineEmits<{
   select: [];
 }>();
 const { locale, t, te } = useI18n();
+const { getTimezone } = useTimezone();
 
 const view = computed(() =>
   props.mode === 'manager'
-    ? toManagerOrderCard(props.order as ManagerOrderSummary, locale.value, t, te)
-    : toUserOrderCard(props.order as MiniappOrderItem, locale.value, t, te),
+    ? toManagerOrderCard(props.order as ManagerOrderSummary, locale.value, t, te, getTimezone())
+    : toUserOrderCard(props.order as MiniappOrderItem, locale.value, t, te, getTimezone()),
 );
 const metaText = computed(() =>
   [view.value.location, view.value.method].filter(Boolean).join(' · '),
@@ -159,9 +176,17 @@ const visibleActions = computed<OrderCardAction[]>(() => {
     icon: symOutlinedVisibility,
     labelKey: 'manager.orders.actions.details',
   };
+  const cancelAction: OrderCardAction = {
+    key: 'cancel',
+    event: 'cancel',
+    icon: symOutlinedClose,
+    labelKey:
+      props.mode === 'manager' ? 'manager.orderPage.actions.cancel' : 'history.cancel',
+  };
 
   switch (props.order.status) {
     case 1:
+      // Заявку в статусе «Создана» могут отменить и клиент, и менеджер.
       return props.mode === 'manager'
         ? [
             detailsAction,
@@ -171,8 +196,9 @@ const visibleActions = computed<OrderCardAction[]>(() => {
               icon: 'play_arrow',
               labelKey: 'manager.orderPage.actions.take',
             },
+            cancelAction,
           ]
-        : [];
+        : [cancelAction];
     case 2:
       return props.mode === 'manager'
         ? [
@@ -210,6 +236,21 @@ const compact = computed(() => props.compact || visibleActions.value.length === 
 const density = computed(() => (compact.value ? 'compact' : 'regular'));
 const selectableCard = computed(() => props.selectable && visibleActions.value.length === 0);
 const pendingActionKeys = computed(() => new Set(props.pendingActions));
+
+/** Тексты диалога отмены зависят от поверхности: менеджерская карточка или история клиента. */
+const cancelDialog = computed(() =>
+  props.mode === 'manager'
+    ? {
+        title: t('manager.orderPage.cancelDialog.title'),
+        message: t('manager.orderPage.cancelDialog.text'),
+        ok: t('manager.orderPage.actions.cancel'),
+      }
+    : {
+        title: t('history.cancelDialog.title'),
+        message: t('history.cancelDialog.text'),
+        ok: t('history.cancel'),
+      },
+);
 
 /** Блокирует только действия, для которых выполняется запрос. */
 function isActionPending(key: string): boolean {

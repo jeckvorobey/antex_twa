@@ -9,6 +9,7 @@ import type {
   MiniappHomeResponse,
   MiniappManagerAvailability,
   MiniappOrderCreate,
+  MiniappOrderItem,
   MiniappOrdersResponse,
   MiniappProfileResponse,
   MiniappQuoteResponse,
@@ -31,14 +32,18 @@ export async function fetchManagerAvailability() {
   return response.data;
 }
 
+/** Котировка запрашивается ровно по одной сумме: sell или buy. */
+export type MiniappQuoteAmounts =
+  | { amountSell: number; amountBuy?: never }
+  | { amountSell?: never; amountBuy: number };
+
 /** Рассчитывает актуальную котировку выбранной пары перед созданием заявки. */
 export async function fetchQuote(
   params: {
     currencySell: string;
     currencyBuy: string;
-    amountSell: number;
     methodGet?: MiniappReceiveMethod;
-  },
+  } & MiniappQuoteAmounts,
   config: { signal?: AbortSignal } = {},
 ) {
   const response = await api.get<MiniappQuoteResponse>('/api/miniapp/exchange/quote', {
@@ -66,6 +71,12 @@ export async function fetchOrders(
 
 export async function createOrder(payload: MiniappOrderCreate) {
   await api.post('/api/miniapp/orders', payload);
+}
+
+/** Отменяет собственную заявку клиента; разрешено только для статуса «Создана». */
+export async function cancelOrder(orderId: number) {
+  const response = await api.post<MiniappOrderItem>(`/api/orders/${orderId}/cancel`);
+  return response.data;
 }
 
 export async function fetchProfile() {

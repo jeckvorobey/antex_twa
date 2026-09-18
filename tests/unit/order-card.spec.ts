@@ -1,12 +1,45 @@
 import { mount } from '@vue/test-utils';
 import { QBadge, QBtn, QCard, QIcon, QTooltip, Quasar } from 'quasar';
 import { createI18n } from 'vue-i18n';
-import { describe, expect, it } from 'vitest';
+import { createPinia, setActivePinia } from 'pinia';
+import { describe, expect, it, vi } from 'vitest';
 
 import OrderCard from '@components/orders/OrderCard.vue';
+import { useAuthStore } from '@stores/auth.store';
 import ru from '@i18n/ru';
 import type { ManagerOrderSummary } from '@types/manager-chat';
 import type { MiniappOrderItem } from '@types/miniapp';
+
+const dialogState = vi.hoisted(() => ({
+  create: vi.fn(),
+  onOk: null as (() => void) | null,
+}));
+
+vi.mock('quasar', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('quasar')>();
+  return {
+    ...actual,
+    Dialog: {
+      create: dialogState.create.mockImplementation(() => {
+        const chain = {
+          onOk: (callback: () => void) => {
+            dialogState.onOk = callback;
+            return chain;
+          },
+          onDismiss: () => chain,
+          onCancel: () => chain,
+        };
+        return chain;
+      }),
+    },
+  };
+});
+
+/** Сбрасывает мок диалога между проверками. */
+function resetDialog(): void {
+  dialogState.create.mockClear();
+  dialogState.onOk = null;
+}
 
 const baseOrder: MiniappOrderItem = {
   id: 12,
@@ -41,6 +74,10 @@ function mountCard(
   overrides: Partial<MiniappOrderItem | ManagerOrderSummary> = {},
   pendingActions: string[] = [],
 ) {
+  const pinia = createPinia();
+  setActivePinia(pinia);
+  // Детерминированный UTC: без Telegram-timezone берётся браузерное смещение окружения.
+  useAuthStore().userTimezone = 'UTC';
   const i18n = createI18n({ legacy: false, locale: 'ru', messages: { ru } });
   const order: MiniappOrderItem | ManagerOrderSummary =
     mode === 'user'
@@ -60,7 +97,7 @@ function mountCard(
   return mount(OrderCard, {
     props: { order, mode, actions, pendingActions },
     global: {
-      plugins: [Quasar, i18n],
+      plugins: [pinia, Quasar, i18n],
       components: { QBadge, QBtn, QCard, QIcon, QTooltip },
       stubs: { QTooltip: { template: '<span><slot /></span>' } },
     },
@@ -100,22 +137,27 @@ describe('shared OrderCard', () => {
     expect(manager.html()).not.toContain('manager-order-card__');
   });
 
-  it('places time before the right-aligned action group and emits user repeat', async () => {
+  it('places date and time with a calendar icon before the action group', async () => {
     const wrapper = mountCard('user', true, { status: 3 });
     const bottom = wrapper.get('.order-card__bottom');
+    const dateTime = wrapper.get('.order-card__time');
 
     expect(wrapper.classes()).toContain('order-card--regular');
     expect(wrapper.classes()).not.toContain('order-card--compact');
     expect(bottom.element.firstElementChild?.classList).toContain('order-card__time');
     expect(bottom.element.lastElementChild?.classList).toContain('order-card__actions');
+    expect(dateTime.text()).toContain('19.08.2026 20:34');
+    expect(dateTime.get('.q-icon').classes()).toContain('material-icons');
+    expect(dateTime.get('.q-icon').text()).toBe('calendar_today');
     await wrapper.get('[aria-label="Повторить"]').trigger('click');
     expect(wrapper.emitted('repeat')).toHaveLength(1);
   });
 
   it('uses status-specific customer actions and compact density when there is no action', async () => {
     const newOrder = mountCard('user', true, { status: 1 });
-    expect(newOrder.findAll('.order-card__action')).toHaveLength(0);
-    expect(newOrder.classes()).toContain('order-card--compact');
+    expect(newOrder.findAll('.order-card__action')).toHaveLength(1);
+    expect(newOrder.get('[aria-label="Отменить заявку"]').exists()).toBe(true);
+    expect(newOrder.classes()).toContain('order-card--regular');
 
     const activeOrder = mountCard('user', true, { status: 2 });
     expect(activeOrder.findAll('.order-card__action')).toHaveLength(0);
@@ -130,17 +172,22 @@ describe('shared OrderCard', () => {
     const newOrder = mountCard('manager', true, { status: 1 });
     const take = newOrder.get('[aria-label="Взять в работу"]');
 
-    expect(newOrder.findAll('.order-card__action')).toHaveLength(2);
-    expect(newOrder.findAll('.order-card__action-visual')).toHaveLength(2);
+    expect(newOrder.findAll('.order-card__action')).toHaveLength(3);
+    expect(newOrder.findAll('.order-card__action-visual')).toHaveLength(3);
     await newOrder.get('[aria-label="Открыть детали заявки"]').trigger('click');
     expect(newOrder.emitted('openDetails')).toHaveLength(1);
     await take.trigger('click');
     expect(newOrder.emitted('take')).toHaveLength(1);
 
+    resetDialog();
+    await newOrder.get('[aria-label="Отменить заявку"]').trigger('click');
+    expect(dialogState.create).toHaveBeenCalledTimes(1);
+    dialogState.onOk?.();
+    expect(newOrder.emitted('cancel')).toHaveLength(1);
+
     const wrapper = mountCard('manager', true, { status: 2 });
     const chat = wrapper.get('[aria-label="Открыть чат клиента"]');
     const complete = wrapper.get('[aria-label="Завершить заявку"]');
-    const cancel = wrapper.get('[aria-label="Отменить заявку"]');
 
     expect(wrapper.find('[aria-label="Повторить"]').exists()).toBe(false);
     expect(wrapper.findAll('.order-card__action')).toHaveLength(4);
@@ -148,12 +195,15 @@ describe('shared OrderCard', () => {
     expect(wrapper.emitted('openDetails')).toHaveLength(1);
     expect(wrapper.emitted('openChat')).toBeUndefined();
     expect(wrapper.emitted('complete')).toBeUndefined();
-    expect(wrapper.emitted('cancel')).toBeUndefined();
     await chat.trigger('click');
     await complete.trigger('click');
-    await cancel.trigger('click');
     expect(wrapper.emitted('openChat')).toHaveLength(1);
     expect(wrapper.emitted('complete')).toHaveLength(1);
+
+    resetDialog();
+    await wrapper.get('[aria-label="Отменить заявку"]').trigger('click');
+    expect(dialogState.create).toHaveBeenCalledTimes(1);
+    dialogState.onOk?.();
     expect(wrapper.emitted('cancel')).toHaveLength(1);
 
     const completedOrder = mountCard('manager', true, { status: 3 });

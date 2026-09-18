@@ -5,7 +5,7 @@ import type {
 } from '@components/orders/order-card.model';
 import type { ManagerOrderSummary } from '@types/manager-chat';
 import type { MiniappOrderItem } from '@types/miniapp';
-import { formatMiniappTime } from '@utils/formatters';
+import { formatMiniappDateTime } from '@utils/formatters';
 import { managerUserFullName } from '@utils/manager-chat';
 import { getStatusLabelKey, getStatusTone } from '@utils/miniapp';
 
@@ -39,6 +39,7 @@ function baseOrderCard(
   locale: string,
   t: TranslateFn,
   te: HasTranslationFn,
+  timezone?: string,
 ): OrderCardViewModel {
   const country = translatedValue(
     `manager.countries.${order.country}`,
@@ -63,7 +64,7 @@ function baseOrderCard(
       t,
       te,
     ),
-    createdAt: formatMiniappTime(order.createdAt, locale),
+    createdAt: formatMiniappDateTime(order.createdAt, locale, timezone),
     customerName: null,
   };
 }
@@ -73,8 +74,9 @@ export function toUserOrderCard(
   locale: string,
   t: TranslateFn,
   te: HasTranslationFn,
+  timezone?: string,
 ): OrderCardViewModel {
-  return baseOrderCard(order, locale, t, te);
+  return baseOrderCard(order, locale, t, te, timezone);
 }
 
 export function toManagerOrderCard(
@@ -82,8 +84,9 @@ export function toManagerOrderCard(
   locale: string,
   t: TranslateFn,
   te: HasTranslationFn,
+  timezone?: string,
 ): OrderCardViewModel {
-  const view = baseOrderCard(order, locale, t, te);
+  const view = baseOrderCard(order, locale, t, te, timezone);
   const customerName = order.user
     ? managerUserFullName(order.user) || t('manager.customerFallback', { id: order.user.id })
     : null;
