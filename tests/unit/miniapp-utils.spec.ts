@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { createPinia, setActivePinia } from 'pinia';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 import {
   getStatusLabelKey,
@@ -20,6 +21,10 @@ const city: MiniappCity = {
 };
 
 describe('miniapp utils', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+  });
+
   it('groups orders by localized date label', () => {
     const result = groupOrdersByDate([
       {

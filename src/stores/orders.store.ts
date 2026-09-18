@@ -1,7 +1,10 @@
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
 
-import { fetchOrders } from '@services/api/miniapp.service';
+import {
+  cancelOrder as cancelOrderRequest,
+  fetchOrders,
+} from '@services/api/miniapp.service';
 import type { MiniappOrderItem } from '@types/miniapp';
 import { groupOrdersByDate } from '@utils/miniapp';
 
@@ -125,6 +128,26 @@ export const useOrdersStore = defineStore('orders', () => {
     await requestFirstPage('refreshing');
   }
 
+  /** Отменяет заявку клиента и обновляет её статус в текущем списке. */
+  async function cancelOrder(orderId: number) {
+    try {
+      await cancelOrderRequest(orderId);
+      const index = items.value.findIndex((item) => item.id === orderId);
+      if (index !== -1) {
+        const nextItems = items.value.slice();
+        nextItems[index] = { ...nextItems[index], status: 4 };
+        items.value = nextItems;
+      }
+    } catch (error) {
+      const responseStatus = (error as { response?: { status?: number } })?.response?.status;
+      if (responseStatus === 409) {
+        // Статус на сервере изменился: перечитываем список актуальными данными.
+        void refresh().catch(() => undefined);
+      }
+      throw error;
+    }
+  }
+
   function prepend(order: MiniappOrderItem) {
     const existingIndex = items.value.findIndex((item) => item.id === order.id);
     if (existingIndex === -1) {
@@ -152,6 +175,7 @@ export const useOrdersStore = defineStore('orders', () => {
     reloadFirstPage,
     loadNextPage,
     refresh,
+    cancelOrder,
     prepend,
   };
 });

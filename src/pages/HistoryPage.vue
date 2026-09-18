@@ -59,7 +59,9 @@
                 :order="item"
                 mode="user"
                 class="app-history-card app-card-shadow"
+                :pending-actions="cancellingIds.has(item.id) ? ['cancel'] : []"
                 @repeat="repeatOrder(item)"
+                @cancel="cancelOrder(item)"
               />
             </section>
           </template>
@@ -89,14 +91,17 @@ import { useI18n } from 'vue-i18n';
 import OrderCard from '@components/orders/OrderCard.vue';
 import AntexEmptyState from '@components/ui/AntexEmptyState.vue';
 import AntexSkeleton from '@components/ui/AntexSkeleton.vue';
+import { useAntexNotify } from '@/composables/useAntexNotify';
 import { useOrdersStore } from '@stores/orders.store';
 import { useUiStore } from '@stores/ui.store';
 import type { MiniappOrderItem } from '@types/miniapp';
 
 const { t } = useI18n();
+const { notify } = useAntexNotify();
 const ordersStore = useOrdersStore();
 const uiStore = useUiStore();
 const activeFilter = ref<'all' | 'active' | 'done' | 'cancelled'>('all');
+const cancellingIds = ref<Set<number>>(new Set());
 const infiniteScrollRef = ref<{ resume: () => void; stop: () => void } | null>(null);
 const historyScrollRef = ref<HTMLElement | null>(null);
 
@@ -156,6 +161,29 @@ function repeatOrder(item: MiniappOrderItem) {
     country: item.country,
     cityId: item.cityId,
   });
+}
+
+/** Подтверждённая отмена своей заявки: загрузка только на кнопке этой карточки. */
+async function cancelOrder(item: MiniappOrderItem) {
+  if (cancellingIds.value.has(item.id)) return;
+  const nextPending = new Set(cancellingIds.value);
+  nextPending.add(item.id);
+  cancellingIds.value = nextPending;
+  try {
+    await ordersStore.cancelOrder(item.id);
+    notify('positive', t('history.notifications.cancelled'));
+  } catch (error) {
+    const responseStatus = (error as { response?: { status?: number } })?.response?.status;
+    if (responseStatus === 409) {
+      notify('negative', t('history.notifications.cancelConflict'));
+    } else {
+      notify('negative', t('history.notifications.cancelError'));
+    }
+  } finally {
+    const nextPending = new Set(cancellingIds.value);
+    nextPending.delete(item.id);
+    cancellingIds.value = nextPending;
+  }
 }
 
 </script>

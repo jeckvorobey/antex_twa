@@ -7,7 +7,7 @@ vi.mock('@boot/axios', () => ({
 }));
 
 import { api } from '@boot/axios';
-import { transferAex } from '@services/api/miniapp.service';
+import { cancelOrder, transferAex } from '@services/api/miniapp.service';
 
 describe('transferAex', () => {
   beforeEach(() => {
@@ -24,5 +24,20 @@ describe('transferAex', () => {
       amount: 10,
     });
     expect(result).toEqual({ ok: true });
+  });
+});
+
+describe('cancelOrder', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('posts to the user order cancel route', async () => {
+    vi.mocked(api.post).mockResolvedValue({ data: { id: 17, status: 4 } });
+
+    const result = await cancelOrder(17);
+
+    expect(api.post).toHaveBeenCalledWith('/api/orders/17/cancel');
+    expect(result).toEqual({ id: 17, status: 4 });
   });
 });

@@ -9,6 +9,7 @@ import type {
   MiniappHomeResponse,
   MiniappManagerAvailability,
   MiniappOrderCreate,
+  MiniappOrderItem,
   MiniappOrdersResponse,
   MiniappProfileResponse,
   MiniappQuoteResponse,
@@ -67,6 +68,12 @@ export async function fetchOrders(
 
 export async function createOrder(payload: MiniappOrderCreate) {
   await api.post('/api/miniapp/orders', payload);
+}
+
+/** Отменяет собственную заявку клиента; разрешено только для статуса «Создана». */
+export async function cancelOrder(orderId: number) {
+  const response = await api.post<MiniappOrderItem>(`/api/orders/${orderId}/cancel`);
+  return response.data;
 }
 
 export async function fetchProfile() {

@@ -44,42 +44,40 @@
           :disable="changingStatus"
           @click="setStatus(2)"
         />
-        <template v-if="order.status === 2">
-          <q-btn
-            outline
-            rounded
-            no-caps
-            color="primary"
-            icon="done_all"
-            :label="t('manager.orderPage.actions.complete')"
-            :loading="pendingStatus === 3"
-            :disable="changingStatus"
-            @click="setStatus(3)"
-          />
-          <q-btn
-            flat
-            rounded
-            no-caps
-            color="negative"
-            icon="close"
-            :label="t('manager.orderPage.actions.cancel')"
-            :disable="changingStatus"
-            :loading="pendingStatus === 4"
-            @click="confirmCancel"
-          />
-        </template>
+        <q-btn
+          v-if="order.status === 2"
+          outline
+          rounded
+          no-caps
+          color="primary"
+          icon="done_all"
+          :label="t('manager.orderPage.actions.complete')"
+          :loading="pendingStatus === 3"
+          :disable="changingStatus"
+          @click="setStatus(3)"
+        />
+        <CancelOrderButton
+          v-if="order.status === 1 || order.status === 2"
+          :label="t('manager.orderPage.actions.cancel')"
+          :loading="pendingStatus === 4"
+          :disable="changingStatus"
+          :dialog-title="t('manager.orderPage.cancelDialog.title')"
+          :dialog-message="t('manager.orderPage.cancelDialog.text')"
+          :ok-label="t('manager.orderPage.actions.cancel')"
+          @confirm="setStatus(4, true)"
+        />
       </div>
     </template>
   </q-page>
 </template>
 
 <script setup lang="ts">
-import { Dialog } from 'quasar';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 
 import AntexEmptyState from '@components/ui/AntexEmptyState.vue';
+import CancelOrderButton from '@components/orders/CancelOrderButton.vue';
 import ManagerPageHeader from '@components/manager/ManagerPageHeader.vue';
 import ManagerOrderDetails from '@components/manager/ManagerOrderDetails.vue';
 import OrderCard from '@components/orders/OrderCard.vue';
@@ -149,27 +147,6 @@ async function setStatus(status: number, confirmed = false): Promise<void> {
     changingStatus.value = false;
     pendingStatus.value = null;
   }
-}
-
-/** Блокирует действия на время подтверждения без преждевременного лоадера. */
-function confirmCancel(): void {
-  if (changingStatus.value) return;
-  changingStatus.value = true;
-  let confirmed = false;
-  Dialog.create({
-    title: t('manager.orderPage.cancelDialog.title'),
-    message: t('manager.orderPage.cancelDialog.text'),
-    cancel: { label: t('common.back'), flat: true },
-    ok: { label: t('manager.orderPage.actions.cancel'), color: 'negative' },
-    persistent: true,
-  })
-    .onOk(() => {
-      confirmed = true;
-      void setStatus(4, true);
-    })
-    .onDismiss(() => {
-      if (!confirmed) changingStatus.value = false;
-    });
 }
 
 function goBack(): void {

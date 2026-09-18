@@ -41,7 +41,7 @@
         @select="openDetails(order.id)"
         @take="setStatus(order.id, 2)"
         @complete="setStatus(order.id, 3)"
-        @cancel="confirmCancel(order.id)"
+        @cancel="setStatus(order.id, 4)"
       />
     </div>
     <ManagerListMore
@@ -56,7 +56,6 @@
 
 <script setup lang="ts">
 import { useAntexNotify } from '@/composables/useAntexNotify';
-import { Dialog } from 'quasar';
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
@@ -150,25 +149,5 @@ async function setStatus(
   } finally {
     unlockStatusActions(orderId);
   }
-}
-
-/** Запрашивает подтверждение до включения загрузки отмены. */
-function confirmCancel(orderId: number): void {
-  if (!lockStatusActions(orderId)) return;
-  let confirmed = false;
-  Dialog.create({
-    title: t('manager.orderPage.cancelDialog.title'),
-    message: t('manager.orderPage.cancelDialog.text'),
-    cancel: { label: t('common.back'), flat: true },
-    ok: { label: t('manager.orderPage.actions.cancel'), color: 'negative' },
-    persistent: true,
-  })
-    .onOk(() => {
-      confirmed = true;
-      void setStatus(orderId, 4, { lock: false });
-    })
-    .onDismiss(() => {
-      if (!confirmed) unlockStatusActions(orderId);
-    });
 }
 </script>

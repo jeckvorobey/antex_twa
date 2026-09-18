@@ -398,6 +398,15 @@ export default {
     refresh: 'Обновить историю',
     repeat: 'Повторить',
     cancel: 'Отменить заявку',
+    cancelDialog: {
+      title: 'Отменить заявку?',
+      text: 'Заявка будет отменена, менеджер получит уведомление через бота.',
+    },
+    notifications: {
+      cancelled: 'Заявка отменена',
+      cancelError: 'Не удалось отменить заявку',
+      cancelConflict: 'Статус заявки изменился, история обновлена',
+    },
     loadingMore: 'Загружаем ещё',
   },
   profile: {
