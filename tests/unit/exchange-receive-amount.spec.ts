@@ -8,8 +8,12 @@ describe('exchange receive amount input', () => {
     expect(parseExchangeAmount('300.12345678', 8)).toBe(300.12345678);
   });
 
-  it.each(['<script>', '-1', '1e3', '10.123'])('rejects unsafe or over-precise input %s', (value) => {
+  it.each(['<script>', '-1', '1e3', '10.123', '5.'])('rejects unsafe or over-precise input %s', (value) => {
     expect(parseExchangeAmount(value, 2)).toBeNull();
+  });
+
+  it('accepts integer input without decimal part', () => {
+    expect(parseExchangeAmount('5000', 2)).toBe(5000);
   });
 
   it('shows the full sell precision returned by a reverse quote', () => {

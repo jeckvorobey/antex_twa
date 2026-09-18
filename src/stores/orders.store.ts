@@ -10,6 +10,9 @@ import { groupOrdersByDate } from '@utils/miniapp';
 
 const PAGE_LIMIT = 10;
 
+/** Результат отмены заявки для UI. */
+export type CancelOrderOutcome = 'cancelled' | 'conflict' | 'missing';
+
 export const useOrdersStore = defineStore('orders', () => {
   const items = ref<MiniappOrderItem[]>([]);
   const loading = ref(false);
@@ -128,21 +131,28 @@ export const useOrdersStore = defineStore('orders', () => {
     await requestFirstPage('refreshing');
   }
 
-  /** Отменяет заявку клиента и обновляет её статус в текущем списке. */
-  async function cancelOrder(orderId: number) {
+  /** Отменяет заявку клиента и обновляет её в текущем списке. */
+  async function cancelOrder(orderId: number): Promise<CancelOrderOutcome> {
     try {
-      await cancelOrderRequest(orderId);
+      const updated = await cancelOrderRequest(orderId);
       const index = items.value.findIndex((item) => item.id === orderId);
       if (index !== -1) {
         const nextItems = items.value.slice();
-        nextItems[index] = { ...nextItems[index], status: 4 };
+        nextItems[index] = updated;
         items.value = nextItems;
       }
+      return 'cancelled';
     } catch (error) {
       const responseStatus = (error as { response?: { status?: number } })?.response?.status;
       if (responseStatus === 409) {
         // Статус на сервере изменился: перечитываем список актуальными данными.
         void refresh().catch(() => undefined);
+        return 'conflict';
+      }
+      if (responseStatus === 404) {
+        // Заявка недоступна (чужая/удалена): карточка-призрак больше не актуальна.
+        void refresh().catch(() => undefined);
+        return 'missing';
       }
       throw error;
     }

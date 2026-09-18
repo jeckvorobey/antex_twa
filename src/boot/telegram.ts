@@ -33,6 +33,7 @@ export interface TelegramWebApp extends TelegramEnvironmentWebApp {
   };
   ready(): void;
   expand(): void;
+  close(): void;
   requestWriteAccess?: (callback: TelegramWriteAccessCallback) => void;
   MainButton: TelegramMainButton;
 }

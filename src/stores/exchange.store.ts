@@ -7,6 +7,7 @@ import {
   fetchExchangeScreen,
   fetchManagerAvailability,
   fetchQuote,
+  type MiniappQuoteAmounts,
 } from '@services/api/miniapp.service';
 import type {
   MiniappCity,
@@ -123,13 +124,13 @@ export const useExchangeStore = defineStore('exchange', () => {
   }
 
   /** Возвращает серверный snapshot quote, не заменяя exchange-screen и draft формы. */
-  async function refreshQuote(params: {
-    currencySell: string;
-    currencyBuy: string;
-    amountSell?: number;
-    amountBuy?: number;
-    methodGet?: MiniappReceiveMethod;
-  }) {
+  async function refreshQuote(
+    params: {
+      currencySell: string;
+      currencyBuy: string;
+      methodGet?: MiniappReceiveMethod;
+    } & MiniappQuoteAmounts,
+  ) {
     return fetchQuote(params);
   }
 

@@ -32,15 +32,18 @@ export async function fetchManagerAvailability() {
   return response.data;
 }
 
+/** Котировка запрашивается ровно по одной сумме: sell или buy. */
+export type MiniappQuoteAmounts =
+  | { amountSell: number; amountBuy?: never }
+  | { amountSell?: never; amountBuy: number };
+
 /** Рассчитывает актуальную котировку выбранной пары перед созданием заявки. */
 export async function fetchQuote(
   params: {
     currencySell: string;
     currencyBuy: string;
-    amountSell?: number;
-    amountBuy?: number;
     methodGet?: MiniappReceiveMethod;
-  },
+  } & MiniappQuoteAmounts,
   config: { signal?: AbortSignal } = {},
 ) {
   const response = await api.get<MiniappQuoteResponse>('/api/miniapp/exchange/quote', {

@@ -41,6 +41,7 @@
           :country-options="countryOptions"
           :city-options="cityOptions"
           :available-methods="currentQuoteMethods"
+          @invalid-input="inputInvalid = $event"
         />
 
         <AntexButton
@@ -137,6 +138,7 @@ const selectedMethod = ref<MiniappReceiveMethod>('qrcode');
 const selectedCityId = ref<number | null>(null);
 const amountSellTouched = ref(false);
 const syncingState = ref(false);
+const inputInvalid = ref(false);
 const offlineConfirmVisible = ref(false);
 const offlineConfirmed = ref(false);
 const submitFlowPending = ref(false);
@@ -237,7 +239,7 @@ const canSubmit = computed(() => {
   const hasBaseFields = Boolean(selectedSellCurrency.value && currencyBuy.value);
   const hasMethodFields = selectedMethod.value !== 'cash' || Boolean(selectedCityId.value);
 
-  return hasAmounts && hasBaseFields && hasMethodFields && preliminaryValidation.value.valid;
+  return hasAmounts && hasBaseFields && hasMethodFields && !inputInvalid.value && preliminaryValidation.value.valid;
 });
 
 watch(
@@ -556,7 +558,9 @@ async function submit() {
       notify('negative', t('exchange.quoteUnavailable'));
       return;
     }
+    syncingState.value = true;
     amountBuy.value = quote.amountBuy;
+    syncingState.value = false;
 
     await exchangeStore.submitOrder({
       country: selectedCountry.value,

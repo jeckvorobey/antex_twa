@@ -69,14 +69,21 @@ const emit = defineEmits<{
 const { t } = useI18n();
 
 /** Отмена выполняется только после подтверждения в модальном диалоге. */
+let dialogOpen = false;
+
 function openDialog(): void {
-  if (props.disable || props.loading) return;
+  if (dialogOpen || props.disable || props.loading) return;
+  dialogOpen = true;
   Dialog.create({
     title: props.dialogTitle,
     message: props.dialogMessage,
     cancel: { label: props.cancelLabel ?? t('common.back'), flat: true },
     ok: { label: props.okLabel, color: 'negative' },
     persistent: true,
-  }).onOk(() => emit('confirm'));
+  })
+    .onOk(() => emit('confirm'))
+    .onDismiss(() => {
+      dialogOpen = false;
+    });
 }
 </script>

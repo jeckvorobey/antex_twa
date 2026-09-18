@@ -129,7 +129,7 @@ export function parseExchangeAmount(
 ): number | null {
   if (value == null || value === '') return null;
   const normalized = String(value).trim().replace(/\s+/g, '').replace(',', '.');
-  if (!new RegExp(`^\\d+(?:\\.\\d{0,${maxDecimalPlaces}})?$`).test(normalized)) {
+  if (!new RegExp(`^\\d+(?:\\.\\d{1,${maxDecimalPlaces}})?$`).test(normalized)) {
     return null;
   }
   const parsed = Number(normalized);

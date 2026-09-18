@@ -134,7 +134,7 @@ async function openChat(): Promise<void> {
 
 /** Сохраняет статус один раз и показывает загрузку выбранного действия. */
 async function setStatus(status: number, confirmed = false): Promise<void> {
-  if (changingStatus.value && !confirmed) return;
+  if (changingStatus.value) return;
   changingStatus.value = true;
   pendingStatus.value = status;
   try {

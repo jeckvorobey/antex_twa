@@ -170,15 +170,16 @@ async function cancelOrder(item: MiniappOrderItem) {
   nextPending.add(item.id);
   cancellingIds.value = nextPending;
   try {
-    await ordersStore.cancelOrder(item.id);
-    notify('positive', t('history.notifications.cancelled'));
-  } catch (error) {
-    const responseStatus = (error as { response?: { status?: number } })?.response?.status;
-    if (responseStatus === 409) {
+    const outcome = await ordersStore.cancelOrder(item.id);
+    if (outcome === 'cancelled') {
+      notify('positive', t('history.notifications.cancelled'));
+    } else if (outcome === 'conflict') {
       notify('negative', t('history.notifications.cancelConflict'));
     } else {
-      notify('negative', t('history.notifications.cancelError'));
+      notify('negative', t('history.notifications.cancelMissing'));
     }
+  } catch {
+    notify('negative', t('history.notifications.cancelError'));
   } finally {
     const nextPending = new Set(cancellingIds.value);
     nextPending.delete(item.id);

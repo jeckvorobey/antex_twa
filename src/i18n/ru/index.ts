@@ -406,6 +406,7 @@ export default {
       cancelled: 'Заявка отменена',
       cancelError: 'Не удалось отменить заявку',
       cancelConflict: 'Статус заявки изменился, история обновлена',
+      cancelMissing: 'Заявка недоступна, история обновлена',
     },
     loadingMore: 'Загружаем ещё',
   },

@@ -175,6 +175,7 @@ const emit = defineEmits<{
   'update:selectedCountry': [value: string | null];
   'update:selectedMethod': [value: MiniappReceiveMethod];
   'update:selectedCityId': [value: number | null];
+  'invalid-input': [value: boolean];
 }>();
 
 const { locale, t } = useI18n();
@@ -279,6 +280,7 @@ function handleAmountSellInput(value: string | number | null) {
   const parsed = parseExchangeAmount(value, 8);
   const hasInput = value != null && value !== '';
   amountSellError.value = parsed == null && hasInput ? t('errors.exchange_invalid_amount') : null;
+  setInvalidInput(parsed == null && hasInput);
   if (parsed == null && hasInput) return;
   emit('update:amountSell', parsed);
 }
@@ -287,6 +289,7 @@ function handleAmountBuyInput(value: string | number | null) {
   const parsed = parseExchangeAmount(value, 2);
   const hasInput = value != null && value !== '';
   amountBuyError.value = parsed == null && hasInput ? t('errors.exchange_invalid_amount') : null;
+  setInvalidInput(parsed == null && hasInput);
   if (parsed == null && hasInput) return;
   emit('update:amountBuy', parsed);
 }
@@ -294,6 +297,16 @@ function handleAmountBuyInput(value: string | number | null) {
 /** Текст ошибки валидации суммы отправки (кастомный блок под инпутом). */
 const amountSellError = ref<string | null>(null);
 const amountBuyError = ref<string | null>(null);
+
+/** Невалидный текст в инпуте: старая валидная сумма не должна уходить в заявку. */
+const hasInvalidInput = ref(false);
+
+function setInvalidInput(value: boolean): void {
+  if (hasInvalidInput.value !== value) {
+    hasInvalidInput.value = value;
+    emit('invalid-input', value);
+  }
+}
 
 /** Валидация суммы при изменении значения или minAmount. */
 function validateAmountSell() {
@@ -312,8 +325,21 @@ function validateAmountSell() {
   }
 }
 
-watch(() => props.amountSell, validateAmountSell);
+watch(
+  () => props.amountSell,
+  () => {
+    // Внешняя перезапись поля заменяет текст инпута — невалидный ввод исчезает.
+    setInvalidInput(false);
+    validateAmountSell();
+  },
+);
 watch(minAmount, validateAmountSell);
+watch(
+  () => props.amountBuy,
+  () => {
+    setInvalidInput(false);
+  },
+);
 
 function focusAmountSell() {
   amountSellInputRef.value?.focus();

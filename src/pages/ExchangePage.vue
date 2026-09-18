@@ -31,6 +31,7 @@
             :city-options="cityOptions"
             :available-methods="currentQuoteMethods"
             :internal-exchange="isInternalExchange"
+            @invalid-input="inputInvalid = $event"
           />
 
           <section class="app-section">
@@ -156,6 +157,7 @@ const selectedCountry = ref<string | null>(null);
 const selectedMethod = ref<MiniappReceiveMethod>('qrcode');
 const selectedCityId = ref<number | null>(null);
 const amountSellTouched = ref(false);
+const inputInvalid = ref(false);
 const syncingState = ref(false);
 const aexQuote = ref<MiniappQuoteResponse | null>(null);
 const offlineConfirmVisible = ref(false);
@@ -283,7 +285,7 @@ const canSubmit = computed(() => {
   );
   const hasBaseFields = Boolean(selectedSellCurrency.value && selectedBuyCurrency.value);
   const hasMethodFields = selectedMethod.value !== 'cash' || Boolean(selectedCityId.value);
-  return hasAmounts && hasBaseFields && hasMethodFields && preliminaryValidation.value.valid;
+  return hasAmounts && hasBaseFields && hasMethodFields && !inputInvalid.value && preliminaryValidation.value.valid;
 });
 
 watch(selectedSellCurrency, () => {
@@ -618,19 +620,25 @@ async function submitOrder() {
     if (!canSubmit.value || !selectedCountry.value) {
       return;
     }
+    const submitAmountSell = amountSell.value;
+    if (submitAmountSell == null) {
+      return;
+    }
     quote = await refreshQuoteBeforeSubmit();
     if (!quote) {
       notify('negative', t('exchange.quoteUnavailable'));
       return;
     }
+    syncingState.value = true;
     amountBuy.value = quote.amountBuy;
+    syncingState.value = false;
 
     await exchangeStore.submitOrder({
       country: selectedCountry.value,
       cityId: selectedMethod.value === 'cash' ? selectedCityId.value : null,
       currencySell: selectedSellCurrency.value,
       currencyBuy: selectedBuyCurrency.value,
-      amountSell: Math.round(amountSell.value),
+      amountSell: submitAmountSell,
       amountBuy: quote.amountBuy,
       rate: quote.rate,
       methodGet: selectedMethod.value,
